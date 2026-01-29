@@ -41,11 +41,12 @@ def handler(job):
         cmd.append("--evaluate")
 
     try:
-        runpod.serverless.progress_update(job, "Running generate.py...")
+        runpod.serverless.progress_update(job, "Running generate.py (this can take 2–10+ min)...")
+        # Don't capture output so generate.py logs stream to RunPod and you see progress
         proc = subprocess.run(
             cmd,
             cwd=str(workdir),
-            capture_output=True,
+            capture_output=False,
             text=True,
             timeout=1800,
         )
@@ -53,7 +54,7 @@ def handler(job):
             return {
                 "status": "failed",
                 "module_id": module_id,
-                "error": proc.stderr or proc.stdout or "generate.py failed",
+                "error": "generate.py exited with non-zero code",
             }
         manifest_path = modules_dir / module_id / "manifest.json"
         if not manifest_path.exists():

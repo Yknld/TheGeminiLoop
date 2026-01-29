@@ -35,6 +35,8 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://euxfugfzmpsemkjpcpuz.supa
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1eGZ1Z2Z6bXBzZW1ranBjcHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMDkyMDYsImV4cCI6MjA4MzU4NTIwNn0.bsfC3T5WoUhGrS-6VuowULRHciY7BpzMCBQ3F4fZFRI")
 
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+GEMINI_TTS_MODEL = os.environ.get("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
+GEMINI_TTS_VOICE = os.environ.get("GEMINI_TTS_VOICE", "Kore")  # e.g. Kore, Puck, Zephyr
 
 # EXACT PROMPT FROM homework-app.js
 PLANNER_PROMPT_TEMPLATE = """You are an expert educational content creator that breaks down homework problems into intuitive, interactive learning steps. 
@@ -465,30 +467,50 @@ Return ONLY the SVG code, no explanations, no markdown."""
 
 
 def generate_audio(text, output_path):
-    """Generate TTS audio using Supabase"""
+    """Generate TTS audio using Gemini TTS API (returns PCM; saved as WAV)."""
+    import base64
+    import wave
     try:
-        response = requests.post(
-            f"{SUPABASE_URL}/functions/v1/tts",
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {SUPABASE_KEY}",
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_TTS_MODEL}:generateContent"
+        payload = {
+            "contents": [{"parts": [{"text": text}]}],
+            "generationConfig": {
+                "responseModalities": ["AUDIO"],
+                "speechConfig": {
+                    "voiceConfig": {
+                        "prebuiltVoiceConfig": {"voiceName": GEMINI_TTS_VOICE}
+                    }
+                },
             },
-            json={"text": text},
-            timeout=30
+        }
+        response = requests.post(
+            f"{url}?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json=payload,
+            timeout=60,
         )
-        
-        if response.status_code == 200:
-            data = response.json()
-            audio_content = data.get("audioContent")
-            if audio_content:
-                # Decode base64
-                import base64
-                audio_bytes = base64.b64decode(audio_content)
-                with open(output_path, "wb") as f:
-                    f.write(audio_bytes)
-                return True
-        return False
-        
+        if response.status_code != 200:
+            return False
+        data = response.json()
+        candidates = data.get("candidates") or []
+        if not candidates:
+            return False
+        parts = (candidates[0].get("content") or {}).get("parts") or []
+        if not parts:
+            return False
+        inline = parts[0].get("inlineData") or {}
+        b64 = inline.get("data")
+        if not b64:
+            return False
+        pcm = base64.b64decode(b64)
+        # Gemini TTS returns PCM: 24kHz, mono, 16-bit (s16le)
+        wav_path = output_path.with_suffix(".wav") if output_path.suffix != ".wav" else output_path
+        with wave.open(str(wav_path), "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)  # 16-bit
+            wf.setframerate(24000)
+            wf.writeframes(pcm)
+        return True
     except Exception:
         return False
 
@@ -624,13 +646,13 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
                 "visual": None
             }
             
-            # Generate audio
+            # Generate audio (Gemini TTS → WAV)
             if step.get("audioExplanation"):
-                print("   🔊 Generating TTS audio...")
+                print("   🔊 Generating Gemini TTS audio...")
                 audio_start = time.time()
-                audio_path = module_path / "audio" / f"q{q_idx}-step-{i}.mp3"
+                audio_path = module_path / "audio" / f"q{q_idx}-step-{i}.wav"
                 if generate_audio(step["audioExplanation"], audio_path):
-                    processed_step["audio"] = f"audio/q{q_idx}-step-{i}.mp3"
+                    processed_step["audio"] = f"audio/q{q_idx}-step-{i}.wav"
                     elapsed = time.time() - audio_start
                     print(f"   ✅ Audio generated: {processed_step['audio']} ({elapsed:.1f}s)")
                 else:

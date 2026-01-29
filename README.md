@@ -34,10 +34,10 @@ flowchart TB
         S3 --> BRANCH{{"Type?"}}
         BRANCH -->|"interactive"| HTML["Gemini → Interactive HTML"]
         BRANCH -->|"image"| SVG["Gemini → SVG Diagram"]
-        S5 --> TTS["Supabase TTS → MP3"]
+        S5 --> TTS["Gemini TTS → WAV"]
         HTML --> COMP["components/qN-step-M.html"]
         SVG --> VIS["visuals/qN-step-M.svg"]
-        TTS --> AUD["audio/qN-step-M.mp3"]
+        TTS --> AUD["audio/qN-step-M.wav"]
         META --> PVIZ["Problem-level SVG"]
     end
 
@@ -141,7 +141,7 @@ sequenceDiagram
 flowchart TB
     subgraph EXTERNAL["External Services"]
         GEM["Gemini API\n(Planning + HTML + SVG + Vision)"]
-        SUP["Supabase\n(TTS Edge Function)"]
+        SUP["(optional)"]
     end
 
     subgraph CORE["The Gemini Loop"]
@@ -196,7 +196,7 @@ The pipeline will:
 
 - Call Gemini to produce a structured plan (steps, explanations, visualization types).
 - Generate interactive HTML components and/or SVG diagrams per step.
-- Optionally generate TTS audio via Supabase.
+- Optionally generate step audio via Gemini TTS (WAV).
 - Run the evaluation loop: load each component in a browser, interact, screenshot, score with Gemini Vision, and auto-fix failures until pass or max attempts.
 - Write the final bundle to `modules/<module_id>/`.
 
@@ -231,7 +231,7 @@ Open:
         ├── problem-viz-qN.svg
         ├── components/      # qN-step-M.html (interactive)
         ├── visuals/         # qN-step-M.svg (static diagrams)
-        └── audio/           # qN-step-M.mp3 (optional)
+        └── audio/           # qN-step-M.wav (Gemini TTS, optional)
 ```
 
 ---
@@ -245,14 +245,14 @@ Open:
 | **Closed-loop QA** | Browser automation + Gemini Vision scores each component; failures are fixed and re-tested. |
 | **Static output** | No runtime AI; manifest + assets are pre-generated and served as static files. |
 | **Math** | LaTeX in content; MathJax in the learner UI. |
-| **Audio** | Optional TTS per step via Supabase. |
+| **Audio** | Optional TTS per step via Gemini TTS (WAV). |
 
 ---
 
 ## Configuration
 
 - **Gemini**: Set `GEMINI_API_KEY` (and optionally the API URL) in `generate.py` and in the evaluator (e.g. from `index.html` meta or env).
-- **TTS**: Set `SUPABASE_URL` and `SUPABASE_KEY` in `generate.py` for audio.
+- **Audio**: Uses same `GEMINI_API_KEY`; optional `GEMINI_TTS_VOICE` (e.g. Kore, Puck).
 - **Evaluation**: Requires a browser (Chrome/Chromium) and, if used, the BrowserUse MCP client for automation.
 
 ---
