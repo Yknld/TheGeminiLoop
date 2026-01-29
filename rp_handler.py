@@ -34,7 +34,7 @@ def handler(job):
     modules_dir = workdir / "modules"
     modules_dir.mkdir(exist_ok=True)
 
-    cmd = [sys.executable, str(workdir / "generate.py"), "--id", module_id]
+    cmd = [sys.executable, "-u", str(workdir / "generate.py"), "--id", module_id]
     for p in problem_texts:
         cmd.append(p)
     if evaluate:
@@ -42,14 +42,18 @@ def handler(job):
 
     try:
         runpod.serverless.progress_update(job, "Running generate.py (this can take 2–10+ min)...")
-        # Don't capture output so generate.py logs stream to RunPod and you see progress
-        proc = subprocess.run(
+        # Forward subprocess stdout/stderr to worker stdout so RunPod logs show progress
+        proc = subprocess.Popen(
             cmd,
             cwd=str(workdir),
-            capture_output=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
-            timeout=1800,
+            bufsize=1,
         )
+        for line in proc.stdout:
+            print(line, end="", flush=True)
+        proc.wait(timeout=1800)
         if proc.returncode != 0:
             return {
                 "status": "failed",
