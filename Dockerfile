@@ -14,6 +14,6 @@ COPY generate.py evaluate_loop_clean.py run_evaluator_queue.py ./
 COPY serve.py index.html module-viewer.html homework-app.js homework-styles.css ./
 COPY modules ./modules
 
-# RunPod serverless entrypoint
-COPY rp_handler.py .
-CMD ["python", "-u", "rp_handler.py"]
+# RunPod serverless entrypoint (handler.py is the conventional name RunPod looks for)
+COPY rp_handler.py handler.py ./
+CMD ["python", "-u", "handler.py"]

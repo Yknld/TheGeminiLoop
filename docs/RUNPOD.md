@@ -11,6 +11,8 @@ Use these values when connecting the repo:
 | **Build Context** | `.` |
 | **Credentials** | No credentials (unless the repo or base image is private) |
 
+The container runs `handler.py`, which calls `runpod.serverless.start()` (RunPod’s queue-based endpoint expects this). The real logic lives in `rp_handler.py`.
+
 ## Environment / secrets
 
 Set these in the RunPod endpoint or template so generation works:
