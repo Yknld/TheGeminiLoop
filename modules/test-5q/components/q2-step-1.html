@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solving Equations</title>
+    <style>
+        /* CSS Variables for consistent theming */
+        :root {
+            --primary-blue: #3b82f6;
+            --secondary-blue: #60a5fa;
+            --green-correct: #22c55e;
+            --red-incorrect: #ef4444;
+            --light-green-bg: #dcfce7;
+            --light-red-bg: #fee2e2;
+            --text-dark: #334155; /* Slightly darker for better readability */
+            --text-medium: #64748b;
+            --bg-light: #f7f9fc;
+            --bg-white: #fff;
+            --border-color: #cbd5e0;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --scale-beam-color: #a0aec0;
+            --scale-fulcrum-base-color: #718096;
+            --pan-bg-color: #f7fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .module-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            background-color: var(--bg-white);
+            border-radius: 15px;
+            box-shadow: 0 8px 25px var(--shadow-light); /* More prominent shadow */
+            width: 90%;
+            max-width: 700px;
+            box-sizing: border-box;
+            gap: 20px;
+        }
+
+        h2 { /* New title style */
+            color: var(--text-dark);
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .instruction-text { /* New instruction text */
+            color: var(--text-medium);
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        .scale-area {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .scale-beam {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end; /* Keeps pans aligned at bottom */
+            width: 100%;
+            height: 20px;
+            background-color: var(--scale-beam-color);
+            border-radius: 5px;
+            position: relative;
+            z-index: 1;
+            padding: 0 20px;
+            box-sizing: border-box;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bounce effect */
+            transform-origin: center 95%; /* Pivot point for rotation */
+        }
+
+        /* The tilt classes are kept for robustness, but in this specific balanced division scenario,
+           the scale should ideally always return to a non-tilted state after the action. */
+        .scale-beam.tilt-right {
+            transform: rotate(5deg);
+        }
+
+        .scale-beam.tilt-left { 
+            transform: rotate(-5deg);
+        }
+
+        .scale-pan {
+            background-color: var(--pan-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            width: 45%;
+            min-height: 100px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+            position: relative;
+            bottom: -5px; /* Adjust to sit below the beam */
+            gap: 8px;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .scale-beam.tilt-right .left-pan {
+            transform: translateY(10px); /* Lower the left pan */
+        }
+
+        .scale-beam.tilt-right .right-pan {
+            transform: translateY(-10px); /* Raise the right pan */
+        }
+        
+        .scale-beam.tilt-left .left-pan {
+            transform: translateY(-10px); /* Raise the left pan */
+        }
+
+        .scale-beam.tilt-left .right-pan {
+            transform: translateY(10px); /* Lower the right pan */
+        }
+
+
+        .left-pan {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .block {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 8px;
+            color: white;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); /* Richer shadow */
+            font-size: 1em;
+            transition: opacity 0.3s ease, transform 0.3s ease; /* For hiding */
+        }
+
+        .x-block {
+            background-color: var(--primary-blue);
+        }
+
+        .unit-block {
+            background-color: var(--green-correct);
+        }
+
+        .scale-fulcrum {
+            width: 30px;
+            height: 60px;
+            background-color: var(--scale-fulcrum-base-color);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0 0 15px 15px;
+            z-index: 0;
+        }
+
+        .scale-base {
+            width: 150px;
+            height: 15px;
+            background-color: var(--scale-fulcrum-base-color);
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 8px;
+            z-index: 0;
+        }
+
+        .interactive-controls { /* New styles for interactive buttons */
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .action-button {
+            background-color: var(--secondary-blue); /* A slightly different blue */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .action-button:hover:not(:disabled) {
+            background-color: var(--primary-blue);
+            transform: translateY(-1px);
+        }
+
+        .action-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .action-button:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .status-message { /* New status message styles */
+            margin-top: 15px;
+            font-size: 0.95em;
+            color: var(--text-medium);
+            min-height: 20px; /* To prevent layout shift */
+            text-align: center;
+        }
+
+        .equation-display {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: var(--text-dark);
+            background-color: #e2e8f0; /* Slightly darker background */
+            padding: 12px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            margin-top: 20px; /* Space from controls */
+        }
+
+        .answer-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .answer-input {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1em;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+        }
+
+        .answer-input:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+        }
+
+        .submit-button {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .submit-button:hover {
+            background-color: #2563eb; /* Darker blue on hover */
+        }
+
+        .feedback-message {
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .feedback-message.correct {
+            background-color: var(--light-green-bg);
+            color: var(--green-correct);
+        }
+
+        .feedback-message.incorrect {
+            background-color: var(--light-red-bg);
+            color: var(--red-incorrect);
+        }
+    </style>
+</head>
+<body>
+    <div class="module-container">
+        <h2>Solving a One-Step Linear Equation</h2>
+        <!-- Corrected and expanded instructional text -->
+        <p class="instruction-text">To solve for $x$, we need to isolate it, meaning we want to get $x$ by itself on one side of the equation. In the expression $2x$, $x$ is being multiplied by $2$. To find the value of one $x$, we need to perform an operation that maintains the balance of the scale for the current equation $2x = 10$. Use the button below to perform the necessary balanced operation to solve for $x$.</p>
+
+        <div class="scale-area">
+            <div class="scale-beam">
+                <div class="scale-pan left-pan">
+                    <div class="block x-block" id="x-block-1">x</div>
+                    <div class="block x-block" id="x-block-2">x</div>
+                </div>
+                <div class="scale-pan right-pan">
+                    <div class="block unit-block" id="unit-block-1">1</div>
+                    <div class="block unit-block" id="unit-block-2">1</div>
+                    <div class="block unit-block" id="unit-block-3">1</div>
+                    <div class="block unit-block" id="unit-block-4">1</div>
+                    <div class="block unit-block" id="unit-block-5">1</div>
+                    <div class="block unit-block" id="unit-block-6">1</div>
+                    <div class="block unit-block" id="unit-block-7">1</div>
+                    <div class="block unit-block" id="unit-block-8">1</div>
+                    <div class="block unit-block" id="unit-block-9">1</div>
+                    <div class="block unit-block" id="unit-block-10">1</div>
+                </div>
+            </div>
+            <div class="scale-fulcrum"></div>
+            <div class="scale-base"></div>
+        </div>
+
+        <div class="interactive-controls">
+            <!-- Renamed and repurposed the button for balanced division -->
+            <button id="divideByTwoBtn" class="action-button">Divide Both Sides by 2</button>
+        </div>
+
+        <!-- Corrected initial status message -->
+        <div id="scaleStatus" class="status-message">The scale shows the equation 2x = 10. Click 'Divide Both Sides by 2' to solve for x.</div>
+
+        <div class="equation-display">
+            <span id="equationText">2x = 10</span>
+        </div>
+
+        <div class="answer-section">
+            <label for="answer" style="font-weight: bold; color: var(--text-dark);">What is the value of x?</label>
+            <input type="number" id="answer" class="answer-input" placeholder="Enter your answer">
+            <button class="submit-button" onclick="checkAnswer()">Check Answer</button>
+            <div id="feedback" class="feedback-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // stage: 0: initial, 1: solved
+        let stage = 0; 
+        const xBlock2 = document.getElementById('x-block-2');
+        const unitBlocksToRemove = [];
+        for (let i = 6; i <= 10; i++) {
+            unitBlocksToRemove.push(document.getElementById(`unit-block-${i}`));
+        }
+        // Renamed button element for clarity in the script
+        const divideByTwoBtn = document.getElementById('divideByTwoBtn'); 
+        const scaleStatus = document.getElementById('scaleStatus');
+        const equationText = document.getElementById('equationText');
+        const scaleBeam = document.querySelector('.scale-beam');
+
+        // Function to update scale tilt for visual feedback
+        // In this fixed version, the scale should always remain balanced after the single action
+        function updateScaleTilt(tiltClass) {
+            scaleBeam.classList.remove('tilt-right', 'tilt-left'); // Reset any existing tilt
+            if (tiltClass) {
+                scaleBeam.classList.add(tiltClass);
+            }
+        }
+
+        // Event listener for the new "Divide Both Sides by 2" button
+        divideByTwoBtn.addEventListener('click', () => {
+            if (stage === 0) {
+                // Remove one x-block (visually representing 2x / 2 = x)
+                xBlock2.style.opacity = '0'; // Visually hide
+                xBlock2.style.transform = 'translateY(10px) scale(0.8)'; // Subtle shrinking effect
+                xBlock2.style.pointerEvents = 'none'; // Make it non-interactive
+
+                // Remove 5 unit blocks (visually representing 10 / 2 = 5)
+                unitBlocksToRemove.forEach(block => {
+                    block.style.opacity = '0';
+                    block.style.transform = 'translateY(10px) scale(0.8)';
+                    block.style.pointerEvents = 'none';
+                });
+
+                // Update status and equation display to reflect the balanced operation
+                scaleStatus.textContent = "You've divided both sides of the equation by 2. The scale remains balanced, showing that one 'x' is equal to 5 units.";
+                updateScaleTilt(null); // Scale should return to or maintain balanced (no tilt) state
+                equationText.textContent = "x = 5"; // Update equation display
+                
+                // Disable the button after the action is performed, as the equation is now solved
+                divideByTwoBtn.disabled = true;
+                stage = 1; // Transition to solved stage
+            }
+        });
+
+        // Original checkAnswer function - preserved as is
+        function checkAnswer() {
+            const userAnswer = document.getElementById('answer').value;
+            const feedback = document.getElementById('feedback');
+
+            // Clear previous feedback
+            feedback.classList.remove('correct', 'incorrect');
+
+            if (userAnswer == 5) {
+                feedback.textContent = "Correct! x = 5";
+                feedback.classList.add('correct');
+            } else {
+                feedback.textContent = "Incorrect. Try again!";
+                feedback.classList.add('incorrect');
+            }
+
+            feedback.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Division Basics: Step 1</title> <!-- Adjusted title for better alignment with the component's context -->
+    <style>
+        /* General Reset and Body */
+        body {
+            font-family: 'Inter', sans-serif; /* Modern font choice */
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa; /* Lighter, subtle background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #343a40; /* Darker default text color */
+        }
+
+        /* Main Container Styling */
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px; /* Slightly more rounded corners */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* More pronounced shadow */
+            padding: 30px 40px; /* Adjusted padding */
+            width: 90%;
+            max-width: 850px; /* Slightly wider max-width */
+            text-align: center;
+            border: 1px solid #e0e4eb; /* Subtle border */
+        }
+
+        /* Header Section Styling for Instructional Harmony */
+        .header-section {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e9ecef; /* Separator line */
+            padding-bottom: 15px;
+        }
+
+        .main-title {
+            font-size: 1.8rem;
+            color: #2c3e50; /* Darker, professional title color */
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .sub-title {
+            font-size: 1.2rem;
+            color: #5a6a7c; /* Slightly lighter subtitle */
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .module-info {
+            font-size: 0.9rem;
+            color: #8899ac;
+            margin-top: 5px;
+        }
+        /* End Header Section */
+
+        /* General Instructions */
+        .instructions {
+            font-size: 1.05rem;
+            color: #555;
+            margin-bottom: 30px; /* Increased margin for better separation */
+            line-height: 1.5;
+        }
+
+        /* Draggable Item Pile */
+        .item-pile {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px; /* Slightly increased gap */
+            padding: 20px;
+            background-color: #eef4f9; /* Light blue background for visual appeal */
+            border-radius: 10px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08); /* Softer inner shadow */
+            margin-bottom: 40px; /* Increased margin */
+            min-height: 70px; /* Ensure space */
+            border: 1px solid #d9e2ea; /* Subtle border */
+        }
+
+        /* Draggable Item Styling */
+        .item {
+            width: 45px; /* Slightly larger items */
+            height: 45px;
+            border-radius: 50%;
+            background-color: #3498db; /* Engaging primary blue */
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Clear initial shadow for interactivity */
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s;
+            border: 1px solid rgba(0,0,0,0.1); /* Slight border for definition */
+        }
+
+        .item:hover {
+            transform: translateY(-3px) scale(1.08); /* More noticeable lift */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Stronger shadow on hover */
+            background-color: #2c83c0; /* Slightly darker blue on hover */
+        }
+
+        .item.dragging {
+            opacity: 0.7; /* More transparent when dragging */
+            cursor: grabbing;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25); /* Maintain shadow while dragging */
+            transform: scale(1.05); /* Keep slightly scaled */
+        }
+
+        /* Group Containers */
+        .groups {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 25px; /* Increased gap between groups */
+        }
+
+        .group {
+            width: 140px; /* Slightly larger drop zones */
+            height: 140px;
+            border-radius: 50%;
+            border: 3px dashed #aeb8c4; /* More visible dashed border initially */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #fdfefe; /* Very light background for groups */
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1); /* Initial subtle shadow */
+            transition: border-color 0.3s ease-in-out, background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            cursor: default; /* Not directly clickable, but a drop target */
+            position: relative; /* For item positioning if needed, though default flow works */
+            padding-top: 25px; /* Space for label */
+        }
+
+        .group:hover {
+            border-color: #7ab8e2; /* Clearer hover state */
+            background-color: #e6f2fb; /* Light blue tint on hover */
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
+        }
+
+        .group.dragover {
+            border-color: #3498db; /* Strong highlight on dragover */
+            background-color: #dbeaf5; /* More distinct background */
+            box-shadow: 0 0 0 5px rgba(52, 152, 219, 0.3), 0 5px 15px rgba(0, 0, 0, 0.2); /* "Glow" effect */
+            border-style: solid; /* Solid border on dragover for stronger cue */
+        }
+
+        .group-label {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #495057;
+            position: absolute;
+            top: 15px; /* Adjusted position slightly lower for better visual balance */
+            user-select: none;
+            pointer-events: none; /* Ensure label doesn't interfere with drag/drop */
+        }
+        
+        /* Styling for items within groups for better visual arrangement */
+        .group .item {
+            position: relative; /* Allow items to stack/arrange within group */
+            margin: 4px; /* Small margin for visual separation */
+            /* Reset hover effect when inside a group if desired, or let it cascade */
+            transform: none; 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Softer shadow for dropped items */
+            cursor: pointer; /* Can still drag out */
+            /* Background color set by JS updateFeedback for dynamic styling */
+        }
+        /* Override specific hover styles for items inside groups if they need to behave differently */
+        .group .item:hover {
+            transform: translateY(-1px) scale(1.03); /* Subtle lift for placed items */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            /* Background color for hover set by JS logic for consistency */
+        }
+
+
+        /* Feedback Message */
+        .feedback {
+            margin-top: 35px; /* Increased margin */
+            font-size: 1.15rem;
+            font-weight: 600;
+            min-height: 28px; /* Ensure space even when empty */
+            color: #28a745; /* Default success color */
+        }
+
+        #feedbackMessage {
+            /* This ID is already on the feedback div, so no need for a separate element */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Harmonized Instructional Context -->
+        <div class="header-section">
+            <h1 class="main-title">Division Basics: Understanding Division</h1>
+            <h2 class="sub-title">Step 1: Introduction to Equal Grouping (Foundation for 15 ÷ 3)</h2>
+            <p class="module-info">Module: test-5q | Q5 | Step 1 of 4</p>
+        </div>
+
+        <p class="instructions">
+            To build towards understanding '15 divided by 3', let's start with a simpler task. Divide these 9 circles into 3 equal groups. Drag and drop the circles into the empty group zones below.
+        </p>
+
+        <div class="item-pile" id="itemPile">
+            <!-- Items are now explicitly present in the HTML as per fix requirements, with added IDs for robustness -->
+            <div class="item" draggable="true" id="item-1">1</div>
+            <div class="item" draggable="true" id="item-2">2</div>
+            <div class="item" draggable="true" id="item-3">3</div>
+            <div class="item" draggable="true" id="item-4">4</div>
+            <div class="item" draggable="true" id="item-5">5</div>
+            <div class="item" draggable="true" id="item-6">6</div>
+            <div class="item" draggable="true" id="item-7">7</div>
+            <div class="item" draggable="true" id="item-8">8</div>
+            <div class="item" draggable="true" id="item-9">9</div>
+        </div>
+
+        <div class="groups">
+            <div class="group" id="group1">
+                <div class="group-label">Group 1</div>
+            </div>
+            <div class="group" id="group2">
+                <div class="group-label">Group 2</div>
+            </div>
+            <div class="group" id="group3">
+                <div class="group-label">Group 3</div>
+            </div>
+        </div>
+
+        <div class="feedback" id="feedbackMessage"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const itemPile = document.getElementById('itemPile');
+            const groups = document.querySelectorAll('.group');
+            const feedbackMessage = document.getElementById('feedbackMessage');
+            let draggedItem = null;
+            const totalItems = 9;
+
+            // Select existing items and attach drag event listeners to them.
+            const items = document.querySelectorAll('.item-pile .item'); 
+            items.forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                    // dataTransfer.setData is important for cross-browser compatibility
+                    e.dataTransfer.setData('text/plain', item.id); 
+                });
+
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                });
+            });
+
+            // Drag and drop functionality for groups
+            groups.forEach(group => {
+                group.addEventListener('dragover', (e) => {
+                    e.preventDefault(); // Allow drop
+                    group.classList.add('dragover');
+                });
+
+                group.addEventListener('dragleave', () => {
+                    group.classList.remove('dragover');
+                });
+
+                group.addEventListener('drop', (e) => {
+                    e.preventDefault(); // Prevent default browser handling of dropped data
+                    group.classList.remove('dragover');
+                    if (draggedItem) {
+                        // Prevent adding the group-label as a draggable item if draggedItem is the label itself
+                        if (!draggedItem.classList.contains('group-label')) {
+                            group.appendChild(draggedItem);
+                            updateFeedback();
+                        }
+                    }
+                });
+            });
+
+            // Drag and drop functionality for item pile
+            itemPile.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Allow drop
+            });
+
+            itemPile.addEventListener('drop', (e) => {
+               e.preventDefault(); // Prevent default browser handling
+               if (draggedItem) {
+                    itemPile.appendChild(draggedItem);
+                    updateFeedback();
+                }
+            });
+
+            function updateFeedback() {
+                // Subtract 1 from children.length because each group contains a 'group-label' div
+                const group1Count = document.getElementById('group1').children.length - 1;
+                const group2Count = document.getElementById('group2').children.length - 1;
+                const group3Count = document.getElementById('group3').children.length - 1;
+                const totalInGroups = group1Count + group2Count + group3Count;
+
+                // Update styling of items based on their parent (pile or group)
+                document.querySelectorAll('.item').forEach(item => {
+                    if (item.parentElement.classList.contains('group')) {
+                        item.style.backgroundColor = '#5cb85c'; // Green for items in groups
+                        item.style.borderColor = 'rgba(0,0,0,0.15)'; 
+                        // Specific hover style for items in groups
+                        item.onmouseover = () => { item.style.backgroundColor = '#4cae4c'; };
+                        item.onmouseout = () => { item.style.backgroundColor = '#5cb85c'; };
+                    } else if (item.parentElement.id === 'itemPile') {
+                        item.style.backgroundColor = '#3498db'; // Blue for items in the pile
+                        item.style.borderColor = 'rgba(0,0,0,0.1)';
+                        // Reset hover style for items in pile
+                        item.onmouseover = () => { item.style.backgroundColor = '#2c83c0'; };
+                        item.onmouseout = () => { item.style.backgroundColor = '#3498db'; };
+                    }
+                });
+
+
+                if (totalInGroups === totalItems) {
+                    if (group1Count === 3 && group2Count === 3 && group3Count === 3) {
+                        feedbackMessage.textContent = "Excellent! You've successfully divided the 9 circles into 3 equal groups of 3.";
+                        feedbackMessage.style.color = "#28a745"; // Green for success
+                    } else {
+                        feedbackMessage.textContent = "Not quite! Each group needs to have the same number of circles. Keep trying!";
+                        feedbackMessage.style.color = "#fd7e14"; // Orange for try again
+                    }
+                } else {
+                    feedbackMessage.textContent = ""; // Clear feedback if not all items are placed
+                }
+            }
+            // Initial call to update feedback to apply proper styling on load
+            updateFeedback(); 
+        });
+    </script>
+</body>
+</html>

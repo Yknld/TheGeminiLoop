@@ -1,0 +1,265 @@
+<div class="module-container" style="font-family: 'Arial', sans-serif; padding: 20px; max-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 15px; background-color: #f0f4f8; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <style>
+        .balance-scale-svg {
+            width: 100%;
+            max-width: 700px;
+            height: 300px; /* Fixed height for consistent layout */
+            margin-bottom: 10px;
+            overflow: visible; /* Important for weights to animate outside initial bounds */
+        }
+
+        .equation-text {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .instruction-text {
+            font-size: 1.1em;
+            color: #555;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .scale-beam {
+            fill: #78350f; /* Brown */
+            stroke: #5b210b;
+            stroke-width: 3;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            rx: 3; /* Rounded corners for beam */
+            ry: 3;
+        }
+
+        .scale-pivot {
+            fill: #333;
+            stroke: #222;
+            stroke-width: 2;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            rx: 2; /* Rounded corners for pivot stand */
+        }
+
+        .pan-holder-rect { /* Rect part of the pan surface */
+            fill: #e0e0e0; /* Light grey */
+            stroke: #a0a0a0;
+            stroke-width: 2;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            rx: 3;
+            ry: 3;
+        }
+        
+        .pan-connection {
+            stroke: #a0a0a0;
+            stroke-width: 2;
+        }
+
+        .weight-x-rect { /* Rect part of X weight */
+            fill: #2563eb; /* Blue */
+            stroke: #1e40af;
+            stroke-width: 1;
+            rx: 3;
+            ry: 3;
+        }
+        .weight-one-rect { /* Rect part of '1' weight */
+            fill: #16a34a; /* Green */
+            stroke: #15803d;
+            stroke-width: 1;
+            rx: 2;
+            ry: 2;
+        }
+
+        .weight-label {
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            fill: white; /* Label text color */
+            text-anchor: middle;
+            dominant-baseline: central;
+            pointer-events: none;
+        }
+        .weight-label.one-label {
+             font-size: 10px; /* Smaller font for '1' */
+        }
+
+        .removable-weight {
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            transform-origin: center center; /* Essential for scale animation */
+        }
+
+        #minus-5-label {
+            position: absolute;
+            background-color: #ef4444; /* Red */
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 1.8em;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(10px); /* Initial position for enter animation */
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+            pointer-events: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        /* Pan holder groups for animation */
+        #leftPanHolder, #rightPanHolder {
+            transition: transform 0.4s ease-out; /* Add transition for pan movement */
+            transform: translateY(0px); /* Initial state for transition */
+        }
+    </style>
+
+    <div class="equation-text">x + 5 = 12</div>
+    <div class="instruction-text" id="instruction-text">To undo +5, we will use the inverse operation: Subtraction.</div>
+
+    <div style="position: relative; width: 100%; max-width: 700px; height: 300px;">
+        <svg class="balance-scale-svg" viewBox="0 0 700 300" preserveAspectRatio="xMidYMid meet">
+            <!-- Pivot -->
+            <rect x="345" y="240" width="10" height="40" class="scale-pivot"></rect>
+            <circle cx="350" cy="240" r="8" class="scale-pivot"></circle>
+
+            <!-- Beam -->
+            <rect x="100" y="235" width="500" height="10" class="scale-beam"></rect>
+            
+            <!-- Left Pan Assembly -->
+            <g id="leftPanHolder">
+                <rect x="150" y="260" width="100" height="10" class="pan-holder-rect"></rect>
+                <line x1="190" y1="245" x2="190" y2="260" class="pan-connection"></line>
+                <line x1="210" y1="245" x2="210" y2="260" class="pan-connection"></line>
+                <g id="leftWeights">
+                    <!-- X weight group -->
+                    <g>
+                        <rect x="155" y="210" width="40" height="45" class="weight-x-rect"></rect>
+                        <text x="175" y="232" class="weight-label">x</text>
+                    </g>
+
+                    <!-- '1' weights on left (removable) -->
+                    <g class="one-weight-group removable-weight" id="leftWeight1">
+                        <rect x="200" y="230" width="20" height="25" class="weight-one-rect"></rect>
+                        <text x="210" y="242" class="weight-label one-label">1</text>
+                    </g>
+                    <g class="one-weight-group removable-weight" id="leftWeight2">
+                        <rect x="225" y="230" width="20" height="25" class="weight-one-rect"></rect>
+                        <text x="235" y="242" class="weight-label one-label">1</text>
+                    </g>
+                    <g class="one-weight-group removable-weight" id="leftWeight3">
+                        <rect x="155" y="200" width="20" height="25" class="weight-one-rect"></rect>
+                        <text x="165" y="212" class="weight-label one-label">1</text>
+                    </g>
+                    <g class="one-weight-group removable-weight" id="leftWeight4">
+                        <rect x="180" y="200" width="20" height="25" class="weight-one-rect"></rect>
+                        <text x="190" y="212" class="weight-label one-label">1</text>
+                    </g>
+                    <g class="one-weight-group removable-weight" id="leftWeight5">
+                        <rect x="205" y="200" width="20" height="25" class="weight-one-rect"></rect>
+                        <text x="215" y="212" class="weight-label one-label">1</text>
+                    </g>
+                </g>
+            </g>
+
+            <!-- Right Pan Assembly -->
+            <g id="rightPanHolder">
+                <rect x="450" y="260" width="100" height="10" class="pan-holder-rect"></rect>
+                <line x1="490" y1="245" x2="490" y2="260" class="pan-connection"></line>
+                <line x1="510" y1="245" x2="510" y2="260" class="pan-connection"></line>
+                <g id="rightWeights">
+                    <!-- '1' weights on right (12 of them) -->
+                    <!-- Row 1 -->
+                    <g class="one-weight-group"><rect x="455" y="230" width="20" height="25" class="weight-one-rect"></rect><text x="465" y="242" class="weight-label one-label">1</text></g>
+                    <g class="one-weight-group"><rect x="480" y="230" width="20" height="25" class="weight-one-rect"></rect><text x="490" y="242" class="weight-label one-label">1</text></g>
+                    <g class="one-weight-group"><rect x="505" y="230" width="20" height="25" class="weight-one-rect"></rect><text x="515" y="242" class="weight-label one-label">1</text></g>
+                    <g class="one-weight-group"><rect x="530" y="230" width="20" height="25" class="weight-one-rect"></rect><text x="540" y="242" class="weight-label one-label">1</text></g>
+                    <!-- Row 2 -->
+                    <g class="one-weight-group"><rect x="455" y="200" width="20" height="25" class="weight-one-rect"></rect><text x="465" y="212" class="weight-label one-label">1</text></g>
+                    <g class="one-weight-group"><rect x="480" y="200" width="20" height="25" class="weight-one-rect"></rect><text x="490" y="212" class="weight-label one-label">1</text></g>
+                    <g class="one-weight-group"><rect x="505" y="200" width="20" height="25" class="weight-one-rect"></rect><text x="515" y="212" class="weight-label one-label">1</text></g>
+                    <g class="one-weight-group"><rect x="530" y="200" width="20" height="25" class="weight-one-rect"></rect><text x="540" y="212" class="weight-label one-label">1</text></g>
+                    <!-- Row 3 -->
+                    <g class="one-weight-group"><rect x="455" y="170" width="20" height="25" class="weight-one-rect"></rect><text x="465" y="182" class="weight-label one-label">1</text></g>
+                    <g class="one-weight-group"><rect x="480" y="170" width="20" height="25" class="weight-one-rect"></rect><text x="490" y="182" class="weight-label one-label">1</text></g>
+                    <g class="one-weight-group"><rect x="505" y="170" width="20" height="25" class="weight-one-rect"></rect><text x="515" y="182" class="weight-label one-label">1</text></g>
+                    <g class="one-weight-group"><rect x="530" y="170" width="20" height="25" class="weight-one-rect"></rect><text x="540" y="182" class="weight-label one-label">1</text></g>
+                </g>
+            </g>
+        </svg>
+        <div id="minus-5-label"></div>
+    </div>
+
+    <script>
+        (function() {
+            const leftPanHolder = document.getElementById('leftPanHolder');
+            const removableWeights = Array.from(document.querySelectorAll('.removable-weight'));
+            const minus5Label = document.getElementById('minus-5-label');
+            const panRiseAmountPerWeight = 8; // Pixels the pan rises per weight removed
+            const panInitialY = 0; // Initial translateY for pan holders (relative to its starting SVG position)
+
+            let weightsRemovedCount = 0;
+
+            // Function to update the position of the -5 label
+            function updateMinus5LabelPosition() {
+                const panRect = leftPanHolder.querySelector('.pan-holder-rect'); // The pan surface rect
+                if (!panRect) return;
+
+                // Get bounding rectangles for positioning relative to the container div
+                const svgElement = document.querySelector('.balance-scale-svg');
+                const svgContainer = svgElement.parentElement; // The div wrapping the SVG
+
+                const panRectScreen = panRect.getBoundingClientRect();
+                const svgContainerRectScreen = svgContainer.getBoundingClientRect();
+
+                // Calculate the center of the pan rect relative to the SVG container
+                const labelX = (panRectScreen.left + panRectScreen.width / 2) - svgContainerRectScreen.left;
+                const labelY = panRectScreen.top - svgContainerRectScreen.top;
+
+                minus5Label.style.left = `${labelX - minus5Label.offsetWidth / 2}px`;
+                minus5Label.style.top = `${labelY - minus5Label.offsetHeight - 25}px`; // Position above the pan
+            }
+
+            // Initial label position setup. Wait for layout to be stable.
+            requestAnimationFrame(() => {
+                 updateMinus5LabelPosition();
+            });
+
+            // Start animation after a short delay
+            setTimeout(() => {
+                // Show the -5 label with animation
+                minus5Label.style.opacity = '1';
+                minus5Label.style.transform = 'translateY(0px)'; // Animate to initial position
+
+                let currentDelay = 0;
+                removableWeights.forEach((weightGroup, index) => {
+                    setTimeout(() => {
+                        // Apply animation to the weight group (rect and text inside)
+                        weightGroup.style.transform = 'scale(0.1) translateY(-30px)'; // Shrink and move up slightly
+                        weightGroup.style.opacity = '0';
+
+                        // After each weight's disappearance transition, update the pan position
+                        // This timeout should match the weight's transition duration (0.3s)
+                        setTimeout(() => {
+                            weightsRemovedCount++;
+                            // Calculate new pan Y based on weights removed
+                            const currentPanY = panInitialY - (weightsRemovedCount * panRiseAmountPerWeight);
+                            leftPanHolder.style.transform = `translateY(${currentPanY}px)`;
+                            
+                            // Update label position dynamically as pan moves
+                            updateMinus5LabelPosition();
+
+                            if (weightsRemovedCount === removableWeights.length) {
+                                // All weights removed, fade out -5 label after a short pause
+                                setTimeout(() => {
+                                    minus5Label.style.opacity = '0';
+                                    minus5Label.style.transform = 'translateY(-10px)'; // Fade out moving up
+                                }, 1000); // Keep label for 1s after last weight removal
+                            }
+                        }, 300); // Wait for the weight's shrink/fade transition
+                    }, currentDelay);
+                    currentDelay += 600; // Delay for the next weight (e.g., 0.3s transition + 0.3s gap)
+                });
+            }, 1000); // Initial delay before the animation sequence starts
+
+            // Re-calculate position on window resize
+            window.addEventListener('resize', () => {
+                requestAnimationFrame(updateMinus5LabelPosition);
+            });
+        })();
+    </script>
+</div>

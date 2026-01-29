@@ -1,0 +1,345 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            max-width: 100%;
+            box-sizing: border-box;
+            background-color: #f0f4f8;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            gap: 20px;
+            overflow: hidden; /* To contain tilting scale */
+            min-height: 350px; /* Ensure enough space for scale and equation */
+        }
+
+        .balance-scale-container {
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            height: 180px; /* Height for the scale structure and pans */
+            margin-bottom: 20px;
+        }
+
+        .balance-beam {
+            width: 100%;
+            height: 10px;
+            background-color: #5a5a5a;
+            border-radius: 5px;
+            position: absolute;
+            top: 50px; /* Adjust based on pivot */
+            left: 0;
+            transform-origin: center 5px; /* Pivot point */
+            transition: transform 1s ease-in-out;
+            z-index: 1;
+        }
+
+        .balance-pivot {
+            width: 20px;
+            height: 80px;
+            background-color: #5a5a5a;
+            position: absolute;
+            top: 55px; /* Below the beam */
+            left: calc(50% - 10px);
+            border-radius: 0 0 5px 5px;
+            z-index: 0;
+        }
+
+        .balance-pivot::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 20px solid #5a5a5a;
+            top: -20px;
+            left: -5px;
+        }
+
+        .balance-pan {
+            width: 35%; /* Width of the pan */
+            height: 25px;
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            position: absolute;
+            top: 70px; /* Below the beam */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+            box-sizing: border-box;
+            transition: top 1s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            gap: 5px;
+            flex-wrap: wrap; /* Allow weights to wrap */
+            min-height: 40px; /* Ensure space for items */
+        }
+
+        .pan-left {
+            left: 5%;
+            transform: translateX(0); /* Initial state, will be updated by JS */
+            transition: left 1s ease-in-out, transform 1s ease-in-out;
+        }
+
+        .pan-right {
+            right: 5%;
+            transform: translateX(0); /* Initial state, will be updated by JS */
+            transition: right 1s ease-in-out, transform 1s ease-in-out;
+        }
+
+        /* Connect pans to beam */
+        .pan-hook {
+            position: absolute;
+            width: 2px;
+            height: 25px;
+            background-color: #5a5a5a;
+            top: 50px;
+            transition: transform 1s ease-in-out;
+            z-index: 0;
+        }
+        .hook-left { left: calc(5% + 35% / 2 - 1px); transform-origin: top; }
+        .hook-right { right: calc(5% + 35% / 2 - 1px); transform-origin: top; }
+
+
+        .weight, .x-block {
+            min-width: 30px;
+            min-height: 30px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: white;
+            transition: all 0.5s ease-out, opacity 0.5s ease-out, transform 0.5s ease-out;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .x-block {
+            background-color: #2563eb; /* Blue */
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.4);
+            font-size: 18px;
+        }
+
+        .weight {
+            background-color: #16a34a; /* Green */
+            box-shadow: 0 2px 4px rgba(22, 163, 74, 0.4);
+        }
+
+        /* Equation display */
+        .equation-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            min-height: 40px; /* Reserve space */
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            gap: 5px; /* Spacing between equation elements */
+        }
+
+        .equation-part {
+            transition: all 0.5s ease-out, opacity 0.5s ease-out, transform 0.5s ease-out;
+            display: inline-block; /* For transform to work */
+        }
+
+        .equation-part.plus-five { color: #2563eb; } /* Blue for +5 */
+        .equation-part.minus-five { color: #dc2626; } /* Red for -5 */
+        .equation-part.cancel {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        .equation-part.fade-out {
+            opacity: 0;
+        }
+        .equation-part.new-value {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .equation-part.new-value.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+    </style>
+
+    <div class="balance-scale-container">
+        <div class="balance-beam" id="balanceBeam"></div>
+        <div class="balance-pivot"></div>
+        <div class="pan-hook hook-left" id="hookLeft"></div>
+        <div class="pan-hook hook-right" id="hookRight"></div>
+        <div class="balance-pan pan-left" id="panLeft">
+            <div class="x-block" id="xBlock">X</div>
+            <div class="weights-left-container" id="weightsLeftContainer"></div>
+        </div>
+        <div class="balance-pan pan-right" id="panRight">
+            <div class="weights-right-container" id="weightsRightContainer"></div>
+        </div>
+    </div>
+
+    <div class="equation-display" id="equationDisplay">
+        <span class="equation-part" id="eqX">x</span>
+        <span class="equation-part plus-five" id="eqPlus5">+ 5</span>
+        <span class="equation-part minus-five" id="eqMinus5">- 5</span>
+        <span class="equation-part" id="eqEquals">=</span>
+        <span class="equation-part" id="eqTwelve">12</span>
+        <span class="equation-part" id="eqMinus">-</span>
+        <span class="equation-part" id="eqFive">5</span>
+    </div>
+
+    <script>
+        (function() {
+            const balanceBeam = document.getElementById('balanceBeam');
+            const hookLeft = document.getElementById('hookLeft');
+            const hookRight = document.getElementById('hookRight');
+            const panLeft = document.getElementById('panLeft');
+            const panRight = document.getElementById('panRight');
+            const weightsLeftContainer = document.getElementById('weightsLeftContainer');
+            const weightsRightContainer = document.getElementById('weightsRightContainer');
+
+            const eqX = document.getElementById('eqX');
+            const eqPlus5 = document.getElementById('eqPlus5');
+            const eqMinus5 = document.getElementById('eqMinus5');
+            const eqEquals = document.getElementById('eqEquals');
+            const eqTwelve = document.getElementById('eqTwelve');
+            const eqMinus = document.getElementById('eqMinus');
+            const eqFive = document.getElementById('eqFive');
+
+            const tiltFactor = 15; // Degrees for max tilt
+            const panVerticalOffset = 40; // Pixels for vertical pan movement
+
+            function createWeights(container, count, idPrefix) {
+                container.innerHTML = ''; // Clear previous weights
+                for (let i = 0; i < count; i++) {
+                    const weight = document.createElement('div');
+                    weight.className = 'weight';
+                    weight.id = idPrefix + i;
+                    weight.textContent = '1';
+                    container.appendChild(weight);
+                }
+            }
+
+            function updateScaleVisual(leftWeight, rightWeight) {
+                const effectiveLeftWeight = leftWeight; // x is 7, plus any extra weights
+                const effectiveRightWeight = rightWeight;
+
+                const diff = effectiveLeftWeight - effectiveRightWeight;
+                let tilt = 0;
+                let leftPanTop = 70;
+                let rightPanTop = 70;
+
+                // Adjust tilt and pan positions based on weight difference
+                if (diff > 0) { // Left heavier
+                    tilt = tiltFactor;
+                    leftPanTop = 70 + panVerticalOffset;
+                    rightPanTop = 70 - panVerticalOffset;
+                } else if (diff < 0) { // Right heavier
+                    tilt = -tiltFactor;
+                    leftPanTop = 70 - panVerticalOffset;
+                    rightPanTop = 70 + panVerticalOffset;
+                } else { // Balanced
+                    tilt = 0;
+                    leftPanTop = 70;
+                    rightPanTop = 70;
+                }
+
+                balanceBeam.style.transform = `rotate(${tilt}deg)`;
+                panLeft.style.top = `${leftPanTop}px`;
+                panRight.style.top = `${rightPanTop}px`;
+
+                hookLeft.style.transform = `rotate(${tilt}deg)`;
+                hookRight.style.transform = `rotate(${tilt}deg)`;
+            }
+
+            // Initial state: Scale reflects x + 5 = 12.
+            // Since x = 7, this means 7 + 5 = 12 on the left, and 12 on the right.
+            let leftPanWeightCount = 5; // Initial 5 '1' weights on left pan
+            let rightPanWeightCount = 12; // Initial 12 '1' weights on right pan
+            const xValue = 7; // X is effectively 7 for balance calculations
+
+            // Set initial state for visualization
+            createWeights(weightsLeftContainer, leftPanWeightCount, 'leftWeight');
+            createWeights(weightsRightContainer, rightPanWeightCount, 'rightWeight');
+            updateScaleVisual(xValue + leftPanWeightCount, rightPanWeightCount);
+
+
+            function animateStep(step) {
+                if (step === 1) {
+                    // Animate left side: x + 5 - 5 -> x
+                    // Equation: + 5 and - 5 disappear
+                    eqPlus5.classList.add('cancel');
+                    eqMinus5.classList.add('cancel');
+
+                    // Scale Left Pan: 5 weights disappear
+                    const leftWeights = weightsLeftContainer.children;
+                    for (let i = 0; i < leftWeights.length; i++) {
+                        leftWeights[i].style.opacity = '0';
+                        leftWeights[i].style.transform = 'scale(0.5)';
+                    }
+                    leftPanWeightCount = 0; // Effectively 0 weights left with X
+                    updateScaleVisual(xValue + leftPanWeightCount, rightPanWeightCount); // Scale tilts as left side becomes lighter
+                } else if (step === 2) {
+                    // Animate right side: 12 - 5 -> 7
+                    // Equation: 12 and -5 disappear, 7 appears
+                    eqTwelve.classList.add('cancel');
+                    eqMinus.classList.add('cancel');
+                    eqFive.classList.add('cancel');
+
+                    // Create and show new '7'
+                    const eqSeven = document.createElement('span');
+                    eqSeven.className = 'equation-part new-value';
+                    eqSeven.id = 'eqSeven';
+                    eqSeven.textContent = '7';
+                    // Remove old parts, insert new 7 where 12 was
+                    // To maintain order, remove 12, then insert 7, then remove - and 5
+                    eqTwelve.parentNode.insertBefore(eqSeven, eqTwelve);
+                    setTimeout(() => {
+                        eqSeven.classList.add('show');
+                    }, 100); // Small delay to allow element to render before transition
+
+
+                    // Scale Right Pan: 5 weights disappear
+                    const rightWeights = weightsRightContainer.children;
+                    for (let i = 0; i < 5; i++) { // Disappear 5 weights from the first ones
+                        if (rightWeights[i]) {
+                            rightWeights[i].style.opacity = '0';
+                            rightWeights[i].style.transform = 'scale(0.5)';
+                        }
+                    }
+                    // Remove them from DOM after transition
+                    setTimeout(() => {
+                        for (let i = 0; i < 5; i++) {
+                            if (rightWeights[0]) { // Always remove the first element
+                                weightsRightContainer.removeChild(rightWeights[0]);
+                            }
+                        }
+                    }, 500); // Half second to match weight transition
+
+                    rightPanWeightCount = 7; // 7 weights remaining
+                    updateScaleVisual(xValue + leftPanWeightCount, rightPanWeightCount); // Scale balances again
+                }
+            }
+
+            // Automatic animation sequence
+            const animationDelay = 2000; // 2 seconds between steps
+
+            // Step 1: Simplify Left Side
+            setTimeout(() => {
+                animateStep(1);
+            }, animationDelay);
+
+            // Step 2: Simplify Right Side
+            setTimeout(() => {
+                animateStep(2);
+            }, animationDelay * 2);
+
+        })();
+    </script>
+</div>

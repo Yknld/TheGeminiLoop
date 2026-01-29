@@ -1,0 +1,362 @@
+<div class="module-container">
+  <style>
+    .module-container {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f4f8;
+      /* Light background */
+      border-radius: 12px;
+      padding: 15px;
+      max-width: 100%;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      /* Tight spacing */
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+      /* Ensure spheres don't go out */
+      min-height: 380px;
+      /* Ensure enough space for animation */
+      justify-content: space-between;
+      /* Push button(s) to bottom */
+    }
+
+    .sphere-area {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      /* Height for sphere movement */
+      display: flex;
+      /* For initial layout of groups */
+      justify-content: space-around;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .sphere {
+      width: 30px;
+      height: 30px;
+      background-color: #2563eb;
+      /* Blue sphere */
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: all 1s ease-in-out;
+      /* Smooth movement transition */
+      position: absolute;
+      /* Will be dynamically positioned */
+      top: 0;
+      left: 0;
+      /* Initial placeholder */
+      z-index: 1;
+      /* Above other elements potentially */
+    }
+
+    .expression {
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .action-button {
+      background-color: #16a34a;
+      /* Green button */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 25px;
+      font-size: 1.1em;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      position: relative;
+      /* For z-index if needed */
+      z-index: 10;
+    }
+
+    .action-button:hover:not(:disabled) {
+      background-color: #128a3f;
+      transform: translateY(-2px);
+    }
+
+    .action-button:disabled {
+      background-color: #a7f3d0;
+      /* Lighter green when disabled */
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Style for the 'Next Question' button */
+    .action-button.next-button {
+      background-color: #2563eb;
+      /* Blue for next button */
+    }
+
+    .action-button.next-button:hover:not(:disabled) {
+      background-color: #1e40af;
+    }
+
+    .action-button.next-button:disabled {
+      background-color: #a7d0f3;
+      /* Lighter blue when disabled */
+    }
+
+    .button-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-top: auto;
+      /* Push to bottom if parent is flex column */
+      padding-top: 15px;
+    }
+
+    .counter-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -100%);
+      /* Above the cluster */
+      font-size: 3em;
+      font-weight: bold;
+      color: #059669;
+      /* Darker green */
+      opacity: 0;
+      transition: opacity 0.5s ease-out;
+      z-index: 5;
+    }
+
+    .counter-display.visible {
+      opacity: 1;
+    }
+
+    .final-sum {
+      position: absolute;
+      bottom: 60px;
+      /* Adjusted to be above the button group */
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 3em;
+      font-weight: bold;
+      color: #059669;
+      /* Darker green */
+      opacity: 0;
+      transition: opacity 0.5s ease-out;
+      z-index: 5;
+    }
+
+    .final-sum.visible {
+      opacity: 1;
+    }
+  </style>
+
+  <div id="sphereArea" class="sphere-area">
+    <!-- Spheres will be dynamically created here -->
+    <div id="counterDisplay" class="counter-display">0</div>
+    <div id="finalSum" class="final-sum"></div>
+  </div>
+
+  <div id="expressionText" class="expression"></div>
+  <div class="button-group">
+    <button id="countTotalBtn" class="action-button">Count Total</button>
+    <button id="nextQuestionBtn" class="action-button next-button" style="display: none;">Next Question</button>
+  </div>
+
+  <script>
+    (function() {
+      const sphereArea = document.getElementById('sphereArea');
+      const countTotalBtn = document.getElementById('countTotalBtn');
+      const counterDisplay = document.getElementById('counterDisplay');
+      const finalSumDisplay = document.getElementById('finalSum');
+      const expressionText = document.getElementById('expressionText');
+      const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+
+      const sphereSize = 30; // px
+      const groupHorizontalGap = 50; // px between groups
+      const sphereGapInGroup = 10; // px between spheres in a group during initial setup
+      const detachDistance = 15; // px for detach animation
+      const clusterRadius = 15; // Radius of the cluster when converged
+
+      let spheres = []; // To store sphere elements with their initial positions
+
+      // Define an array of questions
+      const questions = [{
+        numGroups: 4,
+        spheresPerGroup: 2,
+        expression: '2 + 2 + 2 + 2'
+      }, // Total: 8
+      {
+        numGroups: 3,
+        spheresPerGroup: 3,
+        expression: '3 + 3 + 3'
+      }, // Total: 9
+      {
+        numGroups: 2,
+        spheresPerGroup: 5,
+        expression: '5 + 5'
+      } // Total: 10
+      ];
+      let currentQuestionIndex = 0;
+      let currentNumGroups;
+      let currentSpheresPerGroup;
+      let currentTotalSpheres;
+
+      function setupInitialState(questionData) {
+        currentNumGroups = questionData.numGroups;
+        currentSpheresPerGroup = questionData.spheresPerGroup;
+        currentTotalSpheres = currentNumGroups * currentSpheresPerGroup;
+
+        sphereArea.innerHTML = ''; // Clear previous spheres
+        spheres = []; // Clear array
+        counterDisplay.style.opacity = '0';
+        counterDisplay.classList.remove('visible');
+        finalSumDisplay.style.opacity = '0';
+        finalSumDisplay.classList.remove('visible');
+        finalSumDisplay.textContent = '';
+        expressionText.textContent = questionData.expression; // Set expression text
+        expressionText.style.opacity = '1';
+        expressionText.style.visibility = 'visible';
+        countTotalBtn.disabled = false;
+        nextQuestionBtn.style.display = 'none'; // Ensure 'Next Question' button is hidden
+
+        // Calculate initial positions to center groups horizontally
+        const areaWidth = sphereArea.clientWidth;
+        const groupWidth = currentSpheresPerGroup * sphereSize + (currentSpheresPerGroup - 1) * sphereGapInGroup;
+        const totalGroupsAndGapsWidth = (currentNumGroups * groupWidth) + ((currentNumGroups - 1) * groupHorizontalGap);
+
+        let currentXOffset = (areaWidth - totalGroupsAndGapsWidth) / 2;
+        const startY = (sphereArea.clientHeight - sphereSize) / 2; // Vertically center
+
+        let sphereCounter = 0;
+        for (let i = 0; i < currentNumGroups; i++) { // Use currentNumGroups
+          for (let j = 0; j < currentSpheresPerGroup; j++) { // Use currentSpheresPerGroup
+            const sphere = document.createElement('div');
+            sphere.classList.add('sphere');
+            sphere.dataset.id = sphereCounter;
+            sphere.style.width = `${sphereSize}px`;
+            sphere.style.height = `${sphereSize}px`;
+            sphere.style.transition = 'none'; // Disable transition for initial setup
+
+            // Calculate initial absolute position
+            const initialX = currentXOffset + j * (sphereSize + sphereGapInGroup);
+            sphere.style.left = `${initialX}px`;
+            sphere.style.top = `${startY}px`;
+
+            sphereArea.appendChild(sphere);
+            spheres.push({
+              element: sphere,
+              initialX: initialX,
+              initialY: startY
+            });
+            sphereCounter++;
+          }
+          currentXOffset += groupWidth + groupHorizontalGap;
+        }
+
+        // Re-enable transitions after all spheres are placed
+        setTimeout(() => {
+          spheres.forEach(s => s.element.style.transition = 'all 1s ease-in-out');
+        }, 50); // Small delay to ensure styles are applied before enabling transition
+      }
+
+      function animateCounting() {
+        countTotalBtn.disabled = true;
+        expressionText.style.opacity = '0'; // Hide expression
+        expressionText.style.visibility = 'hidden';
+
+        // Get center point of the sphereArea for convergence
+        const areaRect = sphereArea.getBoundingClientRect();
+        const centerX = areaRect.width / 2 - sphereSize / 2;
+        const centerY = areaRect.height / 2 - sphereSize / 2;
+
+        // Phase 1: Detach
+        spheres.forEach(s => {
+          const sphereEl = s.element;
+          // Calculate index within its group based on currentSpheresPerGroup
+          const indexInGroup = parseInt(sphereEl.dataset.id) % currentSpheresPerGroup;
+
+          // Move spheres in a group slightly apart using transform
+          if (indexInGroup === 0) { // First sphere in pair (or first in group generally)
+            sphereEl.style.transform = `translate(-${detachDistance}px, 0)`;
+          } else { // Subsequent spheres in group
+            sphereEl.style.transform = `translate(${detachDistance}px, 0)`;
+          }
+          sphereEl.style.transition = 'transform 0.3s ease-out';
+        });
+
+        setTimeout(() => {
+          // Phase 2: Converge and Counter
+          let count = 0;
+          counterDisplay.textContent = '0';
+          counterDisplay.classList.add('visible');
+          counterDisplay.style.opacity = '1';
+
+          const convergenceDuration = 1200; // ms
+          const totalIncrementDuration = convergenceDuration - 200; // Finish counter slightly before convergence
+          const incrementDelay = totalIncrementDuration / currentTotalSpheres; // Distribute increments over time
+
+          spheres.forEach((s, index) => {
+            const sphereEl = s.element;
+            // Clear transform to allow left/top transition
+            sphereEl.style.transform = 'none';
+            sphereEl.style.transition = `left ${convergenceDuration}ms ease-in-out, top ${convergenceDuration}ms ease-in-out`;
+
+            // Calculate target position to form a circular cluster
+            const angle = (index / currentTotalSpheres) * 2 * Math.PI; // Use currentTotalSpheres
+            const targetX = centerX + clusterRadius * Math.cos(angle);
+            const targetY = centerY + clusterRadius * Math.sin(angle);
+
+            // Set target positions
+            sphereEl.style.left = `${targetX}px`;
+            sphereEl.style.top = `${targetY}px`;
+
+            // Increment counter as spheres "arrive"
+            setTimeout(() => {
+              count++;
+              counterDisplay.textContent = count;
+              if (count === currentTotalSpheres) { // Use currentTotalSpheres
+                // All spheres arrived, animation complete
+                setTimeout(() => {
+                  counterDisplay.classList.remove('visible');
+                  counterDisplay.style.opacity = '0';
+                  finalSumDisplay.textContent = 'Total: ' + currentTotalSpheres; // Display with "Total:" prefix
+                  finalSumDisplay.classList.add('visible');
+                  finalSumDisplay.style.opacity = '1'; // Makes the total visible
+
+                  // Display 'Next Question' button
+                  setTimeout(() => {
+                    nextQuestionBtn.style.display = 'block'; // Show the next button
+                  }, 1000); // Delay before showing next button
+                }, 500); // Delay before hiding counter and showing final sum
+              }
+            }, (index + 1) * incrementDelay); // Trigger counter increment based on sphere index timing
+          });
+        }, 300); // Detach animation duration
+      }
+
+      // Initial setup when the script runs
+      setupInitialState(questions[currentQuestionIndex]);
+
+      // Recalculate positions on window resize to ensure responsiveness
+      window.addEventListener('resize', () => {
+        // Only reset if button is not disabled (i.e., not mid-animation)
+        // or if the next button is visible (meaning interaction is complete and needs reset)
+        if (!countTotalBtn.disabled || nextQuestionBtn.style.display === 'block') {
+          setupInitialState(questions[currentQuestionIndex]); // Pass current question
+        }
+      });
+
+      countTotalBtn.addEventListener('click', animateCounting);
+      nextQuestionBtn.addEventListener('click', () => {
+        currentQuestionIndex = (currentQuestionIndex + 1) % questions.length; // Cycle through questions
+        setupInitialState(questions[currentQuestionIndex]);
+      });
+
+    })();
+  </script>
+</div>

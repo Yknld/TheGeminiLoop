@@ -1,0 +1,259 @@
+<div class="module-container" style="font-family: 'Arial', sans-serif; padding: 20px; border-radius: 12px; background-color: #f0faff; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    <style>
+        .module-container {
+            max-width: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* Added H2 styling for the main title */
+        .module-container h2 {
+            font-size: 26px;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 25px; /* More space below title */
+            text-align: center;
+        }
+
+        .visual-representation {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            min-height: 50px; /* Ensure space for circles */
+        }
+
+        .group {
+            display: flex;
+            flex-wrap: wrap; /* Allows circles to wrap if many */
+            justify-content: center;
+            align-items: center;
+            margin: 0 10px;
+            min-width: 120px; /* Give groups some minimum width */
+        }
+
+        .circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #bbdefb; /* Default for circles in addedGroup, before counting */
+            margin: 5px;
+            transition: background-color 0.4s ease-in-out, transform 0.2s ease-out; /* Adjusted transition for smoother counting */
+        }
+
+        .circle.counted { /* Renamed from 'added' for clarity in the counting process */
+            background-color: #64b5f6; /* Medium blue to show it has been counted */
+            transform: scale(1.1); /* Slight pop effect */
+        }
+
+        .circle.initial {
+            background-color: #42a5f5; /* Dark blue for the starting number's circles */
+            transform: scale(1.05); /* Slightly prominent */
+        }
+
+        .equation {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 0 15px;
+        }
+
+        .result {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1565c0;
+            margin-left: 15px;
+            min-width: 100px; /* Ensure space for "3 + 5 = ?" and "3 + 5 = 8" */
+        }
+
+        .current-position-display {
+            text-align: center;
+            font-size: 18px; /* Slightly larger font for better readability */
+            color: #333; /* Darker color for better contrast */
+            margin-top: 25px; /* Added margin-top for better spacing */
+            margin-bottom: 25px;
+            padding: 12px 25px; /* Slightly more padding */
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            display: block; /* Changed to block for full width centering */
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            min-height: 20px; /* Ensure consistent height */
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .control-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px; /* More space above button */
+        }
+
+        .control-button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            min-width: 120px;
+            text-align: center;
+            background-color: #1e88e5;
+            color: white;
+        }
+
+        .control-button:hover:not(:disabled) {
+            background-color: #1565c0;
+            transform: translateY(-1px);
+        }
+
+        .control-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .control-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+
+    <!-- UI/UX Improvement: Added a clear title, removing the meta-information from the screenshot. -->
+    <h2>Adding Two Numbers - Step 2</h2>
+
+    <div class="visual-representation">
+        <div class="group" id="initialGroup">
+            <!-- Initial circles will be added here -->
+        </div>
+        <span class="equation">+</span>
+        <div class="group" id="addedGroup">
+            <!-- Added circles will be added here -->
+        </div>
+        <span class="equation">=</span>
+        <div class="result" id="totalCircles">
+            <!-- The sum will be displayed here, initially "3 + 5 = ?" -->
+        </div>
+    </div>
+
+    <div id="currentPositionDisplay" class="current-position-display">
+        <!-- Dynamic feedback will be shown here -->
+    </div>
+
+    <div class="control-container">
+        <button id="playButton" class="control-button">Start Counting</button>
+    </div>
+
+    <script>
+        (function() {
+            const initialGroup = document.getElementById('initialGroup');
+            const addedGroup = document.getElementById('addedGroup');
+            const totalCirclesDisplay = document.getElementById('totalCircles');
+            const currentPositionDisplay = document.getElementById('currentPositionDisplay');
+            const playButton = document.getElementById('playButton');
+
+            const START_NUMBER = 3;
+            const ADD_NUMBER = 5;
+            const TOTAL_ITEMS = START_NUMBER + ADD_NUMBER;
+            const ANIMATION_DELAY = 1000; // Increased delay for better visual understanding of each step
+
+            let currentCount = 0; // Tracks how many circles from ADD_NUMBER have been counted
+            let animationTimeoutId = null;
+            let animationRunning = false;
+
+            function createCircles() {
+                initialGroup.innerHTML = '';
+                addedGroup.innerHTML = '';
+
+                // Create initial circles (first number, e.g., 3)
+                for (let i = 0; i < START_NUMBER; i++) {
+                    const circle = document.createElement('div');
+                    circle.classList.add('circle', 'initial');
+                    initialGroup.appendChild(circle);
+                }
+
+                // Create circles to be added (second number, e.g., 5), initially uncounted
+                for (let i = 0; i < ADD_NUMBER; i++) {
+                    const circle = document.createElement('div');
+                    circle.classList.add('circle'); // No 'counted' class initially
+                    addedGroup.appendChild(circle);
+                }
+                // FIX: Ensures the equation starts with '?'
+                totalCirclesDisplay.textContent = START_NUMBER + " + " + ADD_NUMBER + " = ?";
+            }
+
+            function animateCounting() {
+                if (!animationRunning) return;
+
+                const circlesToCount = addedGroup.querySelectorAll('.circle:not(.counted)');
+
+                if (currentCount < ADD_NUMBER) {
+                    if (circlesToCount.length > 0) {
+                        circlesToCount[0].classList.add('counted'); // Mark the next circle as counted
+                    }
+                    currentCount++;
+                    // FIX: This text provides clear, step-by-step feedback, aligning with the "counting on" concept.
+                    currentPositionDisplay.textContent = `Counting on from ${START_NUMBER}: ${START_NUMBER} + ${currentCount} = ${START_NUMBER + currentCount}`;
+                    // CRITICAL FIX: Removed the line that incorrectly updated the totalCirclesDisplay
+                    // with intermediate results (e.g., '3 + 5 = 4'), causing the mathematical error.
+                    // The main equation (totalCirclesDisplay) should only show the final sum.
+                    // totalCirclesDisplay.textContent = `${START_NUMBER} + ${ADD_NUMBER} = ${START_NUMBER + currentCount}`; 
+                    
+                    animationTimeoutId = setTimeout(animateCounting, ANIMATION_DELAY);
+                } else {
+                    // Animation complete
+                    // FIX: Provides clearer, conclusive feedback.
+                    currentPositionDisplay.textContent = `Excellent! ${START_NUMBER} + ${ADD_NUMBER} = ${TOTAL_ITEMS}.`;
+                    // FIX: Reveals the final sum in the equation, ensuring mathematical accuracy.
+                    totalCirclesDisplay.textContent = START_NUMBER + " + " + ADD_NUMBER + " = " + TOTAL_ITEMS;
+                    // FIX: Change button text to indicate completion or a next step more clearly.
+                    playButton.textContent = 'Start Over'; // Changed from 'Show Answer' for better UX context.
+                    animationRunning = false;
+                    playButton.disabled = false; // Enable button to reset.
+                }
+            }
+
+            function resetComponent() {
+                if (animationTimeoutId) {
+                    clearTimeout(animationTimeoutId);
+                }
+                currentCount = 0;
+                animationRunning = false;
+
+                createCircles(); // Re-render circles to initial state, resetting totalCirclesDisplay to '?'
+                // FIX: Ensures initial instruction is consistently shown.
+                currentPositionDisplay.textContent = "Click 'Start Counting' to begin!";
+                playButton.textContent = 'Start Counting';
+                playButton.disabled = false;
+            }
+
+            function startAnimationProcess() {
+                // If button says 'Start Over', it means animation is complete and clicking it should reset.
+                // FIX: Changed 'Show Answer' to 'Start Over' to match button text change above.
+                if (playButton.textContent === 'Start Over') {
+                    resetComponent();
+                    // Prevent immediate re-start after reset, let user click 'Start Counting' again.
+                    return;
+                }
+
+                if (animationRunning) return; // Should be disabled, but a safety check
+
+                playButton.textContent = 'Counting...';
+                playButton.disabled = true;
+                // FIX: Improved initial instruction for the counting process, addressing the previous lack of context.
+                currentPositionDisplay.textContent = `Starting with ${START_NUMBER}, let's count ${ADD_NUMBER} more to find the total.`;
+                animationRunning = true;
+                
+                // A small delay before actual counting begins to show the initial instruction first
+                setTimeout(animateCounting, ANIMATION_DELAY / 2); 
+            }
+
+            // Initial setup when component loads
+            createCircles();
+            playButton.addEventListener('click', startAnimationProcess);
+            // Ensure initial display text is correct for the very first load
+            currentPositionDisplay.textContent = "Click 'Start Counting' to begin!";
+        })();
+    </script>
+</div>

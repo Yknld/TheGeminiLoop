@@ -1,0 +1,291 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            background-color: #f9f9f9;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            max-width: 800px;
+            width: 95%;
+            box-sizing: border-box;
+            color: #444;
+        }
+
+        .balance-scale {
+            position: relative;
+            width: 90%;
+            max-width: 500px;
+            height: 150px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .scale-base {
+            width: 120px;
+            height: 15px;
+            background-color: #a0aec0;
+            border-radius: 0 0 8px 8px;
+            position: absolute;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .scale-base::before {
+            content: '';
+            position: absolute;
+            top: -55px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 55px;
+            background-color: #a0aec0;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .scale-arm-pivot {
+            position: absolute;
+            bottom: 50px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .scale-arm {
+            width: 100%;
+            max-width: 400px;
+            height: 8px;
+            background-color: #718096;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scale-arm::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 16px;
+            background-color: #718096;
+            border-radius: 50%;
+            z-index: 3;
+        }
+
+        .scale-pan {
+            width: 170px;
+            min-height: 65px;
+            background-color: #edf2f7;
+            border-radius: 6px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            padding: 5px;
+            box-sizing: border-box;
+            position: relative;
+            top: 20px;
+            border: 1.5px solid #a0aec0;
+            transition: all 0.5s ease-out;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+
+        .block {
+            background-color: #4299e1;
+            color: white;
+            border-radius: 4px;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin: 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out; /* Preserve for fade-out */
+            flex-shrink: 0;
+            position: relative;
+            font-size: 0.8em;
+        }
+
+        .unit-block {
+            background-color: #38a169;
+        }
+
+        /* Ensure fade-out is highly visible and quick */
+        .fade-out {
+            opacity: 0 !important;
+            transform: scale(0) !important;
+        }
+
+        .equation-display {
+            margin-top: 20px;
+            font-size: 1.7em;
+            font-weight: bold;
+            color: #555;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease-in-out;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+            font-size: 0.8em;
+            min-width: 40px;
+            margin: 0 5px;
+            line-height: 1.1;
+        }
+
+        .fraction span:first-child,
+        .fraction span:last-child {
+            padding: 0 2px;
+        }
+
+        .fraction span:nth-child(2) {
+            border-top: 2px solid currentColor;
+            width: 100%;
+            margin: 1px 0;
+        }
+
+        .action-button {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 30px;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-button:hover {
+            background-color: #3182ce;
+            transform: translateY(-1px);
+        }
+
+        .action-button:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .pan-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+    </style>
+    <div class="balance-scale">
+        <div class="scale-base"></div>
+        <div class="scale-arm-pivot">
+            <div class="scale-arm">
+                <div class="pan-container">
+                    <div id="leftPan" class="scale-pan left-pan">
+                        <div class="x-block block">x</div>
+                        <div class="x-block block">x</div>
+                    </div>
+                    <div id="rightPan" class="scale-pan right-pan">
+                        <div class="unit-block block">1</div>
+                        <div class="unit-block block">1</div>
+                        <div class="unit-block block">1</div>
+                        <div class="unit-block block">1</div>
+                        <div class="unit-block block">1</div>
+                        <div class="unit-block block">1</div>
+                        <div class="unit-block block">1</div>
+                        <div class="unit-block block">1</div>
+                        <div class="unit-block block">1</div>
+                        <div class="unit-block block">1</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="equationDisplay" class="equation-display">2x = 10</div>
+    <button id="divideButton" class="action-button">Divide Both Sides by 2</button>
+
+    <script>
+        (function() {
+            const divideButton = document.getElementById('divideButton');
+            const equationDisplay = document.getElementById('equationDisplay');
+            const leftPan = document.getElementById('leftPan');
+            const rightPan = document.getElementById('rightPan');
+
+            function updateEquationDisplay(newEquation, callback) {
+                equationDisplay.style.opacity = 0;
+                setTimeout(() => {
+                    equationDisplay.textContent = newEquation;
+                    equationDisplay.style.opacity = 1;
+                    if (callback) {
+                        callback();
+                    }
+                }, 300); // This 300ms matches the fade-out/in transition for the text
+            }
+
+            divideButton.addEventListener('click', function() {
+                this.disabled = true;
+                this.textContent = 'Dividing...'; // Provide immediate feedback on button
+
+                // 1. Identify blocks to be removed
+                const leftXBlocks = leftPan.querySelectorAll('.x-block');
+                const xBlockToRemove = leftXBlocks.length > 1 ? leftXBlocks[1] : null;
+
+                const rightUnitBlocks = rightPan.querySelectorAll('.unit-block');
+                const unitBlocksToRemove = [];
+                // We need to remove 5 unit blocks, leaving the first 5 (indices 0-4)
+                // So, remove blocks at indices 5, 6, 7, 8, 9
+                for (let i = 0; i < 5 && (i + 5) < rightUnitBlocks.length; i++) {
+                    unitBlocksToRemove.push(rightUnitBlocks[i + 5]);
+                }
+
+                // 2. Apply fade-out classes to identified blocks. This starts the visual animation.
+                if (xBlockToRemove) {
+                    xBlockToRemove.classList.add('fade-out');
+                }
+                unitBlocksToRemove.forEach(block => block.classList.add('fade-out'));
+
+                // 3. After the visual block removal animation completes (300ms, matching CSS transition),
+                // remove blocks from DOM, update equation, and update button.
+                setTimeout(() => {
+                    // Remove blocks from DOM
+                    if (xBlockToRemove) {
+                        xBlockToRemove.remove();
+                    }
+                    unitBlocksToRemove.forEach(block => block.remove());
+
+                    // Update the numerical equation. `updateEquationDisplay` has its own 300ms fade.
+                    // The callback will fire AFTER 'x = 5' is fully visible.
+                    updateEquationDisplay("x = 5", () => {
+                        // All visual and textual updates are complete. Re-enable button.
+                        divideButton.disabled = false;
+                        divideButton.textContent = 'Next Step'; // Change button for progression
+                    });
+                }, 300); // This 300ms must match the CSS transition duration for .fade-out
+            });
+        })();
+    </script>
+</div>

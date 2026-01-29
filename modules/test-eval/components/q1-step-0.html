@@ -1,0 +1,259 @@
+<div class="module-container" style="
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    max-width: 100%;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+">
+    <style>
+        .module-container * {
+            box-sizing: border-box;
+        }
+
+        .balance-scale-viz {
+            width: 100%;
+            max-width: 380px; /* Max width for the scale graphic itself */
+            height: 150px; /* Fixed height for consistent layout */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; /* Aligns content to the bottom */
+            margin-bottom: 15px;
+        }
+
+        .pivot-base {
+            width: 20px;
+            height: 50px;
+            background-color: #9ca3af; /* Light gray */
+            border-radius: 5px 5px 0 0;
+            position: absolute;
+            bottom: 0;
+            z-index: 0;
+        }
+
+        .beam {
+            width: 100%; /* Spans the full width of balance-scale-viz */
+            height: 10px;
+            background-color: #6b7280; /* Dark gray */
+            border-radius: 5px;
+            position: absolute;
+            top: 40px; /* Position relative to balance-scale-viz */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .pan {
+            min-width: 80px;
+            max-width: 120px; /* Limit pan width */
+            min-height: 40px; /* Minimum height for visual consistency */
+            background-color: #e5e7eb; /* Lighter gray */
+            border: 2px solid #9ca3af;
+            border-radius: 8px;
+            padding: 5px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 3px;
+            position: absolute; /* Position relative to .beam */
+            top: 10px; /* Hang below the beam */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .left-pan {
+            left: 0; /* Align to the left edge of the beam */
+            transform: translateX(-50%); /* Shift left by half its width to center */
+        }
+
+        .right-pan {
+            right: 0; /* Align to the right edge of the beam */
+            transform: translateX(50%); /* Shift right by half its width to center */
+        }
+
+        .x-block {
+            width: 40px;
+            height: 30px;
+            background-color: #2563eb; /* Blue */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 4px;
+            font-size: 1.1em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            flex-shrink: 0; /* Prevent shrinking when other items are present */
+        }
+
+        .weights-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .weight-sphere {
+            width: 30px;
+            height: 30px;
+            background-color: #16a34a; /* Green */
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .equation-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #1a202c;
+        }
+
+        .goal-text {
+            font-size: 1em;
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-button {
+            padding: 8px 15px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .control-button:hover:not(:disabled) {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .control-button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .control-button:disabled {
+            background-color: #9ca3af; /* Gray out disabled buttons */
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .reset-button {
+            background-color: #4a5568;
+        }
+
+        .reset-button:hover:not(:disabled) {
+            background-color: #2d3748;
+        }
+    </style>
+
+    <div class="balance-scale-viz">
+        <div class="pivot-base"></div>
+        <div class="beam">
+            <div class="pan left-pan">
+                <div class="block x-block">x</div>
+                <div id="left-weights" class="weights-container"></div>
+            </div>
+            <div class="pan right-pan">
+                <div id="right-weights" class="weights-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="equation-display" id="equation-display"></div>
+    <div class="goal-text">Goal: Isolate x</div>
+
+    <div class="controls">
+        <button id="subtract-one-btn" class="control-button">Remove 1 from both sides</button>
+        <button id="subtract-five-btn" class="control-button">Remove 5 from both sides</button>
+        <button id="reset-btn" class="control-button reset-button">Reset</button>
+    </div>
+
+    <script>
+        (function() {
+            let leftWeightCount = 5;
+            let rightWeightCount = 12;
+
+            const leftWeightsDiv = document.getElementById('left-weights');
+            const rightWeightsDiv = document.getElementById('right-weights');
+            const equationDisplay = document.getElementById('equation-display');
+            const subtractOneBtn = document.getElementById('subtract-one-btn');
+            const subtractFiveBtn = document.getElementById('subtract-five-btn');
+            const resetBtn = document.getElementById('reset-btn');
+
+            function renderWeights(container, count) {
+                container.innerHTML = ''; // Clear previous weights
+                for (let i = 0; i < count; i++) {
+                    const weight = document.createElement('div');
+                    weight.className = 'weight-sphere';
+                    weight.textContent = '1';
+                    container.appendChild(weight);
+                }
+            }
+
+            function updateEquation() {
+                let leftSide = 'x';
+                if (leftWeightCount > 0) {
+                    leftSide += ' + ' + leftWeightCount;
+                }
+                equationDisplay.textContent = `${leftSide} = ${rightWeightCount}`;
+            }
+
+            function updateVisualization() {
+                renderWeights(leftWeightsDiv, leftWeightCount);
+                renderWeights(rightWeightsDiv, rightWeightCount);
+                updateEquation();
+
+                // Disable buttons if operation is not possible
+                subtractOneBtn.disabled = leftWeightCount === 0;
+                subtractFiveBtn.disabled = leftWeightCount < 5; // Can only remove 5 if there are at least 5
+            }
+
+            function subtractWeights(amount) {
+                if (leftWeightCount >= amount) { // Ensure we have enough weights on the left pan
+                    leftWeightCount -= amount;
+                    rightWeightCount -= amount; // Always subtract from both sides to maintain balance
+                    updateVisualization();
+                }
+            }
+
+            subtractOneBtn.addEventListener('click', () => subtractWeights(1));
+            subtractFiveBtn.addEventListener('click', () => subtractWeights(5));
+            resetBtn.addEventListener('click', () => {
+                leftWeightCount = 5;
+                rightWeightCount = 12;
+                updateVisualization();
+            });
+
+            // Initial render
+            updateVisualization();
+        })();
+    </script>
+</div>

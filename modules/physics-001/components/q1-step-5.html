@@ -1,0 +1,512 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Arial', sans-serif;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            color: #333;
+            min-width: 300px;
+        }
+
+        .visualization-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 10px;
+        }
+
+        .equation-display, .calculation-steps {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            box-sizing: border-box;
+            line-height: 1.6;
+        }
+
+        .equation-display strong, .calculation-steps strong {
+            color: #2563eb; /* Blue for key equations/variables */
+        }
+
+        .equation-line {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+        .equation-line .value {
+            font-weight: bold;
+            color: #16a34a; /* Green for calculated values */
+            margin-left: 5px;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            padding: 0 5px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95em;
+            color: #555;
+            margin-bottom: -5px;
+        }
+
+        .slider-label span {
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .svg-container {
+            width: 100%;
+            max-width: 400px;
+            height: 250px; /* Fixed height for SVG to control overall module height */
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+            position: relative; /* For absolute positioning of text labels */
+        }
+
+        .svg-labels {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 12px;
+            color: #555;
+            line-height: 1.4;
+        }
+        .svg-labels div {
+            padding: 2px 5px;
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 3px;
+            margin-bottom: 2px;
+        }
+
+        .mass-block {
+            fill: #2563eb;
+            stroke: #1e40af;
+            stroke-width: 1;
+        }
+
+        .mass-text {
+            fill: white;
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        .incline-line, .ground-line {
+            stroke: #555;
+            stroke-width: 2;
+        }
+
+        .pulley-circle {
+            fill: #ccc;
+            stroke: #888;
+            stroke-width: 1;
+        }
+
+        .string-line {
+            stroke: #f59e0b; /* Orange for string/tension */
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .arrow-head {
+            fill: #f59e0b;
+            stroke: none;
+        }
+        .force-arrow {
+            stroke: #16a34a; /* Green for Tension vectors */
+            stroke-width: 1.5;
+            marker-end: url(#arrowheadGreen);
+        }
+        .a-vector {
+            stroke: #eab308; /* Yellow for acceleration vector */
+            stroke-width: 2;
+            marker-end: url(#arrowheadYellow);
+        }
+        .g-vector {
+            stroke: #a3162b; /* Red for gravity vector */
+            stroke-width: 1.5;
+            marker-end: url(#arrowheadRed);
+        }
+        .vector-label {
+            fill: #16a34a;
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .a-label {
+            fill: #eab308;
+            font-size: 13px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .g-label {
+            fill: #a3162b;
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+    </style>
+
+    <div class="visualization-area">
+        <div class="svg-container">
+            <svg viewBox="0 0 400 250">
+                <defs>
+                    <marker id="arrowheadGreen" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto">
+                        <polygon points="0 0, 8 4, 0 8" fill="#16a34a" />
+                    </marker>
+                    <marker id="arrowheadYellow" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto">
+                        <polygon points="0 0, 8 4, 0 8" fill="#eab308" />
+                    </marker>
+                     <marker id="arrowheadRed" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto">
+                        <polygon points="0 0, 8 4, 0 8" fill="#a3162b" />
+                    </marker>
+                </defs>
+
+                <!-- Ground -->
+                <line x1="0" y1="200" x2="400" y2="200" class="ground-line" />
+
+                <!-- Incline (dynamically rotate) -->
+                <g id="incline-group" transform="translate(70, 200) rotate(-24)">
+                    <path d="M0 0 L200 0" class="incline-line" />
+                    <!-- m1 block (relative to incline-group) -->
+                    <rect id="m1-block" x="50" y="-30" width="40" height="30" class="mass-block" />
+                    <text id="m1-svg-label" x="70" y="-15" class="mass-text">m₁</text>
+                    <!-- String segment for m1 (dynamic, goes to pulley) -->
+                    <line id="m1-string" x1="70" y="-30" x2="150" y="-30" class="string-line" />
+                    <!-- Acceleration arrow for m1 -->
+                    <line id="a1-vector" x1="70" y="-45" x2="100" y="-45" class="a-vector" />
+                    <text id="a1-label" x="110" y="-45" class="a-label">a</text>
+                    <!-- Tension arrow for m1 -->
+                    <line id="T1-vector" x1="70" y="-15" x2="100" y="-15" class="force-arrow" />
+                    <text id="T1-label" x="110" y="-15" class="vector-label">T</text>
+
+                    <!-- Angle theta display (relative to incline-group origin) -->
+                    <g id="angle-arc-incline">
+                        <path d="" fill="none" stroke="#eab308" stroke-width="1.5" />
+                        <line x1="0" y1="0" x2="25" y2="0" stroke="#eab308" stroke-width="1" />
+                        <text x="30" y="-15" fill="#eab308" font-size="14px" font-weight="bold">θ</text>
+                    </g>
+                </g>
+
+                <!-- Pulley (fixed position relative to SVG) -->
+                <circle cx="270" cy="50" r="15" class="pulley-circle" />
+                <line x1="270" y1="50" x2="270" y2="20" stroke="#888" stroke-width="2" /> <!-- Pulley support -->
+
+                <!-- String from incline to pulley -->
+                <line id="string-incline-pulley" x1="220" y1="50" x2="270" y2="50" class="string-line" />
+
+                <!-- String from pulley to m2 -->
+                <line id="string-pulley-m2" x1="270" y1="50" x2="270" y2="100" class="string-line" />
+
+                <!-- m2 block -->
+                <rect id="m2-block" x="250" y="100" width="40" height="40" class="mass-block" />
+                <text id="m2-svg-label" x="270" y="120" class="mass-text">m₂</text>
+
+                <!-- Acceleration arrow for m2 -->
+                <line id="a2-vector" x1="270" y="145" x2="270" y="180" class="a-vector" />
+                <text id="a2-label" x="275" y="160" class="a-label">a</text>
+                <!-- Tension arrow for m2 -->
+                <line id="T2-vector" x1="270" y="95" x2="270" y="60" class="force-arrow" />
+                <text id="T2-label" x="275" y="75" class="vector-label">T</text>
+                <!-- Gravity arrow for m2 -->
+                <line id="g2-vector" x1="270" y="140" x2="270" y="180" class="g-vector" />
+                <text id="g2-label" x="280" y="160" class="g-label">m₂g</text>
+
+            </svg>
+            <div class="svg-labels">
+                <div id="m1-value-display">m₁ = 1.0 kg</div>
+                <div id="m2-value-display">m₂ = 0.5 kg</div>
+                <div id="theta-value-display">θ = 24°</div>
+                <div id="g-value-display">g = 9.8 m/s²</div>
+            </div>
+        </div>
+
+        <div class="equation-display">
+            <div class="equation-line">Equation for hanging mass: <strong>m₂g - T = m₂a</strong></div>
+            <div class="equation-line">Given g = 9.8 m/s²</div>
+        </div>
+
+        <div class="calculation-steps">
+            <div class="equation-line">Algebraic steps to solve for T:</div>
+            <div class="equation-line">1. T = m₂g - m₂a</div>
+            <div class="equation-line">2. T = m₂ (g - a)</div>
+            <div class="equation-line">
+                Calculated acceleration (a): <span id="display-a" class="value">0.000</span> m/s²
+            </div>
+            <div class="equation-line">
+                Substituting values for T: T = <span id="display-m2-val" class="value">0.0</span> kg ( <span id="display-g-val" class="value">9.8</span> m/s² - <span id="display-a-sub-val" class="value">0.000</span> m/s²)
+            </div>
+            <div class="equation-line">
+                Final Tension (T): <span id="display-T" class="value">0.000</span> N
+            </div>
+        </div>
+    </div>
+
+    <div class="slider-group">
+        <label class="slider-label">m₁: <span id="m1-val">1.0</span> kg</label>
+        <input type="range" id="m1-slider" min="1" max="10" step="0.1" value="1">
+
+        <label class="slider-label">m₂: <span id="m2-val">0.5</span> kg</label>
+        <input type="range" id="m2-slider" min="0.5" max="5" step="0.1" value="0.5">
+
+        <label class="slider-label">θ: <span id="theta-val">24</span> °</label>
+        <input type="range" id="theta-slider" min="0" max="90" step="1" value="24">
+    </div>
+
+    <script>
+        (function() {
+            const g = 9.8; // m/s^2
+
+            // Get slider elements
+            const m1Slider = document.getElementById('m1-slider');
+            const m2Slider = document.getElementById('m2-slider');
+            const thetaSlider = document.getElementById('theta-slider');
+
+            // Get value display elements
+            const m1ValSpan = document.getElementById('m1-val');
+            const m2ValSpan = document.getElementById('m2-val');
+            const thetaValSpan = document.getElementById('theta-val');
+            const displayA = document.getElementById('display-a');
+            const displayM2SubVal = document.getElementById('display-m2-val');
+            const displayGSubVal = document.getElementById('display-g-val');
+            const displayASubVal = document.getElementById('display-a-sub-val');
+            const displayT = document.getElementById('display-T');
+
+            // Get SVG elements for dynamic updates
+            const inclineGroup = document.getElementById('incline-group');
+            const m1String = document.getElementById('m1-string');
+            const stringInclinePulley = document.getElementById('string-incline-pulley');
+            const a1Vector = document.getElementById('a1-vector');
+            const a1Label = document.getElementById('a1-label');
+            const a2Vector = document.getElementById('a2-vector');
+            const a2Label = document.getElementById('a2-label');
+            const T1Vector = document.getElementById('T1-vector');
+            const T1Label = document.getElementById('T1-label');
+            const T2Vector = document.getElementById('T2-vector');
+            const T2Label = document.getElementById('T2-label');
+            const g2Vector = document.getElementById('g2-vector');
+            const g2Label = document.getElementById('g2-label');
+
+            const angleArcInclinePath = document.querySelector('#angle-arc-incline path');
+            const horizontalRefLineIncline = document.querySelector('#angle-arc-incline line');
+            const thetaLabelIncline = document.querySelector('#angle-arc-incline text');
+
+            const m1ValueDisplay = document.getElementById('m1-value-display');
+            const m2ValueDisplay = document.getElementById('m2-value-display');
+            const thetaValueDisplay = document.getElementById('theta-value-display');
+            const gValueDisplay = document.getElementById('g-value-display');
+
+
+            function updateVisualization() {
+                let m1 = parseFloat(m1Slider.value);
+                let m2 = parseFloat(m2Slider.value);
+                let theta = parseFloat(thetaSlider.value); // degrees
+
+                // Update slider labels
+                m1ValSpan.textContent = m1.toFixed(1);
+                m2ValSpan.textContent = m2.toFixed(1);
+                thetaValSpan.textContent = theta.toFixed(0);
+
+                // Update SVG text labels
+                m1ValueDisplay.textContent = `m₁ = ${m1.toFixed(1)} kg`;
+                m2ValueDisplay.textContent = `m₂ = ${m2.toFixed(1)} kg`;
+                thetaValueDisplay.textContent = `θ = ${theta.toFixed(0)}°`;
+
+                // Calculate acceleration 'a'
+                // a = (m2 * g - m1 * g * sin(theta_rad)) / (m1 + m2)
+                const thetaRad = theta * (Math.PI / 180);
+                let a = (m2 * g - m1 * g * Math.sin(thetaRad)) / (m1 + m2);
+
+                // Calculate Tension 'T' using the given equation: T = m2 * g - m2 * a
+                let T = m2 * (g - a);
+
+                // Update displayed numerical values
+                displayA.textContent = a.toFixed(3);
+                displayM2SubVal.textContent = m2.toFixed(1);
+                displayASubVal.textContent = a.toFixed(3);
+                displayT.textContent = T.toFixed(3); // Tension in Newtons (N)
+
+                // Update SVG Diagram
+                // Incline rotation (rotate around (70,200) in SVG coordinates)
+                inclineGroup.setAttribute('transform', `translate(70, 200) rotate(-${theta})`);
+
+                // Calculate connection point of string to incline/pulley in SVG coordinates
+                const incline_end_x_group = 200; // x-coord of incline's end within inclineGroup's own coordinate system
+                const incline_end_y_group = 0;   // y-coord of incline's end within inclineGroup's own coordinate system
+
+                // Convert incline_end_x_group, incline_end_y_group to SVG coordinates
+                const incline_end_svg_x = 70 + incline_end_x_group * Math.cos(thetaRad) - incline_end_y_group * Math.sin(thetaRad);
+                const incline_end_svg_y = 200 + incline_end_x_group * Math.sin(thetaRad) + incline_end_y_group * Math.cos(thetaRad);
+
+                // String from incline to pulley
+                stringInclinePulley.setAttribute('x1', incline_end_svg_x);
+                stringInclinePulley.setAttribute('y1', incline_end_svg_y);
+                stringInclinePulley.setAttribute('x2', 270); // Pulley center x
+                stringInclinePulley.setAttribute('y2', 50); // Pulley center y
+
+                // String from m1 block to where it leaves the incline (connects to incline_end_svg_x, incline_end_svg_y)
+                const m1_block_center_x_incline = 70; // x-pos of m1 center in incline group's coord system (50 + 40/2)
+                const m1_block_top_y_incline = -30;   // y-pos of m1 top in incline group's coord system
+
+                // Convert m1 string start point to SVG coordinates
+                const m1_string_start_svg_x = 70 + m1_block_center_x_incline * Math.cos(thetaRad) - m1_block_top_y_incline * Math.sin(thetaRad);
+                const m1_string_start_svg_y = 200 + m1_block_center_x_incline * Math.sin(thetaRad) + m1_block_top_y_incline * Math.cos(thetaRad);
+
+                m1String.setAttribute('x1', m1_string_start_svg_x);
+                m1String.setAttribute('y1', m1_string_start_svg_y);
+                m1String.setAttribute('x2', incline_end_svg_x);
+                m1String.setAttribute('y2', incline_end_svg_y);
+
+                // Adjust vectors based on 'a' (direction and length)
+                const a_visual_scale = 10; // Scale 'a' value for visual length
+                const T_visual_scale = 5;  // Scale 'T' value for visual length
+
+                const a_length = Math.min(Math.abs(a) * a_visual_scale, 50); // Max length 50px
+                const T_length = Math.min(Math.abs(T) / T_visual_scale, 50); // Max length 50px
+
+                // m1 acceleration (up incline if a > 0, down if a < 0)
+                if (Math.abs(a) > 0.001) {
+                    if (a > 0) { // m1 moves up incline
+                        a1Vector.setAttribute('x1', 70 - a_length/2); a1Vector.setAttribute('x2', 70 + a_length/2);
+                        a1Vector.setAttribute('y1', -45); a1Vector.setAttribute('y2', -45);
+                        a1Label.textContent = 'a';
+                        a1Label.setAttribute('x', 70 + a_length/2 + 5);
+                    } else { // m1 moves down incline (a is negative)
+                        a1Vector.setAttribute('x1', 70 + a_length/2); a1Vector.setAttribute('x2', 70 - a_length/2);
+                        a1Vector.setAttribute('y1', -45); a1Vector.setAttribute('y2', -45);
+                        a1Label.textContent = 'a';
+                        a1Label.setAttribute('x', 70 - a_length/2 - 15);
+                    }
+                } else { // a is zero or very small
+                    a1Vector.setAttribute('x1', 0); a1Vector.setAttribute('x2', 0);
+                    a1Label.textContent = '';
+                }
+
+                // T1 vector (always up incline)
+                T1Vector.setAttribute('x1', 70 - T_length/2); T1Vector.setAttribute('x2', 70 + T_length/2);
+                T1Vector.setAttribute('y1', -15); T1Vector.setAttribute('y2', -15);
+                T1Label.textContent = 'T';
+                T1Label.setAttribute('x', 70 + T_length/2 + 5);
+
+
+                // m2 acceleration (down if a > 0, up if a < 0)
+                if (Math.abs(a) > 0.001) {
+                    if (a > 0) { // m2 moves down
+                        a2Vector.setAttribute('y1', 145); a2Vector.setAttribute('y2', 145 + a_length);
+                        a2Vector.setAttribute('x1', 270); a2Vector.setAttribute('x2', 270);
+                        a2Label.textContent = 'a';
+                        a2Label.setAttribute('y', 145 + a_length / 2 + 5);
+                    } else { // m2 moves up (a is negative)
+                        a2Vector.setAttribute('y1', 145); a2Vector.setAttribute('y2', 145 - a_length);
+                        a2Vector.setAttribute('x1', 270); a2Vector.setAttribute('x2', 270);
+                        a2Label.textContent = 'a';
+                        a2Label.setAttribute('y', 145 - a_length / 2 - 5);
+                    }
+                } else { // a is zero
+                    a2Vector.setAttribute('y1', 0); a2Vector.setAttribute('y2', 0);
+                    a2Label.textContent = '';
+                }
+
+                // T2 vector (always up for m2)
+                T2Vector.setAttribute('y1', 95); T2Vector.setAttribute('y2', 95 - T_length);
+                T2Vector.setAttribute('x1', 270); T2Vector.setAttribute('x2', 270);
+                T2Label.textContent = 'T';
+                T2Label.setAttribute('y', 95 - T_length / 2 - 5);
+
+                // Gravity m2g vector (always down)
+                const mg2_length = Math.min(m2 * g / T_visual_scale, 50); // Scale gravity for visual length
+                g2Vector.setAttribute('y1', 140); g2Vector.setAttribute('y2', 140 + mg2_length);
+                g2Vector.setAttribute('x1', 270); g2Vector.setAttribute('x2', 270);
+                g2Label.setAttribute('y', 140 + mg2_length / 2);
+
+
+                // Update angle arc (relative to incline-group origin which is (70,200) in SVG coords)
+                const arcRadius = 25;
+                if (theta > 0) {
+                    const x2_arc_incline = arcRadius * Math.cos(thetaRad);
+                    const y2_arc_incline = -arcRadius * Math.sin(thetaRad); // y-axis is positive downwards in SVG
+
+                    angleArcInclinePath.setAttribute('d', `M${arcRadius} 0 A${arcRadius} ${arcRadius} 0 0 1 ${x2_arc_incline} ${y2_arc_incline}`);
+                    horizontalRefLineIncline.setAttribute('x2', arcRadius);
+                    thetaLabelIncline.setAttribute('x', arcRadius * Math.cos(thetaRad / 2) + 5);
+                    thetaLabelIncline.setAttribute('y', -arcRadius * Math.sin(thetaRad / 2) - 5);
+                    thetaLabelIncline.textContent = 'θ';
+                } else {
+                    angleArcInclinePath.setAttribute('d', ''); // Hide arc
+                    horizontalRefLineIncline.setAttribute('x2', 0); // Hide line
+                    thetaLabelIncline.textContent = ''; // Hide label
+                }
+            }
+
+            // Attach event listeners
+            m1Slider.oninput = updateVisualization;
+            m2Slider.oninput = updateVisualization;
+            thetaSlider.oninput = updateVisualization;
+
+            // Initial visualization update
+            updateVisualization();
+
+            // Set fixed g value initially
+            displayGSubVal.textContent = g.toFixed(1);
+            gValueDisplay.textContent = `g = ${g.toFixed(1)} m/s²`;
+        })();
+    </script>
+</div>

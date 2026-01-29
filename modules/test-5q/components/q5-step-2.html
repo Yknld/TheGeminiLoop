@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Grouping</title>
+    <style>
+        /* Using a more professional font - Inter from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif; /* Modern font for better readability */
+            background-color: #f0f2f5; /* Light grey, modern background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333; /* Default text color */
+        }
+
+        .module-container {
+            background-color: #fff;
+            border-radius: 16px; /* More rounded corners for a softer look */
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); /* Enhanced, softer shadow */
+            padding: 40px; /* More generous internal spacing */
+            max-width: 800px;
+            width: 90%;
+            box-sizing: border-box;
+        }
+
+        .module-header {
+            margin-bottom: 30px; /* Increased spacing below header */
+            border-bottom: 1px solid #e0e0e0; /* Subtle, light grey separator */
+            padding-bottom: 20px; /* More padding below header text */
+        }
+
+        .module-header h2 {
+            margin: 0;
+            font-size: 1.6rem; /* Slightly larger heading */
+            color: #2c3e50; /* Darker, more professional blue-grey for headings */
+            font-weight: 700; /* Bolder heading */
+        }
+
+        .module-header p {
+            margin: 8px 0 0; /* Adjusted margin for subtitle */
+            font-size: 0.9rem; /* Slightly larger subtitle */
+            color: #7f8c8d; /* Softer grey for descriptive text */
+            font-weight: 400;
+        }
+
+        .initial-tokens-row {
+            display: grid; /* Use CSS Grid for a structured 3x5 layout */
+            grid-template-columns: repeat(5, min-content); /* 5 columns, sized to content */
+            gap: 12px; /* Spacing between grid items (tokens) */
+            justify-content: center; /* Center the grid horizontally */
+            margin-bottom: 40px; /* More space below the initial tokens */
+            min-height: 120px; /* Ensure enough vertical space */
+            align-items: center; /* Vertically align tokens within their grid cells */
+        }
+
+        .token {
+            width: 44px; /* Slightly larger tokens for better visual presence */
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #aed581 0%, #8bc34a 100%); /* Vibrant, modern green gradient */
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2); /* More pronounced shadow */
+            cursor: grab; /* Indicates interactivity */
+            transition: transform 0.2s ease-in-out, opacity 0.6s ease, filter 0.6s ease; /* Added transition for opacity and filter */
+            position: relative; /* Essential for pseudo-element and absolute positioning during animation */
+            display: flex; /* For centering content within the token if needed */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .token:hover {
+            transform: scale(1.1);
+        }
+
+        /* Styling for tokens that have been "used" or grouped from the initial set */
+        .token.token-dimmed {
+            opacity: 0.3; /* Visually diminish */
+            filter: grayscale(80%); /* Make it look 'used' */
+            pointer-events: none; /* Make it unclickable */
+            cursor: default; /* Change cursor to default */
+        }
+
+        .token::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3); /* Brighter inner highlight/reflection */
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px; /* Increased spacing below controls */
+        }
+
+        .group-button {
+            background-color: #4CAF50; /* Classic green, good contrast */
+            color: white;
+            padding: 14px 28px; /* Larger button for better tap/click target */
+            border: none;
+            border-radius: 8px; /* More rounded button corners */
+            cursor: pointer;
+            font-size: 1.1rem; /* Larger font size for button text */
+            font-weight: 600;
+            letter-spacing: 0.5px; /* Slight letter spacing for modern feel */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* More prominent shadow */
+        }
+
+        .group-button:hover:not(:disabled) {
+            background-color: #388E3C; /* Darker green on hover */
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3); /* Deeper shadow on hover */
+            transform: translateY(-2px); /* Subtle lift effect on hover */
+        }
+
+        .group-button:disabled {
+            background-color: #e0e0e0; /* Light grey for disabled state */
+            color: #a0a0a0; /* Softer text color for disabled */
+            cursor: not-allowed;
+            box-shadow: none; /* No shadow when disabled */
+            transform: none; /* Remove lift effect when disabled */
+        }
+
+        .group-counter-display {
+            font-size: 1.2rem; /* Larger font for counter */
+            color: #555; /* Slightly darker text */
+            margin-top: 20px; /* Increased spacing above counter */
+            font-weight: 600;
+        }
+
+        .grouped-tokens-container {
+            margin-top: 30px; /* Increased spacing above grouped tokens section */
+            padding-top: 25px; /* Increased padding below separator */
+            border-top: 2px dashed #b0bec5; /* More prominent dashed line (soft blue-grey) */
+            min-height: 60px; /* Provide space for grouped tokens */
+        }
+
+        .group-row {
+            display: flex;
+            justify-content: center; /* Center grouped tokens within their row */
+            align-items: center;
+            margin-bottom: 15px; /* Spacing between rows of grouped tokens */
+            flex-wrap: wrap; /* Allow groups to wrap if too many items */
+            gap: 10px; /* Spacing between tokens within a single group */
+        }
+
+        .group-row .token {
+            width: 40px; /* Slightly smaller grouped tokens for visual distinction */
+            height: 40px;
+            margin: 0; /* Use gap for spacing */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Subtler shadow for grouped tokens */
+            cursor: default; /* Not interactive after grouping */
+            transition: none; /* Disable hover transition for grouped tokens */
+            /* Ensure grouped tokens are always fully visible and not animating */
+            opacity: 1 !important;
+            filter: none !important;
+            transform: none !important;
+        }
+        .group-row .token:hover {
+            transform: none; /* No hover effect after grouping */
+        }
+
+        .equation-display {
+            font-size: 1.4rem; /* Larger and bolder equation text */
+            color: #2c3e50; /* Matches header color for consistency */
+            text-align: center;
+            margin-top: 30px; /* Increased spacing above equation */
+            padding-top: 25px; /* Increased padding below separator */
+            border-top: 2px dashed #b0bec5; /* Matches grouped tokens separator */
+            font-weight: 700; /* Bolder text for the equation */
+        }
+
+        .token-animating {
+            /* Smooth, clear animation for moving tokens */
+            transition: top 0.6s ease-out, left 0.6s ease-out, transform 0.6s ease-out;
+            position: absolute !important; /* Crucial for absolute positioning during animation */
+            z-index: 100; /* Ensure animating tokens are on top of other elements */
+        }
+
+        /* Keyframe for a slight click animation on individual token click */
+        @keyframes tokenClick {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .token.clicked {
+            animation: tokenClick 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+<div class="module-container">
+    <div class="module-header">
+        <h2>Division Basics: 15 Divided by 3 - Step 3</h2>
+        <p>Module: test-Sq | Q5 | Step 3 of 4</p>
+    </div>
+
+    <div id="initial-tokens-container" class="initial-tokens-row"></div>
+    <div class="controls">
+        <button id="group-button" class="group-button">Group Next 3</button>
+        <div id="group-counter-display" class="group-counter-display">Groups Formed: <span id="group-counter">0</span></div>
+    </div>
+    <div id="grouped-tokens-container" class="grouped-tokens-container"></div>
+    <div id="equation-display" class="equation-display">0 × 3 = 0</div>
+
+    <script>
+        (function() {
+            const totalTokens = 15;
+            const groupSize = 3;
+            let tokensGrouped = 0;
+            let groupsFormed = 0;
+
+            const initialTokensContainer = document.getElementById('initial-tokens-container');
+            const groupButton = document.getElementById('group-button');
+            const groupCounterSpan = document.getElementById('group-counter');
+            const groupedTokensContainer = document.getElementById('grouped-tokens-container');
+            const equationDisplay = document.getElementById('equation-display');
+            const moduleContainer = document.querySelector('.module-container');
+
+            const allTokens = []; // Stores references to all 15 original token DOM elements
+
+            function initializeTokens() {
+                for (let i = 0; i < totalTokens; i++) {
+                    const token = document.createElement('div');
+                    token.classList.add('token');
+                    token.dataset.id = i;
+                    token.addEventListener('click', () => {
+                        // Only allow click animation if token is not yet grouped
+                        if (!token.classList.contains('token-dimmed')) {
+                            token.classList.add('clicked');
+                            setTimeout(() => {
+                                token.classList.remove('clicked');
+                            }, 300);
+                        }
+                    });
+                    initialTokensContainer.appendChild(token);
+                    allTokens.push(token);
+                }
+            }
+
+            function updateDisplay() {
+                groupCounterSpan.textContent = groupsFormed;
+                equationDisplay.textContent = `${groupsFormed} × ${groupSize} = ${tokensGrouped}`;
+                if (tokensGrouped >= totalTokens) {
+                    groupButton.disabled = true;
+                    groupButton.textContent = 'All Grouped!';
+                } else {
+                    groupButton.disabled = false;
+                    groupButton.textContent = 'Group Next 3';
+                }
+            }
+
+            function groupNextThree() {
+                if (tokensGrouped >= totalTokens) return;
+
+                const originalTokensToDim = []; // References to the ORIGINAL tokens that will be dimmed
+                const startIndex = tokensGrouped;
+
+                for (let i = 0; i < groupSize; i++) {
+                    const tokenIndex = startIndex + i;
+                    if (tokenIndex < totalTokens) {
+                        const token = allTokens[tokenIndex];
+                        originalTokensToDim.push(token);
+                    }
+                }
+
+                if (originalTokensToDim.length === 0) return;
+
+                groupButton.disabled = true; // Disable button to prevent rapid clicks during animation
+
+                const moduleContainerRect = moduleContainer.getBoundingClientRect();
+                const animatingClones = [];
+
+                // 1. Visually "dim" the original tokens in their initial position and create clones for animation
+                originalTokensToDim.forEach(token => {
+                    token.classList.add('token-dimmed'); // Apply dimmed style to original token
+
+                    // Create a clone for animation
+                    const clone = token.cloneNode(true); // Clone all attributes, including dataset.id
+                    clone.classList.remove('token-dimmed'); // Ensure clone is not dimmed
+                    clone.classList.add('token-animating');
+                    clone.classList.remove('clicked'); // Remove any lingering click animation class
+
+                    // Get the position of the original token relative to the module container
+                    const rect = token.getBoundingClientRect();
+                    clone.style.position = 'absolute';
+                    clone.style.top = (rect.top - moduleContainerRect.top) + 'px';
+                    clone.style.left = (rect.left - moduleContainerRect.left) + 'px';
+                    clone.style.zIndex = '100'; // Ensure clone is on top during animation
+                    clone.style.transform = 'scale(1)'; // Start at original size
+                    
+                    // Remove click listener from clone (it's just for animation)
+                    const newClone = clone.cloneNode(true); // Clone again to remove event listeners
+                    animatingClones.push(newClone);
+                    moduleContainer.appendChild(newClone); // Add clone to module container for absolute animation
+                    newClone.offsetHeight; // Force reflow
+                });
+
+                // 2. Create a temporary group row to calculate the target positions for the clones
+                const tempGroupRow = document.createElement('div');
+                tempGroupRow.classList.add('group-row');
+                tempGroupRow.style.visibility = 'hidden'; // Make it invisible
+                tempGroupRow.style.position = 'absolute'; // Don't affect actual layout
+                tempGroupRow.style.left = '-9999px';
+                tempGroupRow.style.top = '-9999px';
+                groupedTokensContainer.appendChild(tempGroupRow);
+
+                const tempTokens = [];
+                for (let i = 0; i < animatingClones.length; i++) {
+                    const tempToken = document.createElement('div');
+                    tempToken.classList.add('token');
+                    // Ensure temp tokens have the final grouped dimensions for accurate target calculation
+                    tempToken.style.width = '40px';
+                    tempToken.style.height = '40px';
+                    tempToken.style.margin = '0'; // Match .group-row .token styling
+                    tempGroupRow.appendChild(tempToken);
+                    tempTokens.push(tempToken);
+                }
+
+                moduleContainer.offsetHeight; // Force reflow to get correct positions for temporary tokens
+
+                const targetRects = tempTokens.map(token => {
+                    const rect = token.getBoundingClientRect();
+                    return {
+                        top: rect.top - moduleContainerRect.top,
+                        left: rect.left - moduleContainerRect.left
+                    };
+                });
+
+                groupedTokensContainer.removeChild(tempGroupRow); // Clean up the temporary row
+
+                // 3. Start the animation for the clones by setting their target positions
+                animatingClones.forEach((clone, index) => {
+                    clone.style.top = targetRects[index].top + 'px';
+                    clone.style.left = targetRects[index].left + 'px';
+                    clone.style.transform = 'scale(0.9)'; // Animate to a slightly smaller size
+                });
+
+                if (animatingClones.length > 0) {
+                    // Attach transitionend listener to the last clone to finalize the group
+                    animatingClones[animatingClones.length - 1].addEventListener('transitionend', () => {
+                        finalizeGroup(animatingClones); // Pass the animating clones for cleanup
+                    }, { once: true });
+                } else {
+                    finalizeGroup([]); // No tokens to animate, proceed directly
+                }
+            }
+
+            function finalizeGroup(animatedClones) {
+                const newGroupRow = document.createElement('div');
+                newGroupRow.classList.add('group-row');
+
+                animatedClones.forEach(clone => {
+                    clone.remove(); // Remove the animating clone from the DOM
+                });
+
+                // Create brand new static tokens for the final grouped display
+                for (let i = 0; i < groupSize; i++) {
+                    const token = document.createElement('div');
+                    token.classList.add('token');
+                    // Add token to the new group row
+                    newGroupRow.appendChild(token);
+                }
+
+                groupedTokensContainer.appendChild(newGroupRow);
+
+                tokensGrouped += groupSize;
+                groupsFormed++;
+                updateDisplay();
+                groupButton.disabled = false; // Re-enable button
+            }
+
+            groupButton.addEventListener('click', groupNextThree);
+
+            initializeTokens();
+            updateDisplay();
+        })();
+    </script>
+</div>
+
+</body>
+</html>

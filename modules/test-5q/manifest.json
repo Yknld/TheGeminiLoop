@@ -1,0 +1,370 @@
+{
+  "id": "test-5q",
+  "questions": [
+    {
+      "id": 0,
+      "problem": {
+        "title": "Adding Two Numbers",
+        "text": "What is $3 + 5$?",
+        "image": null,
+        "visualization": "problem-viz-q1.svg"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "Addition is a fundamental arithmetic operation that combines two or more numbers (called addends) to find their total sum. When you see a '+' sign between two numbers, it means you are putting them together or finding how many there are in total after combining them. For instance, if you have 3 apples and then you get 5 more apples, addition helps you figure out the total number of apples you now have.",
+          "inputLabel": "What does the '+' symbol represent in $3 + 5$?",
+          "inputPlaceholder": "Type your answer here...",
+          "correctAnswer": "addition|combining|adding|summing|put together|plus|add|combine|sum|combine quantities|adding numbers|plus sign",
+          "audioExplanation": "This visualization helps you understand the core concept of addition. You can use the sliders to represent different numbers, and you'll see how combining those groups visually results in a larger total. This module is an interactive counter that shows two separate groups of items, allowing you to adjust the quantity in each group with sliders. When you 'combine' them, it animates the items merging into one larger group, visually representing the sum. This helps you grasp that addition is about bringing quantities together.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Visualize the concept of addition. Display two separate containers, Container A (labeled 'First Number') and Container B (labeled 'Second Number'). Container A should initially hold 3 blue circles, and Container B should initially hold 5 red circles. Below each container, there should be a slider allowing the user to adjust the number of circles in that container (range 0 to 10). A prominent button labeled 'Combine' should be present. When the 'Combine' button is clicked, animate the circles from Container B smoothly moving into Container A, so all circles are now merged within Container A. The combined total number of circles should be displayed prominently as 'Total: [number]' below Container A. This visualization helps you understand that addition means physically combining two quantities to find a new total, showing that $3 + 5$ means taking 3 items and physically adding 5 more to them to count the entirety.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q1-step-0.html",
+          "visual": null
+        },
+        {
+          "id": 1,
+          "explanation": "Now that you understand what addition means, let's actually perform the operation $3 + 5$. You can think of this as starting with the number 3 and then counting up 5 more places. Or, you can count out 3 items, then count out 5 more items, and then count all of them together to find the total.",
+          "inputLabel": "What is the result of $3 + 5$?",
+          "inputPlaceholder": "Enter the sum",
+          "correctAnswer": "8|=8|eight|eihgt|8.0",
+          "audioExplanation": "This interactive number line helps you visualize the process of adding $3 + 5$. You can see how starting at 3 and making 5 jumps forward lands you directly on the sum. This module is an interactive number line from 0 to 10. It shows a starting point at '3' marked with a green dot. Then, it visually animates 5 jumps (each jump represented by a small arrow or arc) moving to the right from '3'. The final landing point on the number line, '8', is highlighted with a red dot. This helps you understand how addition is essentially 'counting on' from a starting number.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Visualize the operation $3 + 5$ using a number line. Display a horizontal number line ranging from 0 to 10 with clear integer markings (0, 1, 2, ..., 10). Mark the starting number, '3', with a distinct green circle or pointer. Then, animate a sequence of 5 individual 'jumps' or 'steps' moving to the right from the number '3'. Each jump should be clearly visible as a small, dashed arrow or arc that originates from the current position and ends at the next integer. The number line should update its highlighted position with each jump. The final landing position after 5 jumps should be highlighted with a red circle or pointer, indicating the sum. A numerical display below the number line should show 'Current Position: [value]' that updates dynamically with each jump, starting at 3 and ending at 8. This module demonstrates the concept of 'counting on' to perform addition, showing that starting at 3 and adding 5 means moving 5 units to the right on the number line until you reach the final sum.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q1-step-1.html",
+          "visual": null
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "problem": {
+        "title": "Solving a One-Step Linear Equation",
+        "text": "Solve for $x$: $2x = 10$",
+        "image": null,
+        "visualization": "problem-viz-q2.svg"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "Our goal is to find the value of $x$ that makes the equation true. The equation $2x = 10$ means \"two times some number $x$ equals ten.\"",
+          "inputLabel": "What does the variable $x$ represent in this equation?",
+          "inputPlaceholder": "Type your answer here...",
+          "correctAnswer": "an unknown value|an unknown number|a variable|the variable|a number|some number",
+          "audioExplanation": "This visualization uses a balance scale to represent equations. The left side of the scale represents $2x$, shown as two blocks labeled 'x'. The right side represents $10$, shown as ten small unit blocks. The scale is perfectly balanced, which means that the expression on the left is equal to the expression on the right. This helps you visually understand what the equation $2x=10$ means: both sides have the same value.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display a balance scale. On the left side, visualize '2x' as two identical square blocks, each clearly labeled with an 'x'. On the right side, visualize '10' as ten small, identical circular unit blocks arranged neatly. The scale should be perfectly balanced. Below the scale, display the text 'Left Side: $2x$' and 'Right Side: $10$'. The purpose of this visualization is to conceptually represent an equation as a balanced scale, emphasizing that whatever is on the left side must have the same 'weight' or value as what is on the right side to maintain balance. There are no interactive controls in this initial state, it's purely for visual setup.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q2-step-0.html",
+          "visual": null
+        },
+        {
+          "id": 1,
+          "explanation": "To solve for $x$, we need to isolate it, meaning we want to get $x$ by itself on one side of the equation. In the expression $2x$, $x$ is being multiplied by $2$.",
+          "inputLabel": "What mathematical operation is currently being performed on $x$ on the left side of the equation?",
+          "inputPlaceholder": "e.g., addition, subtraction, multiplication...",
+          "correctAnswer": "multiplication|multiplied|times|product",
+          "audioExplanation": "The balance scale still shows $2x$ on the left and $10$ on the right. The two 'x' blocks on the left are highlighted, visually drawing your attention to the fact that there are two of them, which represents multiplication. This helps you clearly see that the variable $x$ is currently involved in a multiplication operation, which is the first step in deciding how to isolate it.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Continue displaying the balance scale from the previous step with two 'x' blocks on the left and ten unit blocks on the right, perfectly balanced. Add a subtle animation, like a gentle pulsing glow or a temporary color change, around the '2x' label or the 'x' blocks themselves on the left side of the scale. This is to visually emphasize that $x$ is being multiplied by 2. Ensure the equation $2x = 10$ is displayed clearly below the balance scale. There are no user controls, the animation is automatic to draw attention to the $2x$ term.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q2-step-1.html",
+          "visual": null
+        },
+        {
+          "id": 2,
+          "explanation": "To isolate $x$, we need to perform the inverse operation. The inverse operation of multiplication is division. Therefore, to undo the multiplication by $2$, we should divide.",
+          "inputLabel": "What specific operation involving the number 2 should we perform to begin isolating $x$?",
+          "inputPlaceholder": "e.g., 'divide by 2'",
+          "correctAnswer": "division|divide|divide by 2|divide by two",
+          "audioExplanation": "This interactive step shows you why you must perform an operation on both sides of the equation. If you were to only divide one side of the scale by 2, you would see the scale become severely unbalanced, tilting to the side that still has more weight. This visualization demonstrates the critical principle that to keep an equation true and balanced, any operation you perform on one side must also be performed on the other.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display the balance scale with two 'x' blocks on the left and ten unit blocks on the right. Below the scale, display the equation $2x = 10$. Introduce a 'Divide Left Side by 2' button. If the user clicks this button, animate the removal of one 'x' block from the left side. The scale should immediately tilt heavily to the right, becoming unbalanced. A warning message 'Scale Unbalanced!' should appear. This interaction is designed to visually demonstrate the consequence of performing an operation on only one side of an equation, highlighting the need to maintain balance.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q2-step-2.html",
+          "visual": null
+        },
+        {
+          "id": 3,
+          "explanation": "To maintain the balance of the equation, whatever operation we perform on one side, we must also perform on the other side. Since we determined we need to divide by $2$ to isolate $x$, we will divide both sides of the equation by $2$.",
+          "inputLabel": "What mathematical expression represents dividing both sides of $2x = 10$ by 2? (e.g., '2x/2 = 10/2')",
+          "inputPlaceholder": "Type the new equation here...",
+          "correctAnswer": "2x/2 = 10/2|2x / 2 = 10 / 2|\\frac{2x}{2} = \\frac{10}{2}|\\frac{2x}{2} = 10/2|2x/2 = \\frac{10}{2}",
+          "audioExplanation": "Now, the balance scale demonstrates what happens when you correctly apply an operation to both sides. As you divide both sides by 2, you'll see the 'x' blocks and the unit blocks reduce proportionally on their respective sides, but the scale remains perfectly level. This module vividly shows that performing the same inverse operation on both sides keeps the equation balanced and moves you closer to finding the value of $x$.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display the balance scale with two 'x' blocks on the left and ten unit blocks on the right. Below the scale, display the equation $2x = 10$. Introduce a 'Divide Both Sides by 2' button. When clicked, animate the following: \\n1. On the left side: Visually divide the two 'x' blocks into two groups. One 'x' block group should shrink slightly and then disappear, leaving only one 'x' block. \\n2. On the right side: Visually divide the ten unit blocks into two groups of five. One group of five should shrink slightly and then disappear, leaving only five unit blocks. \\n3. Throughout this animation, the scale should remain perfectly balanced. \\n4. Simultaneously, below the scale, the equation should animate its transformation: First, show $\\frac{2x}{2} = \\frac{10}{2}$, then simplify to $x = 5$. The purpose is to demonstrate that dividing both sides by the same amount maintains the equality and systematically simplifies the equation to isolate $x$.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q2-step-3.html",
+          "visual": null
+        },
+        {
+          "id": 4,
+          "explanation": "Now that we have performed the division on both sides, we can simplify the equation to find the value of $x$. \\n\\n$\\frac{2x}{2} = \\frac{10}{2}$ \\n\\n$x = 5$",
+          "inputLabel": "What is the final value of $x$?",
+          "inputPlaceholder": "Type your answer here...",
+          "correctAnswer": "5|x=5|x = 5|=5",
+          "audioExplanation": "The balance scale now shows one 'x' block on the left and five unit blocks on the right, perfectly balanced. This final state visually confirms the solution you found: $x=5$. This module provides a clear and intuitive visual representation of the answer, solidifying your understanding that the value of $x$ is 5 because both sides of the equation are equal, just like a perfectly balanced scale.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display the balance scale in its final balanced state: one 'x' block on the left and five unit blocks on the right. Clearly display the final simplified equation $x=5$ below the scale. This visualization serves as a clear, static confirmation of the solution, showing the isolated variable $x$ directly equated to its numerical value in a balanced state. There are no interactive elements, it's the conclusion of the visual step-by-step process.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q2-step-4.html",
+          "visual": null
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "problem": {
+        "title": "Area of a Rectangle",
+        "text": "What is the area of a rectangle with length $6$ and width $4$?",
+        "image": null,
+        "visualization": "problem-viz-q3.svg"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "First, let's identify the shape we are working with. A rectangle is a four-sided polygon with four right angles. To find its area, we typically need its length and width.",
+          "inputLabel": "What geometric shape is described in the problem?",
+          "inputPlaceholder": "Type the name of the shape",
+          "correctAnswer": "rectangle|rectangular|four-sided shape|quadrilateral|quadrilateral shape|oblong",
+          "audioExplanation": "This step asks you to identify the specific geometric shape you're working with. Recognizing the basic shape, in this case a rectangle, is the very first and a critical step in any geometry problem. The visualization shows you a clear, labeled diagram of a rectangle, helping you visually confirm the shape and understand its key features like length and width at a glance.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A clear, simple line drawing of a rectangle. The longer horizontal side at the bottom is labeled 'Length (l)' and the shorter vertical side on the right is labeled 'Width (w)'. Dimension lines with arrows extend from the sides to their respective labels. All four internal corners are marked with small square symbols to explicitly indicate right angles. The rectangle outline should be in a medium blue color (#3b82f6), and all labels and dimension lines should be in black.",
+          "audio": null,
+          "component": null,
+          "visual": "visuals/q3-step-0.svg"
+        },
+        {
+          "id": 1,
+          "explanation": "The area ($A$) of a rectangle is the amount of space it covers. It is calculated by multiplying its length ($l$) by its width ($w$). This can be expressed by the formula: $$A = l \\times w$$",
+          "inputLabel": "What is the formula for the area of a rectangle?",
+          "inputPlaceholder": "Enter the formula (e.g., A = l * w)",
+          "correctAnswer": "A = l * w|A = lw|Area = length * width|Area = length x width|A=l*w|A=lw|Area=length*width|Area=length x width|A=w*l|A=wl|A = w x l|A = w * l",
+          "audioExplanation": "Now that you know the shape, this step helps you recall the essential formula used to calculate its area. The interactive visualization brings this concept to life. By adjusting the length and width using sliders, you can actually see the rectangle expand or contract, and simultaneously observe how the 'Area' value updates, visually showing the product of the dimensions. This interaction helps you understand conceptually that area is the space inside a two-dimensional shape and how it directly relates to its dimensions through simple multiplication.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display a grid background to represent unit squares. On this grid, draw a rectangle. The width of the rectangle should be controlled by a slider labeled 'Width (w)' with a range from 1 to 10. The length of the rectangle should be controlled by a slider labeled 'Length (l)' with a range from 1 to 10. As the user adjusts these sliders, the rectangle should dynamically resize on the grid. Inside the rectangle, fill it with individual unit squares (e.g., if length is 5 and width is 3, show 15 distinct squares), so the user can visually count the squares and see the multiplication in action. Below the rectangle, display the formula for the area: $A = l \\times w$. Below the formula, display the current calculated area based on the slider values: $A = \\text{[current length]} \\times \\text{[current width]} = \\text{[calculated area]}$. All values and the rectangle should update in real-time as the sliders are moved. The visualization should visually represent the concept that area is the count of unit squares that fit inside the shape.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q3-step-1.html",
+          "visual": null
+        },
+        {
+          "id": 2,
+          "explanation": "The problem provides us with the specific dimensions for this rectangle: the length is $6$ and the width is $4$.",
+          "inputLabel": "What is the length of the rectangle given in the problem?",
+          "inputPlaceholder": "Enter the length",
+          "correctAnswer": "6|length = 6|l=6|six",
+          "audioExplanation": "This step focuses on extracting the specific numerical values from the problem statement itself. It's crucial to correctly identify these values before you can proceed with any calculations. The visualization will show you the rectangle with its dimensions clearly labeled with the values provided in the problem, helping you easily pinpoint the length and width that you need to use for this specific calculation.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A clear drawing of a rectangle. The bottom side is labeled 'Length = 6' and the right side is labeled 'Width = 4'. Dimension lines with arrows extend from each side to their respective numerical labels. All corners are marked with small square symbols to indicate right angles. The rectangle outline should be in a medium blue color (#3b82f6), and the numerical labels should be in black.",
+          "audio": null,
+          "component": null,
+          "visual": "visuals/q3-step-2.svg"
+        },
+        {
+          "id": 3,
+          "explanation": "Now, we will substitute the given length ($l = 6$) and width ($w = 4$) into the area formula $A = l \\times w$.",
+          "inputLabel": "Write the area equation after substituting the given values.",
+          "inputPlaceholder": "e.g., A = 6 * 4",
+          "correctAnswer": "A = 6 * 4|A = 6 x 4|A = (6)(4)|A = 4 * 6|A = 4 x 6|A = (4)(6)|A=6*4|A=6x4|A=(6)(4)|A=4*6|A=4x6|A=(4)(6)|A = 6 \\times 4|A = 4 \\times 6",
+          "audioExplanation": "With the formula in mind and the dimensions identified, this step shows you how to put all the pieces together. The interactive module visually demonstrates the substitution process. You'll see the abstract variables $l$ and $w$ in the general formula $A = l \\times w$ replaced by their specific numerical values, 6 and 4, creating the precise expression you need to solve. This helps you understand how concrete numbers fit into a general formula and prepares you for calculation.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display the general formula for the area of a rectangle: $$A = l \\times w$$ Below this, show the specific values from the problem: $l = 6$ and $w = 4$. Then, animate the substitution process: the 'l' in the formula should visually transform into '6' and the 'w' should visually transform into '4', resulting in the equation: $$A = 6 \\times 4$$ The visualization should clearly highlight the transformation from variables to specific numbers within the formula, using a transition or fading effect. Below this, include a simple button labeled 'Show Result'. When clicked, the calculated result $A = 24$ should appear next to the equation, but only after the button is pressed. This module focuses on the conceptual act of replacing variables with specific values.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q3-step-3.html",
+          "visual": null
+        },
+        {
+          "id": 4,
+          "explanation": "Finally, perform the multiplication to calculate the numerical value of the area.",
+          "inputLabel": "What is the numerical value of the area?",
+          "inputPlaceholder": "Enter the calculated area",
+          "correctAnswer": "24",
+          "audioExplanation": "This is the final step where you perform the straightforward calculation to find the answer. The interactive module clearly shows you the result of the multiplication from the previous step. You'll see $6 \\times 4$ explicitly evaluated to $24$, solidifying your understanding of how the dimensions combine to form the total numerical area. This visual reinforcement helps confirm your calculation.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display the equation from the previous step clearly: $$A = 6 \\times 4$$ Below this, animate the calculation process. First, highlight the numbers '6' and '4' with a subtle glow or color change, as if they are being processed. Then, show the result appearing clearly: $$A = 24$$ The module should visually emphasize the operation of multiplication and its direct outcome, making the final numerical answer evident. The background should be a subtle grid to conceptually remind of 'square units'.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q3-step-4.html",
+          "visual": null
+        },
+        {
+          "id": 5,
+          "explanation": "Remember to include the correct units for area. Since the length and width were given in generic \"units\", the area will be in \"square units\" or \"units squared\".",
+          "inputLabel": "What are the units for the area of this rectangle?",
+          "inputPlaceholder": "Enter the units (e.g., square units)",
+          "correctAnswer": "square units|units squared|units^2|unit^2|squared units|unit squared",
+          "audioExplanation": "The very last step in any measurement problem is to include the appropriate units with your answer. Area is always measured in square units because you are essentially counting how many one-by-one unit squares can fit inside the shape. The visualization displays the final rectangle along with the calculated area and its correct units, helping you remember that area is a two-dimensional measurement and requires squared units.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A drawing of a rectangle with length 6 and width 4. The rectangle should be visually divided into a 6x4 grid of small, distinct squares, representing unit squares. The bottom side of the rectangle is labeled 'Length = 6 units' and the right side is labeled 'Width = 4 units'. Inside the rectangle, centered prominently, display the text 'Area = 24 square units'. The grid lines should be subtle grey (#ccc). The rectangle outline should be a medium blue color (#3b82f6). The text for the area should be in bold black, slightly larger than other labels.",
+          "audio": null,
+          "component": null,
+          "visual": "visuals/q3-step-5.svg"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "problem": {
+        "title": "Counting Apples in Groups",
+        "text": "If you have $3$ groups of $4$ apples, how many apples do you have in total?",
+        "image": null,
+        "visualization": "problem-viz-q4.svg"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "The problem describes a quantity arranged in groups. First, let's identify how many groups we are dealing with. This tells us the number of collections or sets of apples.",
+          "inputLabel": "How many groups are there?",
+          "inputPlaceholder": "Enter the number of groups",
+          "correctAnswer": "3",
+          "audioExplanation": "This initial step helps you break down the problem by focusing on the number of distinct collections mentioned. By identifying the number of groups first, you're setting up the foundation for understanding the total quantity. The visualization shows generic placeholders for these groups, helping you mentally organize the information provided in the problem statement. This visualization is a simple diagram showing three empty circles labeled \"Group 1\", \"Group 2\", and \"Group 3\", representing the three distinct groups. It helps you see the fundamental components of the problem.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A clear, simple diagram showing three distinct, identically sized circles arranged horizontally. Each circle should have a label beneath it: 'Group 1', 'Group 2', 'Group 3'. The circles should be outlined in a medium blue (#3b82f6) and filled with a very light gray (#f3f4f6). There are no apples inside them yet. The diagram should clearly represent the concept of distinct groups.",
+          "audio": null,
+          "component": null,
+          "visual": "visuals/q4-step-0.svg"
+        },
+        {
+          "id": 1,
+          "explanation": "Next, we need to know how many apples are contained within each of those groups. The problem specifies \"3 groups of $4$ apples.\" This number is critical for calculating the total.",
+          "inputLabel": "How many apples are in each group?",
+          "inputPlaceholder": "Enter the number of apples per group",
+          "correctAnswer": "4",
+          "audioExplanation": "Now that you've identified the number of groups, this step helps you understand the quantity within each group. Visualizing the apples inside each group helps you see the full picture of how the apples are distributed. This makes it easier to conceptualize the total amount. The visualization is an updated diagram that now fills each of the three groups with the correct number of apples, allowing you to visually confirm the problem's setup. This visualization is a diagram showing three distinct circles, each containing four small red apple icons. The circles are labeled 'Group 1', 'Group 2', 'Group 3'. This helps you understand how the specific quantity of apples is distributed among the identified groups.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "An updated diagram from the previous step. It shows three distinct circles arranged horizontally, identically sized and outlined in medium blue (#3b82f6), filled with very light gray (#f3f4f6). Inside *each* circle, there are four small, uniformly drawn red apple icons (e.g., simple red circles with a small green leaf stem). The apples should be neatly arranged within each circle, perhaps in a 2x2 grid. Below each circle, the labels 'Group 1', 'Group 2', 'Group 3' should still be present.",
+          "audio": null,
+          "component": null,
+          "visual": "visuals/q4-step-1.svg"
+        },
+        {
+          "id": 2,
+          "explanation": "When you have a certain number of \"groups of\" an equal amount, this is a clear indicator for a specific mathematical operation. It's essentially repeated addition, which can be expressed more efficiently.",
+          "inputLabel": "What mathematical operation should you use to find the total when you have 'groups of' items?",
+          "inputPlaceholder": "Enter the operation (e.g., addition, multiplication)",
+          "correctAnswer": "multiplication|multiply|times|product|multiplication operation|multiplication symbol|x|*|\\u00d7",
+          "audioExplanation": "This step is crucial for translating the words of the problem into a mathematical expression. The interactive module helps you understand that \"groups of\" directly corresponds to multiplication by letting you see how repeated addition builds up to the same total. By interacting with the number of groups and items, you can visually confirm that multiplication is a more efficient way to count. This visualization is an interactive balance scale module. It represents repeated addition on one side and multiplication on the other. You can adjust the number of 'groups' and 'items per group' using sliders, and it shows the sum of items (e.g., $4 + 4 + 4$) on one pan and the product (e.g., $3 \\times 4$) on the other, demonstrating that they are equal.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Create an interactive module that visually represents the equivalence between repeated addition and multiplication. Display two balance scales side-by-side, or a single balance scale with two expressions. The left side (or left pan) should represent repeated addition, and the right side (or right pan) should represent multiplication. Include two sliders: 1. 'Number of Groups': Range from 1 to 5, default to 3. 2. 'Items per Group': Range from 1 to 5, default to 4. As the 'Number of Groups' slider is adjusted, dynamically update an expression on the left side showing the 'Items per Group' added repeatedly (e.g., '$4 + 4 + 4$' for 3 groups of 4). Dynamically update a multiplication expression on the right side based on the slider values (e.g., '$3 \\times 4$'). Below both expressions, show the calculated sum and product. For example: 'Sum: 12', 'Product: 12'. The scale should visually 'balance' when the sum equals the product, reinforcing the conceptual equivalence. This module helps the user understand that 'groups of' (represented by the sliders) leads to repeated addition, which is mathematically equivalent to multiplication. It visually confirms that multiplication is a shortcut for repeated addition.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q4-step-2.html",
+          "visual": null
+        },
+        {
+          "id": 3,
+          "explanation": "Now that you know you need to multiply, combine the number of groups and the number of apples per group into a single mathematical expression. This sets up the calculation to find the total.",
+          "inputLabel": "Write the multiplication expression to find the total number of apples.",
+          "inputPlaceholder": "E.g., 3 * 4 or 3 x 4",
+          "correctAnswer": "3x4|3*4|3 \\times 4|4x3|4*3|4 \\times 3|(3)(4)|3(4)|(4)(3)|4(3)|=3x4|=3*4|=3 \\times 4|=4x3|=4*3|=4 \\times 3|=(3)(4)|=3(4)|=(4)(3)|=4(3)",
+          "audioExplanation": "This step allows you to translate the problem directly into a mathematical statement. The interactive module visually sets up the multiplication problem using the numbers you identified earlier. You can adjust the values to see how the expression changes, solidifying your understanding of how to construct such problems. This visualization is an interactive display showing two distinct numerical input fields, one for 'Number of Groups' and one for 'Items per Group'. Below these fields, it automatically constructs and displays the multiplication expression, like '$3 \\times 4$', as you input the numbers, making the mathematical setup clear.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Create an interactive display that helps the user set up the multiplication expression. Display two labeled input fields: 1. 'Number of Groups (G)': An integer input field, default value 3. 2. 'Items per Group (I)': An integer input field, default value 4. Below these input fields, dynamically display the multiplication expression using the current values from the input fields. The expression should be shown in standard mathematical notation, e.g., 'G \\times I'. For the default values, it should display: '$3 \\times 4$'. To enhance understanding, also show a visual array or grid of objects corresponding to the multiplication. For example, if G=3 and I=4, display 3 rows of 4 small, red apple icons. This module allows the user to see how the identified numerical components of the problem are directly translated into a multiplication expression and visually represented as an array. It helps you practice setting up the problem correctly before calculating the answer.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q4-step-3.html",
+          "visual": null
+        },
+        {
+          "id": 4,
+          "explanation": "Finally, perform the multiplication to find the total. This gives you the ultimate answer to the problem: the total count of all apples.",
+          "inputLabel": "What is the total number of apples?",
+          "inputPlaceholder": "Enter the total",
+          "correctAnswer": "12|=12|twelve",
+          "audioExplanation": "This is the final step where you calculate the answer. The interactive module helps you verify your calculation by visually demonstrating the sum of all apples. By seeing the final combined quantity, you can confirm your result and reinforce your understanding of how multiplication results in a total count. This visualization is an interactive grid or array of apple icons, directly representing the $3 \\times 4$ multiplication. It shows 3 rows of 4 apples, and as you change the numbers (groups or items per group), the grid updates, and it clearly displays the total count, making the final calculation tangible.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Create an interactive module that visually represents the total count of apples based on the number of groups and items per group, and displays the final calculated total. Include two sliders or input fields: 1. 'Number of Groups': Range 1 to 5, default 3. 2. 'Items per Group': Range 1 to 5, default 4. Based on the slider values, display a grid or array of small, identical red apple icons. For 'Number of Groups = 3' and 'Items per Group = 4', display a 3x4 grid of apples. The apples should be visually distinct but uniform. Below the grid of apples, clearly display the calculated total number of apples as 'Total Apples: [Calculated Total]'. This total should update in real-time as the sliders are adjusted. This module helps the user visually confirm the result of the multiplication. It concretely shows what '12 apples' looks like when arranged in '3 groups of 4', allowing you to verify your answer and deeply understand the concept of total quantity in multiplication.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q4-step-4.html",
+          "visual": null
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "problem": {
+        "title": "Division Basics: 15 Divided by 3",
+        "text": "What is $15 \\div 3$?",
+        "image": null,
+        "visualization": "problem-viz-q5.svg"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "When you divide $15$ by $3$, you are essentially asking: 'If I have $15$ items, how many items will be in each group if I split them into $3$ equal groups?' or 'How many groups of $3$ can I make from $15$ items?' Understanding this fundamental concept of sharing or grouping equally is the first step in solving division problems.",
+          "inputLabel": "What operation does the symbol '$\\div$' represent?",
+          "inputPlaceholder": "Type your answer here",
+          "correctAnswer": "division|divide|sharing|splitting|grouping|to divide|dividing",
+          "audioExplanation": "This step helps you grasp the fundamental meaning of division. You're learning that division isn't just about symbols; it's about splitting a larger quantity into smaller, equal parts. The visualization shows 15 individual items that you can drag and drop into 3 distinct groups, demonstrating the act of distributing items evenly. This helps you visually understand what it means to divide and how the concept of 'equal groups' works.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Visualize 15 small, identical circular tokens (e.g., blue coins). Below them, display 3 empty, distinctly colored circular containers or 'groups' (e.g., one red, one green, one yellow). Each container should have a label indicating its group number (e.g., 'Group 1', 'Group 2', 'Group 3'). The user should be able to drag each of the 15 tokens one by one from the initial pile into any of the 3 containers. As tokens are dragged, they should snap into the container, and their position within the container should adjust slightly to show multiple tokens. Provide a numerical counter next to each container showing how many tokens are currently inside it (e.g., 'Count: 0'). The goal is to distribute all 15 tokens as evenly as possible among the 3 containers. The interactive module should visually represent the concept of 'sharing equally' or 'distributing into groups', allowing the user to experience the physical act of division.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q5-step-0.html",
+          "visual": null
+        },
+        {
+          "id": 1,
+          "explanation": "Now that you understand what division means conceptually, let's write out the problem in standard mathematical ways. The problem '$15$ divided by $3$' can be expressed using a division symbol as $15 \\div 3$, as a fraction $\\frac{15}{3}$, or using long division notation.",
+          "inputLabel": "How would you write '15 divided by 3' using a division symbol?",
+          "inputPlaceholder": "e.g., 10 / 2",
+          "correctAnswer": "15 / 3|15\\div3|15 \\div 3|15/3",
+          "audioExplanation": "In this step, you're learning the different ways to express a division problem mathematically. Understanding these notations is crucial for accurately interpreting and solving division problems in various contexts. The visualization provides a clear, static display of these different forms, allowing you to associate the spoken phrase '15 divided by 3' with its symbolic representations. It specifically helps you see and remember the common ways to write division.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A clean, minimalistic white background. Centered on the screen, display the expression '$15 \\div 3$' in a large, bold, sans-serif font (e.g., Arial, 72pt, color #2C3E50). Below this, add a horizontal line separator (e.g., 2px thick, #BDC3C7). Directly below the line, display the same division problem as a fraction: '$$\\frac{15}{3}$$' in the same font style and color, but slightly smaller (e.g., 60pt). To the right of the fractional form, aligned vertically, display the long division symbol with '15' inside and '3' outside. Use clear visual spacing between the different notations to distinguish them.",
+          "audio": null,
+          "component": null,
+          "visual": "visuals/q5-step-1.svg"
+        },
+        {
+          "id": 2,
+          "explanation": "To solve $15 \\div 3$, you can think of it as finding out how many groups of $3$ fit into $15$. You can count by $3$s until you reach $15$, or use your multiplication facts. What number, when multiplied by $3$, gives you $15$?",
+          "inputLabel": "What number multiplied by $3$ equals $15$?",
+          "inputPlaceholder": "Enter the number",
+          "correctAnswer": "5|five",
+          "audioExplanation": "This step guides you through the actual calculation of division, connecting it directly to multiplication. By thinking about 'what times 3 equals 15,' you're reinforcing the inverse relationship between multiplication and division, a key mathematical concept. The visualization allows you to interactively build groups of 3 and count them, helping you visually confirm that 5 groups of 3 indeed make 15. This interactive element makes the abstract concept of division more concrete and easier to grasp.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display 15 small, identical circular tokens (e.g., orange dots) arranged in a single horizontal row at the top of the module. Below this, provide a prominent button labeled 'Group the next 3'. Below the button, initialize a counter labeled 'Number of Groups Formed:' showing '0'. When the 'Group the next 3' button is clicked: 1. Animate by moving the next three available tokens downwards and horizontally into a new row below the initial row. 2. Visually enclose these three tokens within a distinct shape (e.g., a light blue circle or rectangle) to clearly show they form a group. 3. Increment the 'Number of Groups Formed:' counter by 1. This process should be repeatable until all 15 tokens have been grouped. Below the groups, display a dynamic equation: 'Number of Groups $\\times 3 = $ Total Tokens Grouped', updating as groups are formed (e.g., '1 $\\times$ 3 = 3', then '2 $\\times$ 3 = 6', etc.). This module visually demonstrates repeated subtraction or forming equal groups to find the quotient.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q5-step-2.html",
+          "visual": null
+        },
+        {
+          "id": 3,
+          "explanation": "You've successfully determined that $15$ divided by $3$ is $5$. This means if you have $15$ items and you split them into $3$ equal groups, there will be $5$ items in each group. Or, if you have $15$ items, you can make $5$ groups of $3$.",
+          "inputLabel": "What is the final answer for $15 \\div 3$?",
+          "inputPlaceholder": "Enter the answer",
+          "correctAnswer": "5|five",
+          "audioExplanation": "This final step brings everything together, consolidating your understanding of the division problem. You've broken down the concept, explored the notation, and performed the calculation, leading you to the correct answer. The visualization in the previous step should have visually confirmed this result for you, making the final answer feel intuitive and well-supported by your interactive experience. It reinforces the idea that dividing 15 into 3 equal parts results in 5 items per part.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A clean, white background. Centered on the screen, display the completed division equation '$15 \\div 3 = 5$' in a large, bold, dark blue font (e.g., 80pt, #1E88E5). Below this, with a bit of vertical spacing, display the same result in fractional form: '$$\\frac{15}{3} = 5$$' in a slightly smaller, but still prominent, font (e.g., 60pt, #1E88E5). Use consistent sans-serif typography. The overall layout should be simple, clear, and focused on presenting the final solution unambiguously.",
+          "audio": null,
+          "component": null,
+          "visual": "visuals/q5-step-3.svg"
+        }
+      ]
+    }
+  ],
+  "generated": "2026-01-26T13:46:29.203189",
+  "version": "2.0"
+}

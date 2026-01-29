@@ -1,0 +1,409 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #f9fafb;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Tight spacing */
+            margin: 0; /* Remove default margin */
+        }
+
+        .equation {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Single column for controls */
+            gap: 12px;
+            margin-top: 5px;
+            padding: 0 10px; /* Slightly less padding for controls */
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.95em;
+            color: #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            background: #d1d5db;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .current-value {
+            font-weight: bold;
+            color: #16a34a;
+            min-width: 60px; /* Ensure consistent width */
+            text-align: right;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2563eb;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 5px;
+        }
+
+        .steps-container {
+            background-color: #e0f2fe; /* Light blue background for steps */
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #0c4a6e;
+        }
+
+        .step {
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .step .math {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 2px 5px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .step-label {
+            min-width: 60px; /* Align content */
+        }
+
+        .result {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #16a34a;
+            margin-top: 10px;
+            text-align: center;
+            background-color: #dcfce7; /* Light green background for result */
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .visual-bar-container {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            display: flex;
+            align-items: center;
+            position: relative;
+            min-height: 50px; /* Ensure space for labels */
+        }
+
+        .visual-bar {
+            height: 15px;
+            background-color: #2563eb;
+            border-radius: 4px;
+            transition: width 0.2s ease-out; /* Smooth transition for width */
+            position: relative;
+        }
+
+        .visual-bar::after {
+            content: 'd'; /* Label for distance */
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .visual-start-point, .visual-end-point {
+            position: absolute;
+            width: 2px;
+            height: 25px;
+            background-color: #2563eb;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .visual-start-point { left: 10px; }
+        .visual-end-point { right: 10px; }
+
+        .visual-label {
+            position: absolute;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #444;
+        }
+        .label-start { left: 10px; top: 15px; transform: translateX(-50%); }
+        .label-end { right: 10px; top: 15px; transform: translateX(50%); }
+        .label-time {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9em;
+            color: #16a34a;
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 600px) {
+            .module-container {
+                padding: 15px;
+                gap: 12px;
+            }
+            .equation {
+                font-size: 1.2em;
+            }
+            .controls-grid {
+                padding: 0;
+            }
+            .section-title {
+                margin-top: 12px;
+                margin-bottom: 5px;
+            }
+            .steps-container, .result {
+                padding: 10px;
+            }
+            .step {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .step .math {
+                margin-left: 0;
+            }
+            .step-label {
+                min-width: unset;
+                margin-bottom: 3px;
+            }
+            .visual-bar::after {
+                top: -15px;
+                font-size: 0.7em;
+            }
+            .label-time {
+                bottom: -20px;
+                font-size: 0.8em;
+            }
+            .visual-bar-container {
+                min-height: 60px; /* Adjust for smaller screens */
+            }
+        }
+    </style>
+
+    <div class="equation">
+        d = v₀t + ½at²
+    </div>
+
+    <div class="controls-grid">
+        <div class="control-group">
+            <label for="distance-slider">Distance (d): <span id="distance-value" class="current-value"></span> m</label>
+            <input type="range" id="distance-slider" min="1" max="10" step="0.1" value="5">
+        </div>
+        <div class="control-group">
+            <label for="velocity-slider">Initial Velocity (v₀): <span id="velocity-value" class="current-value"></span> m/s</label>
+            <input type="range" id="velocity-slider" min="0" max="5" step="0.1" value="0">
+        </div>
+        <div class="control-group">
+            <label for="acceleration-slider">Acceleration (a): <span id="acceleration-value" class="current-value"></span> m/s²</label>
+            <input type="range" id="acceleration-slider" min="0.1" max="5" step="0.01" value="0.6125">
+        </div>
+    </div>
+
+    <div class="section-title">Visualizing Distance and Time</div>
+    <div class="visual-bar-container">
+        <div class="visual-start-point"></div>
+        <div class="visual-bar" id="visual-distance-bar" style="width: 50%;"></div>
+        <div class="visual-end-point"></div>
+        <span class="visual-label label-start">Start</span>
+        <span class="visual-label label-end">End</span>
+        <span class="visual-label label-time">Time (t): <span id="visual-time-value">0.00</span> s</span>
+    </div>
+
+
+    <div class="section-title">Algebraic Steps for 't' (when v₀ = 0)</div>
+    <div class="steps-container">
+        <div class="step">Given: d = v₀t + ½at²</div>
+        <div class="step">When v₀ = 0: <span class="math">d = ½at²</span></div>
+        <div class="step">Multiply by 2: <span class="math">2d = at²</span></div>
+        <div class="step">Divide by a: <span class="math">t² = 2d/a</span></div>
+        <div class="step">Take square root: <span class="math">t = √(2d/a)</span></div>
+        <div id="v0-not-zero-message" style="display: none; color: #b91c1c; font-weight: bold; margin-top: 10px;">
+            <p>Note: The simplified algebraic steps above are only valid when v₀ = 0. </p>
+            <p>For v₀ ≠ 0, 't' is calculated using the quadratic formula: <span class="math">t = (-v₀ + √(v₀² + 2ad)) / a</span></p>
+        </div>
+    </div>
+
+    <div class="section-title">Numerical Calculation Steps</div>
+    <div class="steps-container" id="numerical-steps">
+        <div class="step">
+            <span class="step-label">1. d = <span id="num-d">5.0</span> m</span>
+        </div>
+        <div class="step">
+            <span class="step-label">2. a = <span id="num-a">0.61</span> m/s²</span>
+        </div>
+        <div class="step" id="num-step-2d">
+            <span class="step-label">3. 2d = <span id="num-2d">10.0</span> m</span>
+        </div>
+        <div class="step" id="num-step-2d-div-a">
+            <span class="step-label">4. 2d / a = <span id="num-2d-div-a">16.33</span> s²</span>
+        </div>
+        <div class="step" id="num-step-t-final">
+            <span class="step-label">5. t = √<span id="num-t-sqrt-val">16.33</span> = <span id="num-t-result">4.04</span> s</span>
+        </div>
+    </div>
+
+    <div id="final-t-result" class="result">
+        Time (t) = <span id="calculated-t">4.04</span> s
+    </div>
+
+    <script>
+        (function() {
+            // Get references to elements
+            const dSlider = document.getElementById('distance-slider');
+            const v0Slider = document.getElementById('velocity-slider');
+            const aSlider = document.getElementById('acceleration-slider');
+
+            const dValueSpan = document.getElementById('distance-value');
+            const v0ValueSpan = document.getElementById('velocity-value');
+            const aValueSpan = document.getElementById('acceleration-value');
+
+            const numD = document.getElementById('num-d');
+            const numA = document.getElementById('num-a');
+            const num2d = document.getElementById('num-2d');
+            const num2dDivA = document.getElementById('num-2d-div-a');
+            const numTSqrtVal = document.getElementById('num-t-sqrt-val');
+            const numTResult = document.getElementById('num-t-result');
+            const calculatedT = document.getElementById('calculated-t');
+
+            const numStep2d = document.getElementById('num-step-2d');
+            const numStep2dDivA = document.getElementById('num-step-2d-div-a');
+            const numStepTFinal = document.getElementById('num-step-t-final');
+            const v0NotZeroMessage = document.getElementById('v0-not-zero-message');
+
+            const visualDistanceBar = document.getElementById('visual-distance-bar');
+            const visualTimeValue = document.getElementById('visual-time-value');
+
+            // Set initial values from sliders
+            let d = parseFloat(dSlider.value);
+            let v0 = parseFloat(v0Slider.value);
+            let a = parseFloat(aSlider.value);
+
+            function updateVisualization() {
+                // Read current values
+                d = parseFloat(dSlider.value);
+                v0 = parseFloat(v0Slider.value);
+                a = parseFloat(aSlider.value);
+
+                // Update slider value displays
+                dValueSpan.textContent = d.toFixed(1);
+                v0ValueSpan.textContent = v0.toFixed(1);
+                aValueSpan.textContent = a.toFixed(2); // Acceleration often needs more precision
+
+                let t;
+                let sqrtTerm = v0 * v0 + 2 * a * d;
+
+                // Ensure sqrtTerm is not negative (should not happen with positive d, a, v0 and positive t)
+                if (sqrtTerm < 0) {
+                    t = NaN; // Physically impossible scenario
+                } else {
+                    // Quadratic formula solution for t = (-v0 + sqrt(v0^2 + 2ad)) / a
+                    // Only positive root is physically meaningful for time.
+                    t = (-v0 + Math.sqrt(sqrtTerm)) / a;
+                }
+
+                if (isNaN(t) || t < 0) { // Time cannot be negative, or if calculation failed
+                    calculatedT.textContent = "N/A";
+                    visualTimeValue.textContent = "N/A";
+                } else {
+                    calculatedT.textContent = t.toFixed(2);
+                    visualTimeValue.textContent = t.toFixed(2);
+                }
+
+                // Conditional display for numerical calculation steps
+                if (v0 === 0) {
+                    v0NotZeroMessage.style.display = 'none';
+                    numStep2d.style.display = 'flex';
+                    numStep2dDivA.style.display = 'flex';
+                    numStepTFinal.style.display = 'flex';
+
+                    const val2d = 2 * d;
+                    const val2dDivA = val2d / a;
+                    const t_for_v0_0 = Math.sqrt(val2dDivA);
+
+                    num2d.textContent = val2d.toFixed(1);
+                    num2dDivA.textContent = val2dDivA.toFixed(2);
+                    numTSqrtVal.textContent = val2dDivA.toFixed(2);
+                    numTResult.textContent = t_for_v0_0.toFixed(2); // Use specific t for v0=0 here
+
+                } else {
+                    v0NotZeroMessage.style.display = 'block';
+                    numStep2d.style.display = 'none';
+                    numStep2dDivA.style.display = 'none';
+                    numStepTFinal.style.display = 'none';
+                }
+
+                // Update visual bar length based on distance (d)
+                const minD = parseFloat(dSlider.min);
+                const maxD = parseFloat(dSlider.max);
+                // Normalize d to a percentage of the container width (e.g., 20% to 90%)
+                const barWidthPercentage = 20 + ((d - minD) / (maxD - minD)) * 70;
+                visualDistanceBar.style.width = `${barWidthPercentage}%`;
+            }
+
+            // Attach event listeners
+            dSlider.addEventListener('input', updateVisualization);
+            v0Slider.addEventListener('input', updateVisualization);
+            aSlider.addEventListener('input', updateVisualization);
+
+            // Initial call to set up the visualization
+            updateVisualization();
+        })();
+    </script>
+</div>

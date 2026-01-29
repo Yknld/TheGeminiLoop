@@ -1,0 +1,294 @@
+<div class="module-container">
+  <style>
+    /* General styles for the container */
+    .module-container {
+      font-family: 'Arial', sans-serif;
+      padding: 15px;
+      background-color: #f0f4f8; /* Light background */
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 100%;
+      height: 400px; /* Compact height */
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden; /* To handle potential animation overflows */
+    }
+
+    /* Balance Scale styles */
+    .balance-scale {
+      width: 100%;
+      max-width: 400px; /* Scale itself can have a max width */
+      height: 300px; /* Sufficient height for pans and weights */
+      position: relative;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end; /* Align to the bottom of its container */
+    }
+
+    .scale-base {
+      width: 60px;
+      height: 40px;
+      background-color: #94a3b8; /* Slate grey */
+      position: absolute;
+      bottom: 0;
+      border-radius: 5px 5px 0 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .scale-pivot {
+      width: 10px;
+      height: 20px;
+      background-color: #64748b; /* Darker slate grey */
+      position: absolute;
+      bottom: 40px; /* Above the base */
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .scale-arm {
+      width: 90%;
+      max-width: 380px;
+      height: 10px; /* Arm thickness */
+      background-color: #94a3b8;
+      position: absolute;
+      bottom: calc(40px + 20px); /* Base height + pivot height */
+      left: 50%;
+      transform: translateX(-50%) rotate(0deg); /* Initial balance */
+      transform-origin: center;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      transition: transform 0.5s ease-in-out; /* For rebalancing */
+      align-items: stretch; /* Make children stretch vertically */
+    }
+
+    .scale-pan-container {
+      width: 45%; /* Each pan container takes almost half the arm width */
+      height: 100%; /* Take full height of arm */
+      position: relative; /* For absolute positioning of pan */
+      display: flex; /* For internal centering */
+      justify-content: center;
+      align-items: flex-start; /* Pans hang from the top of this container */
+    }
+
+    .scale-pan {
+      width: 80px;
+      height: 120px; /* Sufficient height for 7 weights */
+      background-color: #cbd5e1; /* Light grey */
+      border: 2px solid #94a3b8;
+      border-radius: 0 0 15px 15px;
+      position: absolute; /* Position relative to scale-pan-container */
+      bottom: -125px; /* Hangs below the arm, 125px from its top */
+      padding-bottom: 5px;
+      box-sizing: border-box;
+      display: flex; /* For contents */
+      justify-content: center;
+      align-items: flex-end; /* Stack items from bottom */
+      overflow: hidden; /* Ensure weights don't overflow visible pan */
+    }
+
+    .left-pan .scale-pan { left: 0; }
+    .right-pan .scale-pan { right: 0; }
+    
+    .weights-container {
+      position: relative; /* For absolute positioning of individual weights */
+      width: 100%; /* Takes full width of pan */
+      height: 100%; /* Takes full height of pan for stacking */
+    }
+
+    .weight-x {
+      width: 40px;
+      height: 40px;
+      background-color: #2563eb; /* Blue */
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      position: absolute; /* Center within its container */
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 5px; /* Sit at the bottom of the pan */
+    }
+
+    .weight-1 {
+      width: 25px; /* Smaller to fit 7 weights */
+      height: 25px; /* Smaller to fit 7 weights */
+      background-color: #16a34a; /* Green */
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      margin: 2px; /* Small spacing between weights */
+      transition: all 0.5s ease-out, opacity 0.5s ease-out, transform 0.5s ease-out; /* For fade out */
+      position: absolute; /* Allow specific positioning within pan */
+      font-size: 0.8em; /* Make '1' readable */
+    }
+
+    /* Equation display */
+    .equation-display {
+      margin-top: 15px;
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #333;
+      min-height: 1.5em; /* Reserve space to prevent layout shift */
+    }
+
+    /* Operation label */
+    .operation-label {
+      position: absolute;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #ef4444; /* Red for subtraction */
+      opacity: 0;
+      transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+      pointer-events: none; /* Do not block interaction */
+      z-index: 10;
+    }
+
+    .operation-label.visible {
+      opacity: 1;
+      transform: translateY(-20px); /* Move up slightly */
+    }
+  </style>
+
+  <div class="balance-scale">
+    <div class="scale-base"></div>
+    <div class="scale-pivot"></div>
+    <div class="scale-arm" id="scaleArm">
+      <div class="scale-pan-container left-pan">
+        <div class="scale-pan">
+          <div class="weights-container" id="leftWeightsContainer">
+            <div class="weight-x">x</div>
+          </div>
+        </div>
+      </div>
+      <div class="scale-pan-container right-pan">
+        <div class="scale-pan">
+          <div class="weights-container" id="rightWeightsContainer">
+            <!-- Weights will be dynamically generated by JS -->
+          </div>
+        </div>
+        <div class="operation-label" id="rightOperationLabel" style="right: -40px; bottom: 20px;">- 5</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="equation-display" id="equationText">
+    x + 5 - 5 = 12 - 5
+  </div>
+</div>
+
+<script>
+  (function() {
+    const scaleArm = document.getElementById('scaleArm');
+    const rightWeightsContainer = document.getElementById('rightWeightsContainer');
+    const equationText = document.getElementById('equationText');
+    const rightOperationLabel = document.getElementById('rightOperationLabel');
+
+    let totalWeights = 7; // Initial number of '1' weights on the right pan
+    const weightsToRemove = 5;
+    const animationDelayPerWeight = 250; // Delay between each weight removal animation
+    const rebalanceTiltDuration = 300; // How long the scale stays tilted
+    const rebalanceDuration = 800; // Duration for scale rebalance animation
+
+    // Constants for weight styling, must match CSS
+    const weightSize = 25; 
+    const weightMargin = 2; 
+
+    // Function to dynamically position weights within a pan container
+    function positionWeights(numWeights, containerElement) {
+      containerElement.innerHTML = ''; // Clear existing weights
+      const panWidth = 80; // Width of the scale pan
+
+      const weights = [];
+      const weightsPerRow = Math.floor((panWidth - 2 * weightMargin) / (weightSize + weightMargin));
+      let actualWeightsPerRow = weightsPerRow === 0 ? 1 : weightsPerRow; // Ensure at least 1 weight per row
+
+      for (let i = 0; i < numWeights; i++) {
+        const weightDiv = document.createElement('div');
+        weightDiv.className = 'weight-1';
+        weightDiv.textContent = '1';
+        
+        const row = Math.floor(i / actualWeightsPerRow);
+        const col = i % actualWeightsPerRow;
+
+        // Calculate horizontal position to center weights in their row
+        const currentRowWeights = Math.min(actualWeightsPerRow, numWeights - row * actualWeightsPerRow);
+        const totalRowWidth = currentRowWeights * weightSize + (currentRowWeights - 1) * weightMargin;
+        const startX = (panWidth - totalRowWidth) / 2;
+        
+        weightDiv.style.left = `${startX + col * (weightSize + weightMargin)}px`;
+        weightDiv.style.bottom = `${weightMargin + row * (weightSize + weightMargin)}px`; // Stack from bottom
+        
+        containerElement.appendChild(weightDiv);
+        weights.push(weightDiv);
+      }
+      return weights; // Return references to the newly created weight elements
+    }
+
+    // Initialize weights on the right pan
+    let currentWeights = positionWeights(totalWeights, rightWeightsContainer);
+
+    function animateSubtraction() {
+      // Show the '- 5' label near the right pan shortly after animation begins
+      setTimeout(() => {
+        rightOperationLabel.classList.add('visible');
+      }, animationDelayPerWeight); 
+
+      let removedCount = 0;
+      let intervalId = setInterval(() => {
+        if (removedCount < weightsToRemove) {
+          // Remove weights one by one, starting from the visually top-most
+          const weightIndex = currentWeights.length - 1 - removedCount; 
+          if (currentWeights[weightIndex]) {
+            currentWeights[weightIndex].style.transform = 'scale(0)';
+            currentWeights[weightIndex].style.opacity = '0';
+          }
+          removedCount++;
+        } else {
+          clearInterval(intervalId); // All weights to be removed have started animating
+
+          // Wait for the last weight to visually disappear before proceeding
+          setTimeout(() => {
+            // Update the total count and redraw the remaining weights in the pan
+            totalWeights -= weightsToRemove;
+            currentWeights = positionWeights(totalWeights, rightWeightsContainer); 
+            
+            // Hide the '- 5' label
+            rightOperationLabel.classList.remove('visible');
+
+            // Animate scale rebalance: briefly tilt, then return to level
+            scaleArm.style.transition = `transform ${rebalanceTiltDuration}ms ease-out`;
+            scaleArm.style.transform = 'translateX(-50%) rotate(-5deg)'; // Tilt left pan up (right pan down)
+            
+            setTimeout(() => {
+              scaleArm.style.transition = `transform ${rebalanceDuration}ms ease-in-out`;
+              scaleArm.style.transform = 'translateX(-50%) rotate(0deg)'; // Rebalance to level
+              
+              setTimeout(() => {
+                // After rebalance, update the equation text
+                equationText.textContent = 'x = 12 - 5';
+                scaleArm.style.transition = 'transform 0.5s ease-in-out'; // Reset transition to default
+              }, rebalanceDuration); // Wait for rebalance animation to complete
+            }, rebalanceTiltDuration); // Keep tilted for a short duration
+          }, animationDelayPerWeight); // Wait for the last weight's fade-out duration
+        }
+      }, animationDelayPerWeight); // Interval for sequential weight removal
+    }
+
+    // Start the entire animation sequence after an initial brief pause
+    setTimeout(animateSubtraction, 1500); 
+  })();
+</script>
+</div>

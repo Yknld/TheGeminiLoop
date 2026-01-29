@@ -1,0 +1,55 @@
+<svg viewBox="0 0 450 250" xmlns="http://www.w3.org/2000/svg" width="900" height="500">
+  <!-- Background matching the specified professional educational diagram style -->
+  <rect width="100%" height="100%" fill="#f8fafc"/>
+
+  <defs>
+    <!-- Define a reusable apple icon -->
+    <g id="apple-icon">
+      <!-- Apple body: simple red circle -->
+      <circle r="10" fill="#ef4444"/>
+      <!-- Stem: small brown line, slightly above the apple body -->
+      <path d="M 0 -10 L 0 -15" stroke="#8B4513" stroke-width="2" stroke-linecap="round"/>
+      <!-- Leaf: small green, slightly curved shape, attached to the stem -->
+      <path d="M 0 -12 Q 3 -15 5 -12 Q 3 -10 0 -12 Z" fill="#22c55e"/>
+    </g>
+  </defs>
+
+  <!-- Group 1: Circle and its contents -->
+  <g>
+    <!-- Main circle: medium blue outline, very light gray fill -->
+    <circle cx="75" cy="80" r="50" fill="#f3f4f6" stroke="#3b82f6" stroke-width="2"/>
+    <!-- Four apple icons arranged in a 2x2 grid inside the circle -->
+    <use href="#apple-icon" x="50" y="55"/>
+    <use href="#apple-icon" x="100" y="55"/>
+    <use href="#apple-icon" x="50" y="105"/>
+    <use href="#apple-icon" x="100" y="105"/>
+    <!-- Label for Group 1, centered below the circle -->
+    <text x="75" y="170" font-family="Arial, sans-serif" font-size="18" fill="#0f172a" text-anchor="middle">Group 1</text>
+  </g>
+
+  <!-- Group 2: Circle and its contents -->
+  <g>
+    <!-- Main circle: medium blue outline, very light gray fill -->
+    <circle cx="225" cy="80" r="50" fill="#f3f4f6" stroke="#3b82f6" stroke-width="2"/>
+    <!-- Four apple icons arranged in a 2x2 grid inside the circle -->
+    <use href="#apple-icon" x="200" y="55"/>
+    <use href="#apple-icon" x="250" y="55"/>
+    <use href="#apple-icon" x="200" y="105"/>
+    <use href="#apple-icon" x="250" y="105"/>
+    <!-- Label for Group 2, centered below the circle -->
+    <text x="225" y="170" font-family="Arial, sans-serif" font-size="18" fill="#0f172a" text-anchor="middle">Group 2</text>
+  </g>
+
+  <!-- Group 3: Circle and its contents -->
+  <g>
+    <!-- Main circle: medium blue outline, very light gray fill -->
+    <circle cx="375" cy="80" r="50" fill="#f3f4f6" stroke="#3b82f6" stroke-width="2"/>
+    <!-- Four apple icons arranged in a 2x2 grid inside the circle -->
+    <use href="#apple-icon" x="350" y="55"/>
+    <use href="#apple-icon" x="400" y="55"/>
+    <use href="#apple-icon" x="350" y="105"/>
+    <use href="#apple-icon" x="400" y="105"/>
+    <!-- Label for Group 3, centered below the circle -->
+    <text x="375" y="170" font-family="Arial, sans-serif" font-size="18" fill="#0f172a" text-anchor="middle">Group 3</text>
+  </g>
+</svg>

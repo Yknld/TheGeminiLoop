@@ -1,0 +1,233 @@
+<div class="module-container">
+  <style>
+    .module-container {
+      font-family: 'Arial', sans-serif;
+      padding: 18px;
+      max-width: 100%;
+      box-sizing: border-box;
+      background-color: #f8fafc; /* Light background */
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      color: #333;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      gap: 15px; /* Tight spacing */
+    }
+
+    .equation-section, .derivation-section, .result-section, .controls-section {
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .equation-section h3, .derivation-section h3, .result-section h3, .controls-section h3 {
+      color: #2563eb; /* Primary blue for headings */
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+
+    .equation-line {
+      font-family: 'Consolas', 'Monospace';
+      font-size: 1.1em;
+      margin-bottom: 8px;
+      padding-left: 10px;
+    }
+
+    .derivation-step {
+      font-family: 'Consolas', 'Monospace';
+      font-size: 1.05em;
+      margin-bottom: 8px;
+      padding-left: 10px;
+      color: #555;
+    }
+
+    .derivation-step strong {
+      color: #0d47a1; /* Darker blue for emphasis */
+    }
+
+    .final-formula {
+      font-family: 'Consolas', 'Monospace';
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #16a34a; /* Green for final result */
+      margin-top: 10px;
+      text-align: center;
+      background-color: #e6ffed; /* Light green background */
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #16a34a;
+    }
+
+    .calculation-detail {
+      font-size: 0.95em;
+      color: #555;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    .slider-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px; /* Spacing for slider elements */
+    }
+
+    .slider-group label {
+      width: 60px;
+      font-weight: bold;
+      color: #2563eb;
+    }
+
+    .slider-group input[type="range"] {
+      flex-grow: 1;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      -webkit-appearance: none;
+      appearance: none;
+      outline: none;
+    }
+
+    .slider-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2563eb;
+      cursor: grab;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .slider-group input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2563eb;
+      cursor: grab;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .slider-value {
+      width: 70px;
+      text-align: right;
+      font-weight: bold;
+      color: #16a34a;
+    }
+
+    /* Small utility classes for math rendering */
+    .sub { vertical-align: sub; font-size: 0.7em; }
+    .sup { vertical-align: super; font-size: 0.7em; }
+  </style>
+
+  <div class="equation-section">
+    <h3>Original Equations:</h3>
+    <div class="equation-line">1) m<span class="sub">2</span> g - T = m<span class="sub">2</span> a</div>
+    <div class="equation-line">2) T - m<span class="sub">1</span> g sin(&theta;) = m<span class="sub">1</span> a</div>
+  </div>
+
+  <div class="derivation-section">
+    <h3>Algebraic Steps (Solving for 'a'):</h3>
+    <div class="derivation-step"><strong>Add (1) and (2):</strong></div>
+    <div class="derivation-step">(m<span class="sub">2</span> g - T) + (T - m<span class="sub">1</span> g sin(&theta;)) = m<span class="sub">2</span> a + m<span class="sub">1</span> a</div>
+    <div class="derivation-step">m<span class="sub">2</span> g - m<span class="sub">1</span> g sin(&theta;) = (m<span class="sub">1</span> + m<span class="sub">2</span>) a</div>
+    <div class="derivation-step"><strong>Resulting formula for 'a':</strong></div>
+  </div>
+
+  <div class="result-section">
+    <div class="final-formula">
+      a = <span id="numerator-calc"></span> / <span id="denominator-calc"></span>
+      <br>
+      a = <span id="a-value">0.00</span> m/s<span class="sup">2</span>
+    </div>
+    <div class="calculation-detail">Numerator = <span id="numerator-display">0.00</span> N</div>
+    <div class="calculation-detail">Denominator = <span id="denominator-display">0.00</span> kg</div>
+  </div>
+
+  <div class="controls-section">
+    <h3>Parameters:</h3>
+    <div class="slider-group">
+      <label for="m1-slider">m<span class="sub">1</span>:</label>
+      <input type="range" id="m1-slider" min="1" max="10" step="0.1" value="5">
+      <span class="slider-value"><span id="m1-value">5.0</span> kg</span>
+    </div>
+    <div class="slider-group">
+      <label for="m2-slider">m<span class="sub">2</span>:</label>
+      <input type="range" id="m2-slider" min="0.5" max="5" step="0.1" value="2.5">
+      <span class="slider-value"><span id="m2-value">2.5</span> kg</span>
+    </div>
+    <div class="slider-group">
+      <label for="theta-slider">&theta;:</label>
+      <input type="range" id="theta-slider" min="0" max="90" step="1" value="30">
+      <span class="slider-value"><span id="theta-value">30</span> &deg;</span>
+    </div>
+    <div class="slider-group">
+      <label>g:</label>
+      <span class="slider-value">9.8 m/s<span class="sup">2</span></span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const g = 9.8; // Fixed value
+
+      const m1Slider = document.getElementById('m1-slider');
+      const m2Slider = document.getElementById('m2-slider');
+      const thetaSlider = document.getElementById('theta-slider');
+
+      const m1ValueSpan = document.getElementById('m1-value');
+      const m2ValueSpan = document.getElementById('m2-value');
+      const thetaValueSpan = document.getElementById('theta-value');
+
+      const numeratorCalcSpan = document.getElementById('numerator-calc');
+      const denominatorCalcSpan = document.getElementById('denominator-calc');
+      const numeratorDisplaySpan = document.getElementById('numerator-display');
+      const denominatorDisplaySpan = document.getElementById('denominator-display');
+      const aValueSpan = document.getElementById('a-value');
+
+      function updateCalculation() {
+        const m1 = parseFloat(m1Slider.value);
+        const m2 = parseFloat(m2Slider.value);
+        const thetaDegrees = parseFloat(thetaSlider.value);
+        const thetaRadians = thetaDegrees * (Math.PI / 180);
+
+        // Update slider display values
+        m1ValueSpan.textContent = m1.toFixed(1);
+        m2ValueSpan.textContent = m2.toFixed(1);
+        thetaValueSpan.textContent = thetaDegrees;
+
+        // Calculate numerator
+        const numerator = (m2 * g) - (m1 * g * Math.sin(thetaRadians));
+        // Calculate denominator
+        const denominator = m1 + m2;
+
+        // Calculate 'a'
+        let a = numerator / denominator;
+
+        // Update displayed formula with substituted values
+        numeratorCalcSpan.innerHTML = `(${m2.toFixed(1)} &times; ${g.toFixed(1)}) - (${m1.toFixed(1)} &times; ${g.toFixed(1)} &times; sin(${thetaDegrees}&deg;))`;
+        denominatorCalcSpan.innerHTML = `(${m1.toFixed(1)} + ${m2.toFixed(1)})`;
+
+        // Update intermediate results
+        numeratorDisplaySpan.textContent = numerator.toFixed(2);
+        denominatorDisplaySpan.textContent = denominator.toFixed(2);
+
+        // Update final 'a' value
+        aValueSpan.textContent = a.toFixed(2);
+      }
+
+      // Attach event listeners
+      m1Slider.oninput = updateCalculation;
+      m2Slider.oninput = updateCalculation;
+      thetaSlider.oninput = updateCalculation;
+
+      // Initial calculation on load
+      updateCalculation();
+    })();
+  </script>
+</div>

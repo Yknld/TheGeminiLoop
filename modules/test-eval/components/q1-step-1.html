@@ -1,0 +1,237 @@
+<div class="module-container">
+    <style>
+        /* General styling for the module */
+        .module-container {
+            font-family: 'Arial', sans-serif;
+            padding: 15px;
+            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #f0f4f8; /* Light background */
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            height: 420px; /* Compact height */
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Balance Scale Container */
+        .balance-scale {
+            position: relative;
+            width: 100%;
+            max-width: 450px; /* Max width for the scale itself */
+            height: 280px; /* Height for the scale structure */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; /* Push base to bottom */
+            margin-top: 10px;
+        }
+
+        /* Scale Base & Support */
+        .scale-base {
+            width: 100px;
+            height: 20px;
+            background-color: #6b7280;
+            border-radius: 5px;
+            position: absolute;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .scale-support {
+            width: 15px;
+            height: 150px; /* Height of the support post */
+            background-color: #9ca3af;
+            border-radius: 5px;
+            position: absolute;
+            bottom: 15px; /* On top of the base */
+            z-index: 0;
+        }
+
+        .scale-pivot {
+            width: 25px;
+            height: 25px;
+            background-color: #ef4444; /* Red pivot */
+            border-radius: 50%;
+            position: absolute;
+            top: calc(150px - 12.5px); /* On top of support, vertically centered */
+            z-index: 3;
+        }
+
+        /* Scale Beam */
+        .scale-beam {
+            position: absolute;
+            width: 380px; /* Fixed width for the beam */
+            height: 10px;
+            background-color: #a3a3a3;
+            border-radius: 5px;
+            top: calc(150px - 5px); /* Centered with pivot */
+            z-index: 2;
+        }
+
+        /* Pan Assemblies */
+        .pan-assembly {
+            position: absolute;
+            top: calc(150px + 5px); /* Below the beam */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: auto;
+            width: 110px; /* Explicit width for proper positioning */
+        }
+
+        .pan-left-assembly {
+            /* Position the assembly's center at the left end of the beam */
+            left: calc(50% - (380px / 2));
+            transform: translateX(-50%); 
+        }
+
+        .pan-right-assembly {
+            /* Position the assembly's center at the right end of the beam */
+            right: calc(50% - (380px / 2));
+            transform: translateX(50%);
+        }
+
+        .pan-hook {
+            width: 4px;
+            height: 30px;
+            background-color: #a3a3a3;
+            z-index: 4;
+        }
+
+        .pan-visual {
+            width: 110px;
+            min-height: 80px;
+            background-color: #e2e8f0;
+            border: 2px solid #a3a3a3;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: flex-start;
+            gap: 5px;
+            padding: 8px;
+            box-sizing: border-box;
+            margin-top: -2px; /* Overlap slightly with hook for connection */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .pan-group-left {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            /* Animation applied here via JS */
+        }
+
+        /* Weight blocks */
+        .weight-block {
+            width: 30px;
+            height: 30px;
+            background-color: #60a5fa; /* Blue for weights */
+            border: 1px solid #3b82f6;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .x-block {
+            background-color: #16a34a; /* Green for x */
+        }
+
+        /* Equation styles */
+        .equation {
+            font-size: 1.8em;
+            font-weight: normal;
+            color: #333;
+            margin-top: 15px; /* Spacing from scale */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .equation .highlight-add {
+            font-weight: bold;
+            color: #ef4444; /* Red for highlight */
+        }
+
+        /* Animation for left group */
+        @keyframes glowFade {
+            0% { box-shadow: 0 0 0px 0px rgba(255, 0, 0, 0); }
+            20% { box-shadow: 0 0 15px 5px rgba(255, 0, 0, 0.7); } /* Peak glow */
+            80% { box-shadow: 0 0 15px 5px rgba(255, 0, 0, 0.7); } /* Hold glow */
+            100% { box-shadow: 0 0 0px 0px rgba(255, 0, 0, 0); } /* Fade out completely */
+        }
+
+        .left-group-animation {
+            animation: glowFade 3s forwards;
+        }
+    </style>
+
+    <div class="balance-scale">
+        <div class="scale-base"></div>
+        <div class="scale-support"></div>
+        <div class="scale-pivot"></div>
+        <div class="scale-beam"></div>
+
+        <!-- Left Pan Assembly -->
+        <div class="pan-assembly pan-left-assembly">
+            <div class="pan-hook"></div>
+            <div class="pan-visual">
+                <div class="pan-group-left">
+                    <div class="weight-block x-block">x</div>
+                    <div class="weight-block">1</div>
+                    <div class="weight-block">1</div>
+                    <div class="weight-block">1</div>
+                    <div class="weight-block">1</div>
+                    <div class="weight-block">1</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Pan Assembly -->
+        <div class="pan-assembly pan-right-assembly">
+            <div class="pan-hook"></div>
+            <div class="pan-visual">
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+                <div class="weight-block">1</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="equation">
+        <span>x</span>
+        <span class="highlight-add">+ 5</span>
+        <span>= 12</span>
+    </div>
+
+    <script>
+        (function() {
+            const leftPanGroup = document.querySelector('.pan-group-left');
+            if (leftPanGroup) {
+                leftPanGroup.classList.add('left-group-animation');
+            }
+        })();
+    </script>
+</div>

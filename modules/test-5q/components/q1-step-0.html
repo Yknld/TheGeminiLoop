@@ -1,0 +1,437 @@
+<div id="addition-visualization-module" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; border-radius: 12px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); background-color: #f9fafb; display: flex; flex-direction: column; gap: 20px; max-width: 100%; width: 100%; position: relative; overflow: hidden;">
+    <style>
+        #addition-visualization-module .module-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+            flex: 1;
+            transition: all 0.2s ease;
+        }
+
+        #addition-visualization-module .module-section:hover {
+            box-shadow: 0 5px 14px rgba(0, 0, 0, 0.08);
+            /* Removed transform for smoother interaction with '+' symbol */
+        }
+
+        #addition-visualization-module .module-label {
+            font-weight: 600;
+            color: #334155;
+            font-size: 1.05em;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        #addition-visualization-module .circle-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 60px;
+            width: 100%;
+            padding: 8px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            align-content: flex-start;
+            justify-content: center;
+        }
+
+        #addition-visualization-module .circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #addition-visualization-module .circle.blue {
+            background-color: #3b82f6; /* A vibrant blue */
+        }
+
+        #addition-visualization-module .circle.red {
+            background-color: #ef4444; /* A clear red */
+        }
+
+        #addition-visualization-module .circle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        #addition-visualization-module input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: #e2e8f0;
+            outline: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.3s ease;
+        }
+
+        #addition-visualization-module input[type="range"]:hover {
+            background: #cbd5e1;
+        }
+
+        #addition-visualization-module input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        #addition-visualization-module input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        #addition-visualization-module input[type="range"]::-webkit-slider-thumb:hover,
+        #addition-visualization-module input[type="range"]::-moz-range-thumb:hover {
+            background: #2563eb;
+            transform: scale(1.1);
+        }
+
+        #addition-visualization-module .count-display {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #475569;
+            margin-top: 4px;
+        }
+
+        #addition-visualization-module .combine-button {
+            padding: 12px 28px;
+            font-size: 1.1em;
+            font-weight: 600;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+            margin-top: 18px; /* Adjusted space around button */
+            margin-bottom: 18px; /* Adjusted space around button */
+            align-self: center;
+            outline: none;
+        }
+
+        #addition-visualization-module .combine-button:hover:not(:disabled) {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(37, 99, 235, 0.35);
+        }
+
+        #addition-visualization-module .combine-button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #addition-visualization-module .result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px; /* Adjusted margin */
+            gap: 10px; /* Space between result elements */
+        }
+
+        #addition-visualization-module .total-display {
+            font-size: 1.8em; /* Larger font size for total */
+            font-weight: 700;
+            color: #1d4ed8; /* A darker, professional blue for the total */
+            text-align: center;
+            opacity: 0;
+            transform: translateY(15px); /* Initial position for slide-up effect */
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+
+        #addition-visualization-module .total-display.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #addition-visualization-module .explanation {
+            font-style: italic;
+            color: #71717a;
+            text-align: center;
+            margin-top: 0; /* Adjusted margin */
+            opacity: 0;
+            transform: translateY(10px); /* Initial position for slide-up effect */
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+            max-width: 80%; /* Limit width for readability */
+            line-height: 1.5;
+            font-size: 0.95em;
+        }
+
+        #addition-visualization-module .explanation.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* New styles for the combined dots display */
+        #addition-visualization-module .total-circle-group {
+            min-height: 60px; /* Ensure space even when empty */
+            opacity: 0;
+            transform: translateY(20px); /* Initial position for slide-up */
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            margin-top: 5px; /* Spacing from explanation */
+            margin-bottom: 5px; /* Spacing to total display */
+            max-width: 400px; /* Limit width for large number of dots */
+            border: 1px solid #93c5fd; /* Soft blue border, matches slider thumb default border */
+            background-color: #eff6ff; /* Very light blue background for the total */
+        }
+
+        #addition-visualization-module .total-circle-group.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Animation for individual circles appearing in the total group */
+        #addition-visualization-module .total-circle-group .circle {
+            opacity: 0;
+            transform: scale(0.5);
+            animation: fadeInScale 0.4s forwards ease-out; /* Animation for individual circles */
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Styles for the operation symbols (+ and =) */
+        #addition-visualization-module .operation-symbol {
+            font-size: 3em; /* Large and prominent */
+            font-weight: 700;
+            color: #475569; /* Dark grey for symbols */
+            text-align: center;
+            min-width: 50px; /* Give it some width in flex contexts */
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+
+        #addition-visualization-module .operation-symbol.plus-symbol {
+            align-self: center; /* Center it between sections in a row */
+            margin: 0 10px; /* Horizontal spacing for plus */
+            opacity: 1; /* Always visible for '+' */
+            transform: scale(0.9); /* Slightly smaller by default */
+        }
+
+        #addition-visualization-module .operation-symbol.plus-symbol:hover {
+            transform: scale(1); /* Pop on hover */
+        }
+
+        #addition-visualization-module .operation-symbol.equal-symbol {
+            opacity: 0;
+            transform: translateY(20px);
+            margin: 15px 0 0px 0; /* Adjusted space between combine button and result */
+        }
+
+        #addition-visualization-module .operation-symbol.equal-symbol.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #addition-visualization-module .numbers-grid {
+            display: flex;
+            gap: 10px; /* Reduced gap as '+' takes space */
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center; /* Align the '+' vertically */
+        }
+
+        #addition-visualization-module .result-separator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 0; /* Ensure no extra margin from above */
+        }
+
+        @media (max-width: 768px) { /* Adjust breakpoint for symbols */
+            #addition-visualization-module .numbers-grid {
+                flex-direction: column;
+                align-items: center;
+            }
+            #addition-visualization-module .operation-symbol.plus-symbol {
+                margin: 15px 0; /* More vertical space when stacked */
+                font-size: 2.5em; /* Slightly smaller when stacked */
+            }
+            #addition-visualization-module .module-section {
+                width: 90%;
+                max-width: 380px;
+            }
+        }
+    </style>
+
+    <h1 style="font-size: 1.6em; color: #334155; margin-bottom: 8px; text-align: center;">Adding Two Numbers - Step 1</h1>
+    <!-- REMOVED: Unnecessary developer metadata div -->
+
+    <div class="numbers-grid">
+        <div class="module-section">
+            <div class="module-label">Container A (First Number)</div>
+            <div id="circle-group-a" class="circle-group"></div>
+            <span id="count-a-display" class="count-display"></span>
+            <input type="range" id="slider-a" min="0" max="10" value="3">
+        </div>
+
+        <div class="operation-symbol plus-symbol">+</div> <!-- NEW: Plus symbol -->
+
+        <div class="module-section">
+            <div class="module-label">Container B (Second Number)</div>
+            <div id="circle-group-b" class="circle-group"></div>
+            <span id="count-b-display" class="count-display"></span>
+            <input type="range" id="slider-b" min="0" max="10" value="5">
+        </div>
+    </div>
+
+    <button id="combine-btn" class="combine-button">Combine</button>
+
+    <div class="result-separator">
+        <div class="operation-symbol equal-symbol" id="equal-symbol">=</div> <!-- NEW: Equal symbol -->
+    </div>
+
+    <div class="result-container">
+        <div id="explanation" class="explanation"></div>
+        <div id="combined-dots-display" class="circle-group total-circle-group"></div> <!-- NEW: Total visual representation -->
+        <div id="total-display" class="total-display"></div>
+    </div>
+
+    <script>
+        (function() {
+            let firstNum = 3;
+            let secondNum = 5;
+
+            const containerAEl = document.getElementById('circle-group-a');
+            const containerBEl = document.getElementById('circle-group-b');
+            const sliderAEl = document.getElementById('slider-a');
+            const sliderBEl = document.getElementById('slider-b');
+            const countADisplay = document.getElementById('count-a-display');
+            const countBDisplay = document.getElementById('count-b-display');
+            const combineBtn = document.getElementById('combine-btn');
+            const totalDisplayEl = document.getElementById('total-display');
+            const explanationEl = document.getElementById('explanation');
+            const equalSymbolEl = document.getElementById('equal-symbol');
+            const combinedDotsDisplayEl = document.getElementById('combined-dots-display'); // Get the existing combined dots display element
+
+            function createCircle(colorClass) {
+                const circle = document.createElement('div');
+                circle.className = 'circle ' + colorClass;
+                return circle;
+            }
+
+            function renderCircles(containerEl, count, colorClass, countDisplayEl) {
+                containerEl.innerHTML = '';
+                for (let i = 0; i < count; i++) {
+                    containerEl.appendChild(createCircle(colorClass));
+                }
+                countDisplayEl.textContent = count;
+            }
+
+            function init() {
+                sliderAEl.value = firstNum;
+                sliderBEl.value = secondNum;
+
+                renderCircles(containerAEl, firstNum, 'blue', countADisplay);
+                renderCircles(containerBEl, secondNum, 'red', countBDisplay);
+
+                sliderAEl.oninput = function() {
+                    firstNum = parseInt(this.value);
+                    renderCircles(containerAEl, firstNum, 'blue', countADisplay);
+                    resetResult();
+                };
+
+                sliderBEl.oninput = function() {
+                    secondNum = parseInt(this.value);
+                    renderCircles(containerBEl, secondNum, 'red', countBDisplay);
+                    resetResult();
+                };
+
+                combineBtn.onclick = handleCombine;
+
+                // Initial reset to ensure clean state on load
+                resetResult();
+            }
+
+            function resetResult() {
+                // Remove 'visible' class from all result elements to hide them and trigger fade-out
+                totalDisplayEl.classList.remove('visible');
+                explanationEl.classList.remove('visible');
+                equalSymbolEl.classList.remove('visible');
+                combinedDotsDisplayEl.classList.remove('visible'); // Hide combined dots
+
+                // Clear text content and circles immediately
+                totalDisplayEl.textContent = '';
+                explanationEl.textContent = '';
+                combinedDotsDisplayEl.innerHTML = ''; // Clear contents of combined dots element
+            }
+
+            function handleCombine() {
+                // Reset any previous results before displaying new ones
+                resetResult();
+
+                const sum = firstNum + secondNum;
+
+                // Populate the existing combined dots container
+                // combinedDotsDisplayEl.innerHTML is already cleared by resetResult()
+
+                // Add blue circles for the first number
+                for (let i = 0; i < firstNum; i++) {
+                    const circle = createCircle('blue');
+                    circle.style.animationDelay = `${i * 0.04}s`; // Staggered entry animation
+                    combinedDotsDisplayEl.appendChild(circle);
+                }
+                // Add red circles for the second number
+                for (let i = 0; i < secondNum; i++) {
+                    const circle = createCircle('red');
+                    circle.style.animationDelay = `${(firstNum + i) * 0.04}s`; // Continue staggered entry
+                    combinedDotsDisplayEl.appendChild(circle);
+                }
+
+                // Set content for numerical total and explanation
+                totalDisplayEl.textContent = `Total: ${sum}`;
+                explanationEl.textContent = `You combined ${firstNum} blue dots and ${secondNum} red dots to get a total of ${sum} dots.`;
+
+                // Staggered animation for the result elements
+                setTimeout(() => {
+                    equalSymbolEl.classList.add('visible'); // Show '=' first
+                }, 100);
+
+                setTimeout(() => {
+                    explanationEl.classList.add('visible'); // Then explanation text
+                }, 300);
+
+                setTimeout(() => {
+                    combinedDotsDisplayEl.classList.add('visible'); // Then the combined dots visualization
+                }, 600); // Give time for explanation to settle
+
+                setTimeout(() => {
+                    totalDisplayEl.classList.add('visible'); // Finally the numerical total
+                }, 1000); // After dots appear
+            }
+
+            init();
+        })();
+    </script>
+</div>

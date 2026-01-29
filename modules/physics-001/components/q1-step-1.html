@@ -1,0 +1,330 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Arial', sans-serif;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            max-width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 480px; /* Compact height */
+        }
+
+        .module-svg-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: #f8fafc;
+            border-radius: 6px;
+            overflow: hidden; /* Ensure nothing draws outside the container */
+        }
+
+        .module-svg-container svg {
+            width: 100%;
+            height: 100%;
+            max-height: 350px; /* Limit SVG height for compactness */
+            display: block;
+        }
+
+        .module-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-top: 5px;
+        }
+
+        .module-control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .module-control-group label {
+            font-weight: 600;
+            color: #334155;
+            min-width: 40px; /* Ensure labels align */
+        }
+
+        .module-control-group input[type="range"] {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            height: 8px;
+            background: #e0e7ff;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        .module-control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .module-control-group input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .module-value {
+            font-weight: 600;
+            color: #2563eb;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .module-formula-display {
+            background-color: #f0f9ff;
+            border: 1px solid #dbeafe;
+            border-radius: 6px;
+            padding: 10px 15px;
+            font-size: 0.95em;
+            color: #1e40af;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        .module-formula-display div {
+            font-weight: 500;
+        }
+        .module-formula-display .formula-value {
+            font-weight: 700;
+            color: #2563eb;
+        }
+    </style>
+
+    <div class="module-svg-container">
+        <svg viewBox="0 0 500 350" preserveAspectRatio="xMidYMid meet">
+            <!-- Inclined Plane -->
+            <polygon id="inclinePlane" points="50,280 450,280 450,200" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+            
+            <!-- Angle Theta Arc -->
+            <path id="thetaAngleArc" d="" fill="none" stroke="#2563eb" stroke-width="2" />
+            <text id="thetaAngleLabel" x="70" y="260" font-size="14" fill="#2563eb" font-weight="bold">θ</text>
+
+            <!-- Block m1 -->
+            <rect id="blockM1" x="150" y="200" width="60" height="40" rx="4" fill="#a7e6ff" stroke="#2563eb" stroke-width="2" />
+            <text id="m1Label" x="180" y="225" text-anchor="middle" font-size="14" fill="#1e40af" font-weight="bold">m₁</text>
+
+            <!-- Force Vectors -->
+            <!-- m1g (Total gravitational force) - Dark Blue -->
+            <line id="forceM1g" x1="0" y1="0" x2="0" y2="0" stroke="#1e40af" stroke-width="3" marker-end="url(#arrowheadDarkBlue)" />
+            <text id="forceM1gLabel" x="0" y="0" font-size="12" fill="#1e40af" font-weight="bold">m₁g</text>
+
+            <!-- m1g sin(theta) (Parallel component) - Red -->
+            <line id="forceM1gSinTheta" x1="0" y1="0" x2="0" y2="0" stroke="#dc2626" stroke-width="3" marker-end="url(#arrowheadRed)" />
+            <text id="forceM1gSinThetaLabel" x="0" y="0" font-size="12" fill="#dc2626" font-weight="bold">m₁g sin(θ)</text>
+
+            <!-- m1g cos(theta) (Perpendicular component) - Green -->
+            <line id="forceM1gCosTheta" x1="0" y1="0" x2="0" y2="0" stroke="#16a34a" stroke-width="3" marker-end="url(#arrowheadGreen)" />
+            <text id="forceM1gCosThetaLabel" x="0" y="0" font-size="12" fill="#16a34a" font-weight="bold">m₁g cos(θ)</text>
+
+            <!-- Angle between m1g and m1g cos(theta) -->
+            <path id="forceAngleArc" d="" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="3 2" />
+            <text id="forceAngleLabel" x="0" y="0" font-size="12" fill="#6b7280" font-weight="bold">θ</text>
+
+            <!-- Arrowheads -->
+            <defs>
+                <marker id="arrowheadDarkBlue" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3 z" fill="#1e40af" />
+                </marker>
+                <marker id="arrowheadRed" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3 z" fill="#dc2626" />
+                </marker>
+                <marker id="arrowheadGreen" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3 z" fill="#16a34a" />
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="module-controls">
+        <div class="module-control-group">
+            <label for="thetaSlider">θ:</label>
+            <input type="range" id="thetaSlider" min="0" max="90" value="30" step="1">
+            <span id="thetaValue" class="module-value">30°</span>
+        </div>
+        <div class="module-control-group">
+            <label for="m1Slider">m₁:</label>
+            <input type="range" id="m1Slider" min="1" max="10" value="5" step="0.1">
+            <span id="m1Value" class="module-value">5.0 kg</span>
+        </div>
+    </div>
+
+    <div class="module-formula-display">
+        <div>m₁g sin(θ) = <span id="m1gSinThetaValue" class="formula-value">0.00 N</span></div>
+        <div>m₁g cos(θ) = <span id="m1gCosThetaValue" class="formula-value">0.00 N</span></div>
+    </div>
+
+    <script>
+        (function() {
+            const G = 9.81; // Acceleration due to gravity (m/s^2)
+            const forceScale = 2; // Pixels per Newton for vector length
+
+            // SVG elements
+            const inclinePlane = document.getElementById('inclinePlane');
+            const blockM1 = document.getElementById('blockM1');
+            const m1Label = document.getElementById('m1Label');
+            const thetaAngleArc = document.getElementById('thetaAngleArc');
+            const thetaAngleLabel = document.getElementById('thetaAngleLabel');
+
+            const forceM1g = document.getElementById('forceM1g');
+            const forceM1gLabel = document.getElementById('forceM1gLabel');
+            const forceM1gSinTheta = document.getElementById('forceM1gSinTheta');
+            const forceM1gSinThetaLabel = document.getElementById('forceM1gSinThetaLabel');
+            const forceM1gCosTheta = document.getElementById('forceM1gCosTheta');
+            const forceM1gCosThetaLabel = document.getElementById('forceM1gCosThetaLabel');
+            const forceAngleArc = document.getElementById('forceAngleArc');
+            const forceAngleLabel = document.getElementById('forceAngleLabel');
+
+            // Sliders and value displays
+            const thetaSlider = document.getElementById('thetaSlider');
+            const thetaValueSpan = document.getElementById('thetaValue');
+            const m1Slider = document.getElementById('m1Slider');
+            const m1ValueSpan = document.getElementById('m1Value');
+
+            // Formula display
+            const m1gSinThetaValueSpan = document.getElementById('m1gSinThetaValue');
+            const m1gCosThetaValueSpan = document.getElementById('m1gCosThetaValue');
+
+            // Constants for visualization layout
+            const inclineStartX = 50;
+            const inclineStartY = 280;
+            const hypotenuseLength = 300; // Length of the inclined surface
+            const blockWidth = 60;
+            const blockHeight = 40;
+            const blockPosAlongIncline = 0.5; // 50% along the incline
+
+            function updateVisualization() {
+                const theta = parseFloat(thetaSlider.value);
+                const m1 = parseFloat(m1Slider.value);
+                const theta_rad = theta * Math.PI / 180;
+
+                thetaValueSpan.textContent = `${theta}°`;
+                m1ValueSpan.textContent = `${m1.toFixed(1)} kg`;
+
+                // Calculate incline geometry
+                const inclineEndX = inclineStartX + hypotenuseLength * Math.cos(theta_rad);
+                const inclineEndY = inclineStartY - hypotenuseLength * Math.sin(theta_rad);
+                const inclineBottomRightX = inclineEndX; // For right-angled triangle base
+                const inclineBottomRightY = inclineStartY;
+
+                inclinePlane.setAttribute('points', `${inclineStartX},${inclineStartY} ${inclineBottomRightX},${inclineBottomRightY} ${inclineEndX},${inclineEndY}`);
+
+                // Update theta angle label at incline base
+                const arcRadius = 20;
+                const arcStartX = inclineStartX + arcRadius;
+                const arcStartY = inclineStartY;
+                const arcEndX = inclineStartX + arcRadius * Math.cos(theta_rad);
+                const arcEndY = inclineStartY - arcRadius * Math.sin(theta_rad);
+                thetaAngleArc.setAttribute('d', `M${arcStartX} ${arcStartY} A ${arcRadius} ${arcRadius} 0 0 0 ${arcEndX} ${arcEndY}`);
+                thetaAngleLabel.setAttribute('x', inclineStartX + arcRadius * Math.cos(theta_rad / 2) + 5);
+                thetaAngleLabel.setAttribute('y', inclineStartY - arcRadius * Math.sin(theta_rad / 2) - 5);
+
+                // Calculate block position and rotation
+                const blockCenterX = inclineStartX + (hypotenuseLength * blockPosAlongIncline) * Math.cos(theta_rad);
+                const blockCenterY = inclineStartY - (hypotenuseLength * blockPosAlongIncline) * Math.sin(theta_rad);
+
+                const blockRectX = blockCenterX - blockWidth / 2;
+                const blockRectY = blockCenterY - blockHeight / 2;
+
+                blockM1.setAttribute('x', blockRectX);
+                blockM1.setAttribute('y', blockRectY);
+                blockM1.setAttribute('transform', `rotate(${-theta} ${blockCenterX} ${blockCenterY})`);
+                
+                m1Label.setAttribute('x', blockCenterX);
+                m1Label.setAttribute('y', blockCenterY + 5); // Offset label slightly for better visibility
+                m1Label.setAttribute('transform', `rotate(${-theta} ${blockCenterX} ${blockCenterY})`);
+
+                // Calculate force values
+                const m1gValue = m1 * G;
+                const m1gSinThetaValue = m1gValue * Math.sin(theta_rad);
+                const m1gCosThetaValue = m1gValue * Math.cos(theta_rad);
+
+                // Update force vectors
+                // m1g (Total gravitational force)
+                const m1gLength = m1gValue * forceScale;
+                forceM1g.setAttribute('x1', blockCenterX);
+                forceM1g.setAttribute('y1', blockCenterY);
+                forceM1g.setAttribute('x2', blockCenterX);
+                forceM1g.setAttribute('y2', blockCenterY + m1gLength);
+                forceM1gLabel.setAttribute('x', blockCenterX + 10);
+                forceM1gLabel.setAttribute('y', blockCenterY + m1gLength / 2);
+
+                // m1g sin(theta) (Parallel component)
+                const m1gSinLength = m1gSinThetaValue * forceScale;
+                const m1gSinEndX = blockCenterX + m1gSinLength * Math.cos(-theta_rad);
+                const m1gSinEndY = blockCenterY + m1gSinLength * Math.sin(-theta_rad);
+                forceM1gSinTheta.setAttribute('x1', blockCenterX);
+                forceM1gSinTheta.setAttribute('y1', blockCenterY);
+                forceM1gSinTheta.setAttribute('x2', m1gSinEndX);
+                forceM1gSinTheta.setAttribute('y2', m1gSinEndY);
+                forceM1gSinThetaLabel.setAttribute('x', m1gSinEndX + (m1gSinEndX > blockCenterX ? 10 : -50));
+                forceM1gSinThetaLabel.setAttribute('y', m1gSinEndY + (m1gSinEndY > blockCenterY ? 10 : -5));
+
+                // m1g cos(theta) (Perpendicular component)
+                const m1gCosLength = m1gCosThetaValue * forceScale;
+                // Angle of perpendicular component into the incline: -theta - 90 degrees from positive x-axis
+                const m1gCosEndX = blockCenterX + m1gCosLength * Math.cos(-theta_rad - Math.PI / 2);
+                const m1gCosEndY = blockCenterY + m1gCosLength * Math.sin(-theta_rad - Math.PI / 2);
+                forceM1gCosTheta.setAttribute('x1', blockCenterX);
+                forceM1gCosTheta.setAttribute('y1', blockCenterY);
+                forceM1gCosTheta.setAttribute('x2', m1gCosEndX);
+                forceM1gCosTheta.setAttribute('y2', m1gCosEndY);
+                forceM1gCosThetaLabel.setAttribute('x', m1gCosEndX + (m1gCosEndX > blockCenterX ? 10 : -80));
+                forceM1gCosThetaLabel.setAttribute('y', m1gCosEndY + (m1gCosEndY > blockCenterY ? 10 : -5));
+                
+                // Angle between m1g and m1g cos(theta)
+                const forceArcRadius = 25;
+                const m1gAngleRad = Math.PI / 2; // Downward (270 degrees in SVG coords, but standard math is 90)
+                const m1gCosAngleRad = Math.PI / 2 + theta_rad; // Clockwise from downward for into incline
+                
+                const arcStartAngle = Math.PI/2; // Angle of m1g from positive x-axis
+                const arcEndAngle = Math.PI/2 + theta_rad; // Angle of m1g cos(theta)
+                
+                const arcStartRX = blockCenterX + forceArcRadius * Math.cos(arcStartAngle);
+                const arcStartRY = blockCenterY + forceArcRadius * Math.sin(arcStartAngle);
+                const arcEndRX = blockCenterX + forceArcRadius * Math.cos(arcEndAngle);
+                const arcEndRY = blockCenterY + forceArcRadius * Math.sin(arcEndAngle);
+
+                // SVG arc path uses angles from 0 (right) CCW. Down is 90, Down+theta (CW) is 90+theta
+                // For arc: M startX startY A radiusX radiusY angle large-arc-flag sweep-flag endX endY
+                // We want to sweep clockwise from vertical (90 deg) to (90+theta) deg.
+                forceAngleArc.setAttribute('d', `M${arcStartRX} ${arcStartRY} A ${forceArcRadius} ${forceArcRadius} 0 0 1 ${arcEndRX} ${arcEndRY}`);
+                
+                // Label for this angle
+                const midAngle = arcStartAngle + theta_rad / 2;
+                forceAngleLabel.setAttribute('x', blockCenterX + (forceArcRadius + 10) * Math.cos(midAngle));
+                forceAngleLabel.setAttribute('y', blockCenterY + (forceArcRadius + 10) * Math.sin(midAngle));
+
+                // Update formula display
+                m1gSinThetaValueSpan.textContent = `${m1gSinThetaValue.toFixed(2)} N`;
+                m1gCosThetaValueSpan.textContent = `${m1gCosThetaValue.toFixed(2)} N`;
+            }
+
+            // Event listeners
+            thetaSlider.oninput = updateVisualization;
+            m1Slider.oninput = updateVisualization;
+
+            // Initial visualization setup
+            updateVisualization();
+        })();
+    </script>
+</div>

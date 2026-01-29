@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algebra Balance</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #343a40;
+        }
+
+        .module-container {
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 95%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        /* Styles for the title and subtitle, making them more distinct */
+        .module-container .main-title {
+            font-size: 1.6rem;
+            color: #212529;
+            margin-bottom: 8px;
+        }
+        .module-container .sub-title {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0;
+            margin-bottom: 25px; /* Add more space below the sub-title */
+        }
+        .header-separator {
+            border: none;
+            border-top: 1px solid #e9ecef;
+            margin: 25px 0; /* Space above and below separator */
+        }
+
+        /* New styles for the explicit equation display */
+        #equation-display {
+            margin-bottom: 30px; /* Space below the equation and above instruction */
+            background-color: #eaf4ff; /* A soft blue background for the equation */
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid #cce0f6;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .equation-label {
+            font-size: 0.95rem;
+            color: #5a6268;
+            margin: 0 0 8px 0;
+            font-weight: 500;
+        }
+
+        .equation-value {
+            font-size: 2.2rem; /* Larger font size for the equation itself */
+            font-weight: 700;
+            color: #0056b3; /* A darker blue for prominence */
+            margin: 0;
+        }
+
+        #instruction {
+            font-size: 1.05rem; /* Slightly larger instruction text */
+            color: #343a40;
+            margin-bottom: 30px; /* More space between instruction and scale */
+            font-weight: 500;
+        }
+
+        #balance-scale {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Reference max-width for internal positioning calculations */
+            height: 200px; /* Ensure enough height for the scale components */
+            margin: 20px auto;
+        }
+
+        .base {
+            width: 70%; 
+            max-width: 250px; /* Limit base width for better aesthetic proportionality */
+            height: 10px;
+            background-color: #adb5bd;
+            border-radius: 0 0 5px 5px;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+
+        .fulcrum {
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 30px solid #adb5bd;
+            position: absolute;
+            bottom: 10px; /* Sits on top of the base */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        #scale-lever {
+            position: absolute;
+            bottom: 40px; /* Positioned just above the fulcrum's top (10px base + 30px fulcrum height) */
+            left: 50%;
+            transform-origin: center 100%; /* Rotates from its bottom center */
+            width: 350px; /* Fixed width for better visual balance and containment */
+            height: 10px;
+            background-color: #6c757d;
+            border-radius: 5px;
+            transition: transform 0.3s ease-out;
+            transform: translateX(-50%); /* Center the lever horizontally */
+            z-index: 2; 
+        }
+
+        .pan {
+            width: 80px;
+            min-height: 70px; /* Increased min-height for more block space */
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start; /* Blocks stack from top */
+            align-content: flex-start; /* For multiple lines of blocks */
+            padding: 5px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+            position: absolute;
+            bottom: 40px; /* Aligned vertically with the scale-lever's bottom */
+            box-sizing: border-box;
+            cursor: grab;
+            z-index: 3; /* Ensure pans are above the lever */
+        }
+
+        .pan:active {
+            cursor: grabbing;
+        }
+
+        #left-pan {
+            left: calc(50% - 175px); /* Positioned relative to balance-scale, aligning its center with the lever's left end */
+            transform: translateX(-50%); /* Shifts the pan to the left by half its width, effectively centering it on the calculated 'left' point */
+        }
+
+        #right-pan {
+            right: calc(50% - 175px); /* Positioned relative to balance-scale, aligning its center with the lever's right end */
+            transform: translateX(50%); /* Shifts the pan to the right by half its width, effectively centering it on the calculated 'right' point */
+        }
+
+        .block {
+            margin: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            font-size: 0.75rem;
+            cursor: grab;
+        }
+
+        .block:active {
+            cursor: grabbing;
+        }
+
+        .x-block {
+            width: 24px;
+            height: 24px;
+            background-color: #6f42c1;
+            border-radius: 4px;
+        }
+
+        .unit-block {
+            width: 18px;
+            height: 18px;
+            background-color: #198754;
+            border-radius: 50%;
+        }
+
+        #block-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* Increased gap between block groups */
+            margin-top: 25px; /* More space below scale */
+            padding: 10px 0; /* Some padding for blocks */
+            border-top: 1px dashed #e9ecef; /* Visual separator for block palette */
+        }
+
+        .block-group {
+            display: flex;
+            flex-wrap: wrap; /* Allow blocks to wrap if many */
+            gap: 5px;
+            justify-content: center;
+        }
+
+        #feedback {
+            margin-top: 20px; /* More space above feedback */
+            font-weight: 500;
+            font-size: 1rem;
+            min-height: 24px; /* Ensure space for feedback even when empty to prevent layout shifts */
+            color: #dc3545; /* Default for error/imbalance (red) */
+        }
+
+        .balanced {
+            color: #28a745; /* Green for balanced state */
+        }
+
+        #scale-values {
+            display: flex;
+            justify-content: space-between;
+            width: 350px; /* Match scale-lever width for precise alignment */
+            margin: 10px auto 0 auto; /* Center it and add top margin */
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        #scale-values div {
+            flex: 1; /* Allow divs to take equal space */
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="module-container">
+    <!-- Consolidated header: Removed the duplicate title/module info -->
+    <h2 class="main-title">Solving a One-Step Linear Equation - Step 1</h2>
+    <p class="sub-title">Module: test-5q | Q2 | Step 1 of 5</p>
+    <hr class="header-separator">
+
+    <div id="equation-display">
+        <p class="equation-label">Balance the equation:</p>
+        <p class="equation-value">2x = 10</p>
+    </div>
+
+    <div id="instruction">
+        Drag the blocks onto the pans to balance the scale.
+    </div>
+
+    <div id="balance-scale">
+        <div class="fulcrum"></div>
+        <div class="base"></div>
+        <div id="scale-lever"></div>
+        <div id="left-pan" class="pan" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        <div id="right-pan" class="pan" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    </div>
+
+    <div id="scale-values">
+        <div id="left-value">Left: 0x + 0</div>
+        <div id="right-value">Right: 0x + 0</div>
+    </div>
+
+    <div id="block-container">
+        <div class="block-group" id="x-blocks">
+            <div class="block x-block" draggable="true" ondragstart="drag(event)">x</div>
+            <div class="block x-block" draggable="true" ondragstart="drag(event)">x</div>
+            <div class="block x-block" draggable="true" ondragstart="drag(event)">x</div>
+            <div class="block x-block" draggable="true" ondragstart="drag(event)">x</div>
+        </div>
+
+        <div class="block-group" id="unit-blocks">
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+            <div class="block unit-block" draggable="true" ondragstart="drag(event)">1</div>
+        </div>
+    </div>
+
+    <div id="feedback"></div>
+
+    <script>
+        const leftPan = document.getElementById('left-pan');
+        const rightPan = document.getElementById('right-pan');
+        const scaleLever = document.getElementById('scale-lever');
+        const feedback = document.getElementById('feedback');
+        const leftValueDisplay = document.getElementById('left-value');
+        const rightValueDisplay = document.getElementById('right-value');
+
+        // The feedback div should be empty initially as the task is to balance.
+        feedback.textContent = "";
+        feedback.className = ""; // Clear any default classes to prevent incorrect styling
+
+        function updateBalance() {
+            const leftXCount = Array.from(leftPan.children).filter(child => child.classList.contains('x-block')).length;
+            const leftUnitCount = Array.from(leftPan.children).filter(child => child.classList.contains('unit-block')).length;
+            const rightXCount = Array.from(rightPan.children).filter(child => child.classList.contains('x-block')).length;
+            const rightUnitCount = Array.from(rightPan.children).filter(child => child.classList.contains('unit-block')).length;
+
+            const xValue = 5; // Fixed assumption: x weighs 5 for this step (from 2x = 10, so x=5)
+            const leftWeight = leftXCount * xValue + leftUnitCount;
+            const rightWeight = rightXCount * xValue + rightUnitCount;
+
+            leftValueDisplay.textContent = `Left: ${leftXCount}x + ${leftUnitCount}`;
+            rightValueDisplay.textContent = `Right: ${rightXCount}x + ${rightUnitCount}`;
+
+            let tiltAngle = 0;
+            const maxTilt = 10; // Maximum tilt in degrees
+            const weightDifference = leftWeight - rightWeight;
+            
+            // Scale tilt angle based on weight difference, capping at maxTilt
+            tiltAngle = -Math.min(Math.max(weightDifference * 2, -maxTilt), maxTilt); 
+
+            // Logic to determine feedback message and styling
+            if (leftXCount === 0 && leftUnitCount === 0 && rightXCount === 0 && rightUnitCount === 0) {
+                // If both pans are empty, clear feedback (initial state or after clearing all blocks)
+                feedback.textContent = "";
+                feedback.className = "";
+            } else if (weightDifference > 0) {
+                feedback.textContent = "Left side is heavier.";
+                feedback.className = ""; // Reverts to default red color for imbalance
+            } else if (weightDifference < 0) {
+                feedback.textContent = "Right side is heavier.";
+                feedback.className = ""; // Reverts to default red color for imbalance
+            } else { // weightDifference === 0, and not the initial empty state
+                feedback.textContent = "Balanced!";
+                feedback.className = "balanced"; // Applies green color from .balanced class
+            }
+
+            scaleLever.style.transform = `translateX(-50%) rotate(${tiltAngle}deg)`;
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            // Clone the element for dragging so the original remains in the palette
+            const clone = ev.target.cloneNode(true);
+            clone.removeAttribute('ondragstart'); // Prevent cloning the drag event handler
+            clone.style.pointerEvents = 'none'; // Make the clone non-interactive during drag
+            ev.dataTransfer.setData("text/html", clone.outerHTML);
+            // Optionally, set data for block type if complex logic is needed in drop
+            ev.dataTransfer.setData("text/plain", ev.target.classList.contains('x-block') ? 'x-block' : 'unit-block'); 
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const dataHtml = ev.dataTransfer.getData("text/html");
+            const element = document.createRange().createContextualFragment(dataHtml); // Creates a document fragment from HTML string
+            const target = ev.target.closest('.pan'); // Find the closest parent element with class 'pan'
+
+            if (target) { // Ensure the drop target is indeed a pan
+                target.appendChild(element); // Append the cloned block to the pan
+                updateBalance(); // Update balance after dropping a block
+            }
+        }
+        
+        // Initial balance check to set display values and scale state when component loads.
+        // The feedback will be cleared by the updateBalance function's initial state check.
+        updateBalance(); 
+    </script>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,343 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Arial', sans-serif;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #ffffff;
+        }
+
+        .visualization-area {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 2 / 1; 
+            overflow: hidden; 
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible; 
+        }
+
+        .incline-line {
+            stroke: #4a4a4a;
+            stroke-width: 3;
+        }
+
+        .block {
+            fill: #60a5fa; /* light blue */
+            stroke: #2563eb;
+            stroke-width: 1;
+        }
+
+        .vector-T {
+            stroke: #ef4444; /* red */
+            stroke-width: 3;
+            fill: none;
+            marker-end: url(#arrowhead-T);
+        }
+
+        .vector-mg-sin-theta {
+            stroke: #1e3a8a; /* dark blue */
+            stroke-width: 3;
+            fill: none;
+            marker-end: url(#arrowhead-mg-sin-theta);
+        }
+
+        .vector-a {
+            stroke: #f97316; /* orange */
+            stroke-width: 3;
+            fill: none;
+            marker-end: url(#arrowhead-a);
+        }
+
+        .vector-label {
+            font-size: 14px;
+            font-weight: bold;
+            fill: #333;
+            user-select: none;
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .slider-group label {
+            font-weight: bold;
+            color: #333;
+            min-width: 60px; 
+        }
+
+        .slider-group input[type="range"] {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #d1d5db;
+            outline: none;
+            border-radius: 4px;
+            cursor: grab;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-value {
+            min-width: 50px;
+            text-align: right;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .equation-display {
+            background-color: #f0f8ff; 
+            border: 1px solid #d0e8f8;
+            border-radius: 6px;
+            padding: 12px 15px;
+            font-family: 'Times New Roman', serif; 
+            font-size: 1.1em;
+            text-align: center;
+            color: #000;
+            white-space: nowrap; 
+            overflow-x: auto; 
+        }
+        
+        .equation-display strong {
+            color: #1e40af; 
+        }
+
+        .label-m1 { fill: #2563eb; } 
+        .label-theta { fill: #16a34a; } 
+        .label-T { fill: #ef4444; }
+        .label-mg-sin-theta { fill: #1e3a8a; }
+        .label-a { fill: #f97316; }
+
+        .ground-line {
+            stroke: #666;
+            stroke-width: 2;
+        }
+        .angle-arc {
+            stroke: #16a34a; /* green */
+            stroke-width: 2;
+            fill: none;
+        }
+        .angle-label {
+            font-size: 14px;
+            font-weight: bold;
+            fill: #16a34a; /* green */
+            user-select: none;
+        }
+
+    </style>
+    <div class="visualization-area">
+        <svg viewBox="0 0 500 250">
+            <defs>
+                <marker id="arrowhead-T" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" />
+                </marker>
+                <marker id="arrowhead-mg-sin-theta" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#1e3a8a" />
+                </marker>
+                <marker id="arrowhead-a" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#f97316" />
+                </marker>
+            </defs>
+
+            <!-- Ground line -->
+            <line x1="0" y1="200" x2="500" y2="200" class="ground-line"></line>
+            
+            <!-- This group rotates everything on the incline -->
+            <g id="incline-system" transform="translate(50, 200) rotate(-30)"> 
+                <!-- Inclined plane -->
+                <line x1="0" y1="0" x2="400" y2="0" class="incline-line"></line>
+
+                <!-- Block m1 -->
+                <rect id="block-m1" x="100" y="-20" width="40" height="40" class="block"></rect>
+                <text id="label-m1-on-block" x="120" y="5" text-anchor="middle" class="vector-label label-m1">m&#8321;</text>
+
+                <!-- Tension vector T (up incline) -->
+                <line id="vector-T" x1="120" y1="-20" x2="180" y2="-20" class="vector-T"></line>
+                <text id="label-T" x="150" y="-25" text-anchor="middle" class="vector-label label-T">T</text>
+
+                <!-- Gravitational component vector mg sin theta (down incline) -->
+                <line id="vector-mg-sin-theta" x1="120" y1="20" x2="60" y2="20" class="vector-mg-sin-theta"></line>
+                <text id="label-mg-sin-theta" x="90" y="35" text-anchor="middle" class="vector-label label-mg-sin-theta">m&#8321;g sin(&#952;)</text>
+
+                <!-- Acceleration vector a (up incline) -->
+                <line id="vector-a" x1="120" y1="-45" x2="160" y2="-45" class="vector-a"></line>
+                <text id="label-a" x="140" y="-50" text-anchor="middle" class="vector-label label-a">a</text>
+            </g>
+
+            <!-- Angle arc -->
+            <path id="angle-arc" class="angle-arc"></path>
+            <text id="label-theta-diagram" x="65" y="185" text-anchor="middle" class="angle-label label-theta">&#952;</text>
+        </svg>
+    </div>
+    <div class="equation-display">
+        Equation of motion: &nbsp; <span class="label-T">T</span> - <span id="equation-m1-val-1" class="label-m1">5.0</span> g sin(<span id="equation-theta-val" class="label-theta">30&deg;</span>) = <span id="equation-m1-val-2" class="label-m1">5.0</span> <span class="label-a">a</span>
+    </div>
+    <div class="controls">
+        <div class="slider-group">
+            <label for="m1-slider">m&#8321; (kg):</label>
+            <input type="range" id="m1-slider" min="1" max="10" step="0.1" value="5">
+            <span id="m1-value" class="slider-value">5.0 kg</span>
+        </div>
+        <div class="slider-group">
+            <label for="theta-slider">&#952; (deg):</label>
+            <input type="range" id="theta-slider" min="0" max="90" step="1" value="30">
+            <span id="theta-value" class="slider-value">30&deg;</span>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const G = 9.8; // m/s^2
+
+    // DOM elements
+    const m1Slider = document.getElementById('m1-slider');
+    const thetaSlider = document.getElementById('theta-slider');
+    const m1ValueSpan = document.getElementById('m1-value');
+    const thetaValueSpan = document.getElementById('theta-value');
+
+    const inclineSystem = document.getElementById('incline-system');
+    const vectorT = document.getElementById('vector-T');
+    const labelT = document.getElementById('label-T');
+    const vectorMgSinTheta = document.getElementById('vector-mg-sin-theta');
+    const labelMgSinTheta = document.getElementById('label-mg-sin-theta');
+    const vectorA = document.getElementById('vector-a');
+    const labelA = document.getElementById('label-a');
+    
+    const labelThetaDiagram = document.getElementById('label-theta-diagram');
+    const angleArc = document.getElementById('angle-arc');
+
+    const equationM1Val1 = document.getElementById('equation-m1-val-1');
+    const equationM1Val2 = document.getElementById('equation-m1-val-2');
+    const equationThetaVal = document.getElementById('equation-theta-val');
+
+    // Vector drawing parameters
+    const BLOCK_CENTER_X = 120; // X position of block center on the incline (relative to incline system's origin)
+    const BLOCK_CENTER_Y = 0;   // Y position of block center on the incline (relative to incline system's origin)
+    const INCLINE_BASE_X = 50;  // X-coord of incline base in SVG viewBox
+    const INCLINE_BASE_Y = 200; // Y-coord of incline base in SVG viewBox
+
+    // Max value for mg_sin_theta for scaling its vector length
+    // m1_max * G * sin(theta_max) = 10 * 9.8 * sin(90deg) = 98 N
+    const MAX_MG_SIN_THETA_VALUE = 10 * G * 1; 
+    const MAX_VECTOR_DISPLAY_LENGTH = 80; // Max pixels for mg_sin_theta vector
+
+    const VECTOR_T_LENGTH = 60; // Fixed visual length for T vector
+    const VECTOR_A_LENGTH = 40; // Fixed visual length for a vector
+    const VECTOR_OFFSET_Y = 20; // Offset from block center for vectors
+
+    function updateVisualization() {
+        const m1 = parseFloat(m1Slider.value);
+        let thetaDeg = parseFloat(thetaSlider.value);
+        const thetaRad = thetaDeg * Math.PI / 180;
+
+        m1ValueSpan.textContent = m1.toFixed(1) + ' kg';
+        thetaValueSpan.textContent = thetaDeg + '\xB0'; // Unicode for degree symbol
+
+        // Update inclined plane rotation
+        inclineSystem.setAttribute('transform', `translate(${INCLINE_BASE_X}, ${INCLINE_BASE_Y}) rotate(${-thetaDeg})`);
+
+        // Calculate mg sin(theta) and scale its vector length
+        const mgSinThetaValue = m1 * G * Math.sin(thetaRad);
+        const mgSinThetaDisplayLength = (mgSinThetaValue / MAX_MG_SIN_THETA_VALUE) * MAX_VECTOR_DISPLAY_LENGTH;
+
+        // Ensure minimum length for visibility, especially when value is near zero
+        const minVectorLength = 10; 
+        const actualMgSinThetaDisplayLength = Math.max(minVectorLength, mgSinThetaDisplayLength);
+
+        // Update mg sin(theta) vector (down incline)
+        vectorMgSinTheta.setAttribute('x1', BLOCK_CENTER_X);
+        vectorMgSinTheta.setAttribute('y1', BLOCK_CENTER_Y + VECTOR_OFFSET_Y);
+        vectorMgSinTheta.setAttribute('x2', BLOCK_CENTER_X - actualMgSinThetaDisplayLength);
+        vectorMgSinTheta.setAttribute('y2', BLOCK_CENTER_Y + VECTOR_OFFSET_Y);
+        labelMgSinTheta.setAttribute('x', BLOCK_CENTER_X - actualMgSinThetaDisplayLength / 2);
+        labelMgSinTheta.setAttribute('y', BLOCK_CENTER_Y + VECTOR_OFFSET_Y + 15);
+
+        // Update T vector (up incline, fixed length)
+        vectorT.setAttribute('x1', BLOCK_CENTER_X);
+        vectorT.setAttribute('y1', BLOCK_CENTER_Y - VECTOR_OFFSET_Y);
+        vectorT.setAttribute('x2', BLOCK_CENTER_X + VECTOR_T_LENGTH);
+        vectorT.setAttribute('y2', BLOCK_CENTER_Y - VECTOR_OFFSET_Y);
+        labelT.setAttribute('x', BLOCK_CENTER_X + VECTOR_T_LENGTH / 2);
+        labelT.setAttribute('y', BLOCK_CENTER_Y - VECTOR_OFFSET_Y - 5);
+
+        // Update a vector (up incline, fixed length, slightly above T)
+        vectorA.setAttribute('x1', BLOCK_CENTER_X);
+        vectorA.setAttribute('y1', BLOCK_CENTER_Y - VECTOR_OFFSET_Y - 25);
+        vectorA.setAttribute('x2', BLOCK_CENTER_X + VECTOR_A_LENGTH);
+        vectorA.setAttribute('y2', BLOCK_CENTER_Y - VECTOR_OFFSET_Y - 25);
+        labelA.setAttribute('x', BLOCK_CENTER_X + VECTOR_A_LENGTH / 2);
+        labelA.setAttribute('y', BLOCK_CENTER_Y - VECTOR_OFFSET_Y - 30);
+
+        // Update angle arc and label
+        const arcRadius = 20;
+        const xArcEnd = INCLINE_BASE_X + arcRadius * Math.cos(thetaRad);
+        const yArcEnd = INCLINE_BASE_Y - arcRadius * Math.sin(thetaRad);
+        
+        // Arc path: M (start) A (rx ry x-axis-rotation large-arc-flag sweep-flag) (end)
+        angleArc.setAttribute('d', `M ${INCLINE_BASE_X + arcRadius} ${INCLINE_BASE_Y} A ${arcRadius} ${arcRadius} 0 0 0 ${xArcEnd} ${yArcEnd}`);
+        
+        // Position angle label
+        const labelArcRadius = arcRadius + 10;
+        const labelX = INCLINE_BASE_X + labelArcRadius * Math.cos(thetaRad / 2);
+        const labelY = INCLINE_BASE_Y - labelArcRadius * Math.sin(thetaRad / 2) + 5; 
+
+        labelThetaDiagram.setAttribute('x', labelX);
+        labelThetaDiagram.setAttribute('y', labelY);
+
+        // Hide arc and label if theta is 0
+        if (thetaDeg === 0) {
+            angleArc.style.display = 'none';
+            labelThetaDiagram.style.display = 'none';
+        } else {
+            angleArc.style.display = 'block';
+            labelThetaDiagram.style.display = 'block';
+        }
+
+        // Update equation display with numerical values
+        equationM1Val1.textContent = m1.toFixed(1);
+        equationM1Val2.textContent = m1.toFixed(1);
+        equationThetaVal.textContent = thetaDeg + '\xB0'; // Display degree symbol
+    }
+
+    // Event listeners
+    m1Slider.addEventListener('input', updateVisualization);
+    thetaSlider.addEventListener('input', updateVisualization);
+
+    // Initial visualization call
+    updateVisualization();
+})();
+</script></div>

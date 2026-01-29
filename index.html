@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="gemini-api-key" content="AIzaSyDA-rWxab0kt41jbIhJk0cv_7SYxdhbmUI">
+    <!-- Supabase configuration for TTS Edge Function -->
+    <meta name="supabase-url" content="https://euxfugfzmpsemkjpcpuz.supabase.co">
+    <meta name="supabase-anon-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1eGZ1Z2Z6bXBzZW1ranBjcHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMDkyMDYsImV4cCI6MjA4MzU4NTIwNn0.bsfC3T5WoUhGrS-6VuowULRHciY7BpzMCBQ3F4fZFRI">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;">
+    <title>Interactive Homework Solver</title>
+    
+    <!-- MathJax for rendering LaTeX math notation -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'no-math',
+                enableMenu: true,  // Enable right-click menu
+                menuOptions: {
+                    settings: {
+                        assistiveMml: true  // Add accessible MathML for screen readers and better selection
+                    }
+                }
+            },
+            chtml: {
+                displayAlign: 'left',
+                displayIndent: '0'
+            }
+        };
+    </script>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="homework-styles.css?v=1769522898">
+</head>
+<body>
+    <!-- Loading Overlay DISABLED -->
+    <div class="loading-overlay hidden" id="loading-overlay" style="display: none !important;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Generating Solutions...</div>
+        <div class="loading-progress" id="loading-progress">Preparing questions...</div>
+    </div>
+
+    <!-- Ask Gemini Tooltip -->
+    <div class="ask-gemini-tooltip" id="ask-gemini-tooltip" style="display: none;">
+        <span class="ask-gemini-tooltip-text">Ask Gemini</span>
+    </div>
+
+    <div class="container">
+        <!-- Question Navigation -->
+        <div class="question-nav">
+            <div class="question-nav-info">
+                <div class="question-selector">
+                    <label for="question-select">Question:</label>
+                    <select id="question-select">
+                        <option value="0">Question 1</option>
+                    </select>
+                </div>
+                <div class="question-counter" id="question-counter">1 of 1</div>
+            </div>
+            <div class="question-nav-buttons">
+                <button class="question-nav-btn" id="prev-question-btn" onclick="previousQuestion()">← Previous</button>
+                <button class="question-nav-btn" id="next-question-btn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+
+        <!-- Problem Statement Section -->
+        <div class="problem-section" id="problem-section">
+            <div class="problem-content">
+                <h2 id="problem-title">Homework Problem</h2>
+                <div class="problem-text" id="problem-text">
+                    Problem description will appear here.
+                </div>
+                <img id="problem-image" class="problem-image" src="" alt="" style="display: none;">
+            </div>
+            <div class="problem-visualizer" id="problem-visualizer">
+                <div class="problem-visualizer-content" id="problem-visualizer-content">
+                    <p style="color: var(--text-secondary); text-align: center;">Generating visualization...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Section (hidden by default) -->
+        <div class="video-section" style="display: none;">
+            <div class="video-wrapper">
+                <iframe 
+                    id="youtube-video"
+                    src=""
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+                <button class="video-audio-control" id="video-audio-btn" onclick="toggleVideoAudio()">🔊 Video Audio</button>
+            </div>
+            <audio id="video-audio" preload="none"></audio>
+        </div>
+
+        <!-- Steps Container -->
+        <div class="steps-container">
+            <h3>Solution Steps</h3>
+            <div class="steps-list" id="steps-list">
+                <!-- Steps will be dynamically generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Gemini Chatbot -->
+    <div class="chatbot-container">
+        <div class="chatbot-panel" id="chatbot-panel">
+            <div class="chatbot-header">
+                <div>
+                    <span>Live Tutor</span>
+                    <div class="chatbot-status" id="chatbot-status">
+                        <span class="status-dot offline" id="status-dot"></span>
+                        <span id="status-text">Offline</span>
+                    </div>
+                </div>
+                <button class="chatbot-close" id="chatbot-close" aria-label="Close chat">×</button>
+            </div>
+            <div class="chatbot-messages" id="chatbot-messages">
+                <div class="chatbot-message bot">
+                    Hello! I'm your Gemini assistant. How can I help you with this homework problem?
+                </div>
+            </div>
+            <div class="chatbot-input-container">
+                <textarea 
+                    class="chatbot-input" 
+                    id="chatbot-input"
+                    placeholder="Ask me anything..."
+                    autocomplete="off"
+                    rows="1"
+                ></textarea>
+                <button class="chatbot-send" id="chatbot-send">Send</button>
+            </div>
+        </div>
+        <button class="chatbot-button" id="chatbot-button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Resources Modal -->
+    <div class="resources-modal" id="resources-modal">
+        <div class="resources-modal-content">
+            <div class="resources-modal-header">
+                <h3 id="resources-modal-title">Learning Resources</h3>
+                <button class="resources-modal-close" id="resources-modal-close">&times;</button>
+            </div>
+            <div id="resources-modal-body">
+                <div class="resources-loading">Loading resources...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Viewer Modal -->
+    <div class="module-modal" id="module-modal">
+        <div class="module-modal-content">
+            <div class="module-modal-header">
+                <h3 id="module-modal-title">Interactive Module</h3>
+                <button class="module-modal-close" id="module-modal-close">&times;</button>
+            </div>
+            <div class="module-modal-body" id="module-modal-body">
+                <!-- Module content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="homework-app.js?v=1769409000"></script>
+    
+    <!-- Load Module on Page Load -->
+    <script>
+        // Auto-load module(s) when page loads
+        // Use ?module=MODULE_ID for single module
+        // Use ?modules=id1,id2,id3 for multiple modules
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Wait for homework-app.js to be ready
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            const waitForHomeworkApp = () => {
+                return new Promise((resolve, reject) => {
+                    const checkReady = () => {
+                        attempts++;
+                        if (typeof window.loadHomeworkFromModule === 'function') {
+                            console.log('✅ homework-app.js is ready');
+                            resolve();
+                        } else if (attempts >= maxAttempts) {
+                            reject(new Error('homework-app.js failed to load'));
+                        } else {
+                            setTimeout(checkReady, 100);
+                        }
+                    };
+                    checkReady();
+                });
+            };
+            
+            try {
+                await waitForHomeworkApp();
+            } catch (error) {
+                console.error('❌ Error waiting for homework-app.js:', error);
+                alert('Failed to load homework application. Please refresh the page.');
+                return;
+            }
+            
+            // Get module from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const moduleId = urlParams.get('module');
+            
+            if (!moduleId) {
+                console.error('❌ No module specified in URL. Use ?module=MODULE_ID');
+                alert('No module specified. Add ?module=MODULE_ID to the URL\n\nExample: ?module=test-5q');
+                return;
+            }
+            
+            console.log(`📂 [DOMContentLoaded] Loading module: ${moduleId}`);
+            try {
+                await loadHomeworkFromModule(moduleId);
+                console.log('✅ [DOMContentLoaded] Module loading complete');
+            } catch (error) {
+                console.error('❌ [DOMContentLoaded] Error loading module:', error);
+                // Hide loading overlay on error
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) overlay.classList.add('hidden');
+                alert('Failed to load module: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

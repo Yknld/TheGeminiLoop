@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .viewer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .module-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .module-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        
+        .module-info {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        #component-container {
+            width: 100%;
+            min-height: 400px;
+        }
+        
+        .error {
+            padding: 20px;
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 8px;
+            color: #c00;
+        }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <div class="module-header">
+            <div class="module-title" id="module-title">Module Component Viewer</div>
+            <div class="module-info" id="module-info">Loading...</div>
+        </div>
+        <div id="component-container"></div>
+    </div>
+    
+    <script>
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const moduleId = urlParams.get('module');
+        const stepIndex = parseInt(urlParams.get('step') || '0');
+        
+        async function loadComponent() {
+            if (!moduleId) {
+                document.getElementById('component-container').innerHTML = 
+                    '<div class="error">No module specified. Use ?module=MODULE_ID&step=STEP_INDEX</div>';
+                return;
+            }
+            
+            try {
+                // Load manifest
+                const cacheBuster = `?_t=${Date.now()}`;
+                const manifestResponse = await fetch(`modules/${moduleId}/manifest.json${cacheBuster}`);
+                if (!manifestResponse.ok) {
+                    throw new Error(`Module not found: ${moduleId}`);
+                }
+                const manifest = await manifestResponse.json();
+                
+                // Handle v2.0 multi-question manifests
+                let question, steps;
+                const questionIndex = parseInt(urlParams.get('question') || '0');
+                
+                if (manifest.version === "2.0" && manifest.questions) {
+                    question = manifest.questions[questionIndex];
+                    steps = question.steps;
+                } else {
+                    question = manifest;
+                    steps = manifest.steps;
+                }
+                
+                // Update header
+                document.getElementById('module-title').textContent = 
+                    `${question.problem.title} - Step ${stepIndex + 1}`;
+                document.getElementById('module-info').textContent = 
+                    `Module: ${moduleId} ${manifest.version === "2.0" ? `| Q${questionIndex + 1}` : ''} | Step ${stepIndex + 1} of ${steps.length}`;
+                
+                // Get step
+                const step = steps[stepIndex];
+                if (!step) {
+                    throw new Error(`Step ${stepIndex} not found`);
+                }
+                
+                // Load component based on type
+                const container = document.getElementById('component-container');
+                
+                if (step.visualizationType === 'interactive') {
+                    // Load from component file (v2.0 uses qX-step-Y naming)
+                    const componentPath = step.component || 
+                        (manifest.version === "2.0" ? `components/q${questionIndex + 1}-step-${stepIndex}.html` : `components/step-${stepIndex}.html`);
+                    // Add cache-busting to always get fresh version
+                    const cacheBuster = `?_t=${Date.now()}`;
+                    const componentResponse = await fetch(`modules/${moduleId}/${componentPath}${cacheBuster}`);
+                    if (!componentResponse.ok) {
+                        throw new Error(`Component not found: ${componentPath}`);
+                    }
+                    const componentHTML = await componentResponse.text();
+                    
+                    // Parse and extract body content
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = componentHTML;
+                    
+                    const bodyContent = tempDiv.querySelector('body');
+                    const styleElements = tempDiv.querySelectorAll('style');
+                    
+                    // Clear and rebuild
+                    container.innerHTML = '';
+                    
+                    // Add styles
+                    styleElements.forEach(style => container.appendChild(style.cloneNode(true)));
+                    
+                    // Add body content
+                    if (bodyContent) {
+                        Array.from(bodyContent.childNodes).forEach(node => {
+                            container.appendChild(node.cloneNode(true));
+                        });
+                    } else {
+                        container.innerHTML = componentHTML;
+                    }
+                    
+                    // Re-execute scripts (SAME AS homework-app.js)
+                    const scripts = container.querySelectorAll('script');
+                    
+                    // Re-execute scripts after DOM is ready
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        if (oldScript.src) {
+                            newScript.src = oldScript.src;
+                        } else {
+                            newScript.textContent = oldScript.textContent;
+                        }
+                        container.appendChild(newScript);
+                    });
+                    
+                } else if (step.visualizationType === 'image') {
+                    // Load SVG image from manifest path (supports v2.0)
+                    const visualPath = step.visual || 
+                        (manifest.version === "2.0" ? `visuals/q${questionIndex + 1}-step-${stepIndex}.svg` : `visuals/step-${stepIndex}.svg`);
+                    const cacheBuster = `?_t=${Date.now()}`;
+                    const imageResponse = await fetch(`modules/${moduleId}/${visualPath}${cacheBuster}`);
+                    if (imageResponse.ok) {
+                        const svg = await imageResponse.text();
+                        container.innerHTML = svg;
+                    } else {
+                        container.innerHTML = `<div class="error">Image not found: ${visualPath}<br><small>Expected at: modules/${moduleId}/${visualPath}</small></div>`;
+                    }
+                } else {
+                    container.innerHTML = `<div class="error">No visualization available for this step<br><small>Type: ${step.visualizationType || 'unknown'}</small></div>`;
+                }
+                
+            } catch (error) {
+                console.error('Error loading component:', error);
+                document.getElementById('component-container').innerHTML = 
+                    `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Load on page load
+        loadComponent();
+    </script>
+</body>
+</html>

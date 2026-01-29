@@ -1,0 +1,88 @@
+{
+  "id": "test-eval",
+  "questions": [
+    {
+      "id": 0,
+      "problem": {
+        "title": "Solving a One-Step Linear Equation",
+        "text": "Find the value of $x$ if $x + 5 = 12$",
+        "image": null,
+        "visualization": "problem-viz-q1.svg"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "The primary goal when solving an algebraic equation like $x + 5 = 12$ is to determine the value of the unknown variable, in this case, $x$. To achieve this, you need to isolate $x$ on one side of the equation. Think of an equation as a perfectly balanced scale: whatever operation you perform on one side, you must also perform on the other to maintain this balance.",
+          "inputLabel": "What is the main objective when solving for a variable in an equation?",
+          "inputPlaceholder": "Type your answer here...",
+          "correctAnswer": "isolate x|isolate the variable|find x|solve for x|get x by itself|get the variable by itself|determine x|determine the variable|isolate the unknown",
+          "audioExplanation": "This visualization helps you understand the fundamental goal of algebra: isolating the unknown variable. You're trying to get $x$ all by itself on one side of the equation. The balanced scale shows you visually that an equation is like a perfect balance, and our goal is to find what value of $x$ makes it true while keeping the scale level.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display a simple, classic-style balance scale. On the left pan, show a blue rectangular block labeled \"x\" and 5 small, identical green spherical weights, each labeled \"1\". On the right pan, show 12 small, identical green spherical weights, each labeled \"1\". The scale should be perfectly balanced horizontally. Below the scale, display the equation \"$x + 5 = 12$\" prominently. Include a dynamic text box beneath the equation that says \"Goal: Isolate x\". This initial state is static, meant to visually represent the problem setup. No interactive controls for the user at this point, just a clear visual representation of the equation as a balanced system.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q1-step-0.html",
+          "visual": null
+        },
+        {
+          "id": 1,
+          "explanation": "In the given equation, $x + 5 = 12$, you can see that the number $5$ is being added to the variable $x$. To begin the process of isolating $x$, we first need to identify this operation so we know how to \"undo\" it.",
+          "inputLabel": "What mathematical operation is currently being applied to $x$ in the equation $x + 5 = 12$?",
+          "inputPlaceholder": "Type your answer here (e.g., addition, subtraction, multiplication, division)...",
+          "correctAnswer": "addition|add|plus",
+          "audioExplanation": "By observing the equation on the screen, you can clearly see that the number 5 is being added to $x$. This step helps you identify the specific mathematical operation directly affecting your variable. The balance scale visualizes $x$ and 5 units together, showing that they are combined, which is what addition represents, making it clear what operation needs to be addressed first.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Continue from the previous balance scale visualization. The scale should still show \"x\" and 5 weights on the left, and 12 weights on the right, perfectly balanced. Below the scale, highlight the \"$+ 5$\" part of the equation \"$x + 5 = 12$\" by making it bold and changing its color to red. Additionally, on the left pan of the scale, briefly animate a glowing red outline around the group consisting of the \"x\" block and the five \"1\" weights, visually emphasizing that they are linked by the addition operation. This visual cue should quickly fade after a few seconds. No user interaction is required for this step, just a visual highlight.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q1-step-1.html",
+          "visual": null
+        },
+        {
+          "id": 2,
+          "explanation": "To undo an operation and isolate the variable, you must apply its inverse operation. For addition, the inverse operation is subtraction. Therefore, to undo the \"$+ 5$\" on the left side of the equation, you will need to subtract $5$.",
+          "inputLabel": "What is the inverse operation of addition?",
+          "inputPlaceholder": "Type your answer here...",
+          "correctAnswer": "subtraction|subtract|minus",
+          "audioExplanation": "Understanding inverse operations is crucial for solving equations. This step visually reinforces that subtraction is the opposite of addition. The visualization helps you think about how to \"remove\" those 5 extra units from the side of $x$ to begin isolating it. You are conceptualizing the action you will take to maintain balance and get $x$ alone on the scale.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display the balance scale setup as before ($x+5$ on left, $12$ on right, balanced). Below the equation \"$x + 5 = 12$\", add a new line of text that reads: \"To undo $+5$, we will use the inverse operation: Subtraction.\". Animate five of the green \"1\" weights being removed from the left pan of the scale one by one, shrinking and fading away. As this happens, the left pan of the scale should visibly rise, indicating an imbalance, but no weights should yet be removed from the right. A temporary large \"$-5$\" label should appear near the left pan as the weights disappear. This step visually demonstrates applying the inverse operation to one side and the resulting imbalance.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q1-step-2.html",
+          "visual": null
+        },
+        {
+          "id": 3,
+          "explanation": "To maintain the balance of the equation (or the scale), any operation you perform on one side must also be performed on the other side. Since we subtracted $5$ from the left side to start isolating $x$, we must also subtract $5$ from the right side of the equation. This ensures the equality remains true.",
+          "inputLabel": "To maintain balance, what operation should you perform on *both* sides of the equation?",
+          "inputPlaceholder": "e.g., \"subtract 5\", \"add 3\"",
+          "correctAnswer": "subtract 5|subtract five|minus 5|minus five|-5",
+          "audioExplanation": "This is a critical step in algebra: maintaining balance. The interactive balance scale makes it perfectly clear why you must apply the same operation to both sides. If you remove 5 units from one side, you must remove 5 from the other to keep the scale level. This visualization helps you grasp the concept of algebraic equivalence, ensuring that your transformed equation remains true and balanced.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Start with the balance scale showing 'x' on the left pan and 7 '1' weights on the right pan, *already balanced*. (The previous step's animation of removing weights from the left, then from the right, and rebalancing should have led to this state.) The equation should dynamically update below the scale to show: \"$x + 5 - 5 = 12 - 5$\". Now, visually animate the '$- 5$' operation by having five '1' weights from the right pan of the scale shrink and fade away one by one, similar to the left side. As they disappear, show a temporary '$- 5$' label appear near the right pan. Once the weights are removed from the right, the scale should rebalance, emphasizing that the operation was applied to both sides. The equation text should then simplify slightly to \"$x = 12 - 5$\".",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q1-step-3.html",
+          "visual": null
+        },
+        {
+          "id": 4,
+          "explanation": "Now that you've subtracted $5$ from both sides, the final step is to simplify the equation to find the value of $x$. \\nOn the left side: $x + 5 - 5$ simplifies to $x$. \\nOn the right side: $12 - 5$ simplifies to $7$. \\nTherefore, the equation becomes $x = 7$.",
+          "inputLabel": "Based on the simplified equation, what is the value of $x$?",
+          "inputPlaceholder": "Enter your answer...",
+          "correctAnswer": "7|=7|x=7|x = 7|seven",
+          "audioExplanation": "This final step brings all your previous actions together to reveal the solution. The balance scale now clearly shows only $x$ on one side and the numerical solution on the other, demonstrating that $x$ is truly isolated and its value determined. You can see how $12$ minus $5$ equals $7$ directly on the scale, making the simplification visually intuitive and confirming your answer.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Start with the balance scale showing 'x' on the left pan and 7 '1' weights on the right pan, perfectly balanced. Below the scale, the equation should be displayed as \"$x + 5 - 5 = 12 - 5$\". First, animate the '$+ 5 - 5$' on the left side: show a red '$-5$' cancelling out the blue '$+5$' in the equation text, leaving only '$x$'. Simultaneously, on the left pan of the scale, animate the initial 5 '1' weights and the 'x' block combining, and then the '5' weights disappearing, leaving only the 'x' block. Next, animate the '$12 - 5$' on the right side: show the '12' and '$-5$' parts of the equation text simplifying to '7'. On the right pan, show the 12 initial '1' weights, then 5 of them disappearing, leaving 7 '1' weights. The final state should clearly display the simplified equation \"$x = 7$\" below the perfectly balanced scale, which now only shows the 'x' block on the left and 7 '1' weights on the right.",
+          "moduleImage": null,
+          "audio": null,
+          "component": "components/q1-step-4.html",
+          "visual": null
+        }
+      ]
+    }
+  ],
+  "generated": "2026-01-28T21:47:09.596951",
+  "version": "2.0"
+}
