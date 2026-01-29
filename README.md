@@ -276,11 +276,24 @@ python3 generate.py --file questions.txt --id my-module --evaluate
 
 ---
 
+## RunPod CPU endpoint
+
+Build from this repo in RunPod with:
+
+- **Branch:** `main`
+- **Dockerfile Path:** `Dockerfile`
+- **Build Context:** `.`
+
+See [docs/RUNPOD.md](./docs/RUNPOD.md) for request format, env vars, and response shape.
+
+---
+
 ## Docs
 
 - [Architecture and flow](./docs/ARCHITECTURE.md) — diagrams and pipeline details.
 - [Evaluation pipeline](./docs/EVALUATION.md) — how the evaluator and fix loop work.
 - [Integration (Supabase / RunPod)](./docs/INTEGRATION.md) — tying The Gemini Loop into your backend and deployment.
+- [RunPod deployment](./docs/RUNPOD.md) — GitHub config, env vars, request/response.
 
 ---
 

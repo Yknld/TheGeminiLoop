@@ -29,10 +29,10 @@ import requests
 from pathlib import Path
 from datetime import datetime
 
-# Configuration
-GEMINI_API_KEY = "AIzaSyDA-rWxab0kt41jbIhJk0cv_7SYxdhbmUI"
-SUPABASE_URL = "https://euxfugfzmpsemkjpcpuz.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1eGZ1Z2Z6bXBzZW1ranBjcHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMDkyMDYsImV4cCI6MjA4MzU4NTIwNn0.bsfC3T5WoUhGrS-6VuowULRHciY7BpzMCBQ3F4fZFRI"
+# Configuration (env vars override for RunPod / production)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDA-rWxab0kt41jbIhJk0cv_7SYxdhbmUI")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://euxfugfzmpsemkjpcpuz.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1eGZ1Z2Z6bXBzZW1ranBjcHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMDkyMDYsImV4cCI6MjA4MzU4NTIwNn0.bsfC3T5WoUhGrS-6VuowULRHciY7BpzMCBQ3F4fZFRI")
 
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
