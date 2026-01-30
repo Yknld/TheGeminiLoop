@@ -47,7 +47,7 @@ sys.path.insert(0, str(_repo))
 sys.path.insert(0, str(_repo.parent / "match-me" / "GeminiLoop"))
 
 from google import genai
-from google.genai.types import Content, Part
+from google.genai.types import Content, Part, Blob
 
 _genai_client = None
 
@@ -68,13 +68,17 @@ class ModuleEvaluator:
 
     def _call_gemini(self, content_list):
         """Call Gemini with list of parts (str and/or PIL Images). Returns response with .text."""
+        import io
         client = _get_genai_client()
         parts = []
         for item in content_list:
             if isinstance(item, str):
                 parts.append(Part(text=item))
             else:
-                parts.append(Part(value=item))
+                # PIL Image: Part expects inline_data (Blob), not value
+                buf = io.BytesIO()
+                item.save(buf, format="PNG")
+                parts.append(Part(inline_data=Blob(data=buf.getvalue(), mime_type="image/png")))
         contents = [Content(parts=parts)]
         return client.models.generate_content(model=self._genai_model, contents=contents)
         
