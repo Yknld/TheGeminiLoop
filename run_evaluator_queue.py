@@ -121,9 +121,9 @@ async def run_evaluation(module_id: str):
     import json
     import os
 
-    headless = bool(os.environ.get("RUNPOD"))  # RunPod has no display; same behavior as local headless
-    if headless:
-        print("🌐 Browser: headless (RUNPOD)\n")
+    # Xvfb provides display in container; run non-headless for reliable screenshots
+    headless = False
+    print("🌐 Browser: non-headless" + (" (Xvfb)" if os.environ.get("RUNPOD") else "") + "\n")
     evaluator = ModuleEvaluator(headless=headless)
     try:
         print("🔌 Connecting to browser...")
