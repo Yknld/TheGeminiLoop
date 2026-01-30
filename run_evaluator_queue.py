@@ -38,7 +38,7 @@ async def fix_component_async(evaluator, task: ComponentTask, current_html: str,
     """Asynchronously fix a component with full context"""
     from evaluate_loop_clean import logger
     
-    logger.info(f"   🔧 [ASYNC] Fixing {task} in background...")
+    logger.info(f"  FIXER: Gemini generating fix for {task} (attempt {task.attempt}/{task.max_attempts})...")
     
     fix_prompt = evaluator._generate_fix_prompt(
         module_id=task.module_id,
@@ -61,9 +61,9 @@ async def fix_component_async(evaluator, task: ComponentTask, current_html: str,
     )
     
     if fixed_html:
-        logger.info(f"   ✅ [ASYNC] Fixed {task} ready!")
+        logger.info(f"  FIXER: Gemini returned fix for {task}. Will apply and re-evaluate.")
     else:
-        logger.warning(f"   ⚠️  [ASYNC] Failed to fix {task}")
+        logger.warning(f"  FIXER: Gemini did not return valid HTML for {task}.")
     
     return fixed_html
 
@@ -82,7 +82,7 @@ async def apply_fix(module_id: str, question_index: int, step_index: int,
     component_path = Path(f"modules/{module_id}/components/{component_filename}")
     
     if not component_path.exists():
-        logger.error(f"   ❌ Component file not found: {component_path}")
+        logger.error(f"  FIXER: Component file not found: {component_path}")
         return False
     
     # Backup original with timestamp
@@ -90,23 +90,22 @@ async def apply_fix(module_id: str, question_index: int, step_index: int,
     backup_path = component_path.with_suffix(f'.html.backup-{timestamp}')
     try:
         shutil.copy(component_path, backup_path)
-        logger.info(f"   💾 Backed up to {backup_path.name}")
+        logger.info(f"  FIXER: Backed up {component_filename} to {backup_path.name}")
     except Exception as e:
-        logger.warning(f"   ⚠️  Could not create backup: {e}")
+        logger.warning(f"  FIXER: Could not create backup: {e}")
     
     # FORCE OVERWRITE - delete old file first to ensure clean write
     try:
         component_path.unlink()  # Delete old file
         component_path.write_text(fixed_html, encoding='utf-8')  # Write new content
-        logger.info(f"   ✅ REPLACED {component_filename} with fixed version")
-        logger.info(f"   📏 New file size: {len(fixed_html)} chars")
+        logger.info(f"  FIXER: Wrote fixed {component_filename} ({len(fixed_html)} chars)")
         return True
     except Exception as e:
-        logger.error(f"   ❌ Failed to write fixed file: {e}")
+        logger.error(f"  FIXER: Failed to write fixed file: {e}")
         # Restore backup if write failed
         if backup_path.exists():
             shutil.copy(backup_path, component_path)
-            logger.info(f"   ↩️  Restored from backup")
+            logger.info(f"  FIXER: Restored from backup")
         return False
 
 async def run_evaluation(module_id: str):
@@ -205,14 +204,13 @@ async def run_evaluation(module_id: str):
                             task.attempt += 1
                             task.fixing = False
                             queue.append(task)
-                            logger.info(f"   ↩️  Re-queued {task} for re-evaluation")
+                            logger.info(f"  FIXER: Applied fix to {task}. Re-queued for re-evaluation (next attempt {task.attempt}/{task.max_attempts}).")
                         else:
-                            logger.warning(f"   ❌ Could not fix {task}, marking as failed")
+                            logger.warning(f"  FIXER: Could not generate fix for {task}. Marking as failed.")
                             failed_components.append(result)
                     except Exception as e:
-                        logger.error(f"   ❌ Error fixing {task}: {e}")
+                        logger.error(f"  FIXER: Error applying fix for {task}: {e}")
                         failed_components.append(result)
-                    
                     completed_fixes.append(task_id)
             
             # Remove completed fixes from tracking
@@ -229,9 +227,12 @@ async def run_evaluation(module_id: str):
                     logger.info(f"⏭️  Skipping {task} - already passed")
                     continue
                 
+                attempt_note = f" (fix attempt {task.attempt}/{task.max_attempts})" if task.attempt > 1 else ""
                 print(f"\n{'='*70}")
-                print(f"🔍 Evaluating {task}")
+                print(f"🔍 Evaluating {task}{attempt_note}")
                 print(f"{'='*70}")
+                if task.attempt > 1:
+                    logger.info(f"FIXER: Re-evaluating {task} after previous fix (attempt {task.attempt}/{task.max_attempts})")
                 
                 # Build URL
                 url = f"http://localhost:8000/module-viewer.html?module={task.module_id}"
@@ -292,9 +293,9 @@ async def run_evaluation(module_id: str):
                     logger.info(f"✅ {task} is DONE - will not be re-evaluated")
                 else:
                     # Check if we should fix or give up
-                    logger.info(f"  🔍 Component failed - checking if should fix (attempt {task.attempt}/{task.max_attempts})")
+                    logger.info(f"  FIXER: {task} failed (score {score}/100). Attempt {task.attempt}/{task.max_attempts}.")
                     if task.attempt >= task.max_attempts:
-                        logger.warning(f"  ❌ Max attempts ({task.max_attempts}) reached, giving up")
+                        logger.warning(f"  FIXER: Max attempts ({task.max_attempts}) reached for {task}. Giving up.")
                         failed_components.append(result)
                     else:
                         # Start async fix
@@ -302,10 +303,10 @@ async def run_evaluation(module_id: str):
                                             if module_version == "2.0" 
                                             else f"step-{task.step_index}.html")
                         component_path = Path(f"modules/{task.module_id}/components/{component_filename}")
-                        logger.info(f"  📁 Looking for: {component_path}")
+                        logger.info(f"  FIXER: Starting fix for {task} (attempt {task.attempt}/{task.max_attempts})")
+                        logger.info(f"  📁 Component file: {component_path}")
                         
                         if component_path.exists():
-                            logger.info(f"  ✓ File exists, preparing fix...")
                             current_html = component_path.read_text()
                             
                             # Load educational context from manifest
@@ -350,13 +351,15 @@ async def run_evaluation(module_id: str):
                                 logger.warning(f"  ⚠️  {task} already being fixed, skipping")
                             else:
                                 fixing_tasks[task_id] = (task, fix_future, current_html, result)
-                                logger.info(f"  🔄 Sent to fixer (attempt {task.attempt}/{task.max_attempts})")
+                                logger.info(f"  FIXER: {task} sent to Gemini for fix (attempt {task.attempt}/{task.max_attempts}). Will re-evaluate when done.")
                         else:
                             logger.error(f"  ❌ Component file not found: {component_path}")
             
             # Brief pause if queue is empty but fixes are pending
             if not queue and fixing_tasks:
-                print(f"\n⏳ Waiting for {len(fixing_tasks)} fix(es) to complete...")
+                pending = [str(t) for t, _, _, _ in fixing_tasks.values()]
+                print(f"\n⏳ Waiting for {len(fixing_tasks)} fix(es) to complete: {', '.join(pending)}")
+                logger.info(f"  FIXER: Waiting for Gemini to finish: {', '.join(pending)}")
                 await asyncio.sleep(2)
         
         # Final summary
