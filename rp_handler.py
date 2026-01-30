@@ -232,6 +232,24 @@ def handler(job):
             )
         else:
             out["module_zip_skipped"] = f"Module zip exceeds {MAX_ZIP_BYTES // (1024*1024)}MB; not included. Use storage upload or run generation locally."
+        # Attach evaluation results (JSON) and artifacts zip (screenshots + recording) for pull
+        eval_results_path = workdir / f"evaluation_results/{module_id}_queue/evaluation_results.json"
+        if eval_results_path.exists():
+            out["evaluation_results_json"] = eval_results_path.read_text()
+        eval_dir = workdir / f"evaluation_results/{module_id}_queue"
+        recording_path = workdir / f"recordings/{module_id}/evaluation.webm"
+        artifacts_buf = io.BytesIO()
+        with zipfile.ZipFile(artifacts_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            if eval_dir.exists():
+                for f in eval_dir.rglob("*"):
+                    if f.is_file():
+                        zf.write(f, f.relative_to(workdir))
+            if recording_path.exists():
+                zf.write(recording_path, f"recordings/{module_id}/evaluation.webm")
+        artifacts_bytes = artifacts_buf.getvalue()
+        if artifacts_bytes and len(artifacts_bytes) <= MAX_ZIP_BYTES:
+            out["artifacts_zip_base64"] = base64.b64encode(artifacts_bytes).decode("ascii")
+            out["artifacts_zip_filename"] = f"{module_id}-artifacts.zip"
         return out
     except subprocess.TimeoutExpired:
         return {"status": "failed", "module_id": module_id, "error": "Generation timed out (30m)"}

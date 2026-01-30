@@ -96,10 +96,21 @@ Success (with optional zip for small modules):
 }
 ```
 
-**To run the module locally:** If the response includes `module_zip_base64`, decode and unzip into your TheGeminiLoop repo root, then run the server and open the URL from `launch_instructions`:
+**To pull the module, evaluation results, and recording:** After the job completes, GET the status (the response includes the handler output). Then run:
 
 ```bash
-# Example: save base64 to file, decode, unzip (use the actual base64 from the job output)
+# Save completed job response (from GET .../status/{job_id})
+curl -s -H "Authorization: Bearer $RUNPOD_API_KEY" "https://api.runpod.ai/v2/$RUNPOD_ENDPOINT/status/$JOB_ID" > status.json
+
+# Extract module zip, evaluation_results.json, and artifacts zip (screenshots + evaluation.webm)
+python pull_runpod_output.py status.json --out .
+```
+
+This creates `modules/<module_id>/`, `evaluation_results/<module_id>_queue/`, and `recordings/<module_id>/evaluation.webm`. Open the recording (e.g. in a browser) to see what the evaluator saw.
+
+**Manual decode:** If you only have `module_zip_base64`, decode and unzip into your TheGeminiLoop repo root:
+
+```bash
 echo "<paste module_zip_base64 here>" | base64 -d > module.zip
 unzip module.zip -d /path/to/TheGeminiLoop/
 cd /path/to/TheGeminiLoop && python serve.py

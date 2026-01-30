@@ -8,12 +8,17 @@ ENDPOINT="${RUNPOD_ENDPOINT:?Set RUNPOD_ENDPOINT (e.g. maz6or8l4hb9h3)}"
 API_KEY="${RUNPOD_API_KEY:?Set RUNPOD_API_KEY}"
 
 # Single problem; set "evaluate": true so generate.py runs with --evaluate (test and validate components).
-# To push to Supabase: add "user_id": "YOUR_USER_UUID", "lesson_id": "YOUR_LESSON_UUID" to input,
-# or set RUNPOD_DEFAULT_USER_ID and RUNPOD_DEFAULT_LESSON_ID in the RunPod endpoint env.
+# To push to Supabase: set RUNPOD_USER_ID and RUNPOD_LESSON_ID (UUIDs) when running this script, e.g.:
+#   RUNPOD_USER_ID=2202c52b-a017-4f1a-8330-24c9eb5224c4 RUNPOD_LESSON_ID=0fed25d6-899d-49c5-89b8-238658cec1be ./test_runpod.sh
+if [ -n "${RUNPOD_USER_ID-}" ] && [ -n "${RUNPOD_LESSON_ID-}" ]; then
+  EXTRA=', "user_id": "'"$RUNPOD_USER_ID"'", "lesson_id": "'"$RUNPOD_LESSON_ID"'"'
+else
+  EXTRA=''
+fi
 INPUT='{
   "input": {
     "problem_texts": ["Solve for x: 2x + 5 = 13"],
-    "evaluate": true
+    "evaluate": true'"$EXTRA"'
   }
 }'
 
@@ -31,4 +36,9 @@ if [ -z "$JOB_ID" ]; then
   exit 1
 fi
 echo "Job ID: $JOB_ID"
-echo "Poll: curl -s -H \"Authorization: Bearer \$RUNPOD_API_KEY\" \"https://api.runpod.ai/v2/${ENDPOINT}/status/${JOB_ID}\""
+echo ""
+echo "Poll until COMPLETED, then pull module + artifacts:"
+echo "  curl -s -H \"Authorization: Bearer \$RUNPOD_API_KEY\" \"https://api.runpod.ai/v2/${ENDPOINT}/status/${JOB_ID}\" > status.json"
+echo "  python pull_runpod_output.py status.json --out ."
+echo ""
+echo "Or poll once: curl -s -H \"Authorization: Bearer \$RUNPOD_API_KEY\" \"https://api.runpod.ai/v2/${ENDPOINT}/status/${JOB_ID}\""
