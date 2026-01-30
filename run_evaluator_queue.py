@@ -115,26 +115,24 @@ async def run_evaluation(module_id: str):
     Args:
         module_id: The module ID to evaluate
     """
-    
     print(f"🔍 Evaluating module: {module_id}")
     print(f"🚀 Using async queue-based evaluation\n")
-    
-    # Import evaluator
+
     from evaluate_loop_clean import ModuleEvaluator, logger
     import json
-    
-    # Create evaluator
-    evaluator = ModuleEvaluator(headless=False)
-    
+    import os
+
+    headless = bool(os.environ.get("RUNPOD"))  # RunPod has no display; same behavior as local headless
+    if headless:
+        print("🌐 Browser: headless (RUNPOD)\n")
+    evaluator = ModuleEvaluator(headless=headless)
     try:
-        # Connect (requires qa_browseruse_mcp + Docker; not available on RunPod default image)
         print("🔌 Connecting to browser...")
         await evaluator.connect()
     except (ImportError, ModuleNotFoundError) as e:
-        print(f"⚠️  Evaluation skipped: BrowserUse MCP not available ({e}).")
-        print("   Module was generated successfully. Use evaluate: false on RunPod or install qa_browseruse_mcp + Docker for validation.")
-        return
-    
+        print(f"❌ BrowserUse MCP not available: {e}")
+        raise
+
     try:
         
         # Load manifest to build initial queue

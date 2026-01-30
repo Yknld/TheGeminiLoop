@@ -3,3 +3,6 @@ requests>=2.28.0
 google-genai>=1.0.0
 Pillow>=10.0.0
 supabase>=2.0.0
+# Browser automation for evaluation (qa_browseruse_mcp is local, installed via Dockerfile)
+playwright>=1.40.0
+pydantic>=2.0.0

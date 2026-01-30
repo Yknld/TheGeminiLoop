@@ -23,8 +23,14 @@ import subprocess
 import zipfile
 import base64
 import io
+import time
+import socket
 import runpod
 from pathlib import Path
+
+PORT = 8000
+SERVER_WAIT_TIMEOUT = 15
+SERVER_POLL_INTERVAL = 0.5
 
 # RunPod response size limit ~10MB; base64 adds ~33%; keep zip under 6MB
 MAX_ZIP_BYTES = 6 * 1024 * 1024
@@ -110,6 +116,29 @@ def handler(job):
     modules_dir = workdir / "modules"
     modules_dir.mkdir(exist_ok=True)
 
+    serve_proc = None
+    if evaluate:
+        os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", "/root/.cache/ms-playwright")
+        runpod.serverless.progress_update(job, "Starting HTTP server for evaluation...")
+        serve_proc = subprocess.Popen(
+            [sys.executable, "-u", str(workdir / "serve.py")],
+            cwd=str(workdir),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        deadline = time.monotonic() + SERVER_WAIT_TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                with socket.create_connection(("127.0.0.1", PORT), timeout=1):
+                    break
+            except (socket.error, OSError):
+                time.sleep(SERVER_POLL_INTERVAL)
+        else:
+            if serve_proc.poll() is None:
+                serve_proc.terminate()
+                serve_proc.wait(timeout=5)
+            return {"status": "failed", "module_id": module_id, "error": f"HTTP server did not bind to port {PORT} in {SERVER_WAIT_TIMEOUT}s"}
+
     cmd = [sys.executable, "-u", str(workdir / "generate.py"), "--id", module_id]
     for p in problem_texts:
         cmd.append(p)
@@ -125,10 +154,19 @@ def handler(job):
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
+            env={**os.environ, "RUNPOD": "1"} if evaluate else os.environ,
         )
-        for line in proc.stdout:
-            print(line, end="", flush=True)
-        proc.wait(timeout=1800)
+        try:
+            for line in proc.stdout:
+                print(line, end="", flush=True)
+            proc.wait(timeout=1800)
+        finally:
+            if serve_proc is not None and serve_proc.poll() is None:
+                serve_proc.terminate()
+                try:
+                    serve_proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    serve_proc.kill()
         if proc.returncode != 0:
             return {
                 "status": "failed",

@@ -1,19 +1,36 @@
 # The Gemini Loop — RunPod Serverless CPU endpoint
 # Build: Branch=main, Dockerfile Path=Dockerfile, Build Context=.
 
-FROM python:3.11-slim
+# Playwright needs more system libs than slim provides
+FROM python:3.11-bullseye
 
 WORKDIR /app
 
-# Install Python deps (no Chromium; use evaluate=false on CPU to keep image small)
+# Playwright Chromium system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+    libdbus-1-3 libatspi2.0-0 libx11-6 libxcomposite1 libxdamage1 libxext6 \
+    libxfixes3 libxrandr2 libgbm1 libxcb1 libxkbcommon0 libpango-1.0-0 \
+    libcairo2 libasound2 fonts-liberation wget ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app (modules/ can be empty; generated at runtime)
+# Playwright browsers (not system Chromium)
+RUN playwright install chromium \
+    && playwright install-deps chromium || true
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
+
+# App code
 COPY generate.py evaluate_loop_clean.py run_evaluator_queue.py ./
 COPY serve.py index.html module-viewer.html homework-app.js homework-styles.css ./
 COPY modules ./modules
 
-# RunPod serverless entrypoint (handler.py is the conventional name RunPod looks for)
+# Local package: qa_browseruse_mcp (not on PyPI)
+COPY qa_browseruse_mcp ./qa_browseruse_mcp
+RUN pip install --no-cache-dir -e ./qa_browseruse_mcp
+
 COPY rp_handler.py handler.py ./
 CMD ["python", "-u", "handler.py"]

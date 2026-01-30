@@ -41,8 +41,10 @@ if api_key:
 else:
     logger.warning("⚠️  No API key found in index.html")
 
-# Add GeminiLoop to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "match-me" / "GeminiLoop"))
+# Prefer qa_browseruse_mcp in same repo (RunPod / local); fallback for match-me layout
+_repo = Path(__file__).resolve().parent
+sys.path.insert(0, str(_repo))
+sys.path.insert(0, str(_repo.parent / "match-me" / "GeminiLoop"))
 
 from google import genai
 from google.genai.types import Content, Part

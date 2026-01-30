@@ -764,25 +764,21 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
     print("\n✅ Load in browser: template.html?module=" + module_id)
     print("="*70 + "\n")
     
-    # Step 5: Run evaluation loop if requested
+    # Step 5: Run evaluation loop if requested (no skipping)
     if args.evaluate and not args.no_evaluate:
         print("\n" + "="*70)
         print("🔍 EVALUATION PHASE")
         print("="*70)
         print("Starting automated testing and validation...\n")
-        
         try:
             import asyncio
             from run_evaluator_queue import run_evaluation
-            
-            # Run evaluation
             asyncio.run(run_evaluation(module_id))
-            
         except Exception as e:
             print(f"\n⚠️  Evaluation failed: {e}")
             print("   Module was generated successfully but testing encountered an error.")
             print("   You can manually test with: python3 run_evaluator_queue.py " + module_id)
-            # Do not re-raise: allow process to exit 0 so RunPod returns the module (no 502/restart)
+            # Do not re-raise: allow process to exit 0 so RunPod returns the module
     elif not args.evaluate:
         print("💡 Tip: Add --evaluate flag to automatically test and validate components")
         print(f"   Or run manually: python3 run_evaluator_queue.py {module_id}\n")

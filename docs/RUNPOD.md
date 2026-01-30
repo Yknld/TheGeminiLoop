@@ -55,7 +55,7 @@ Worker logs will now stream `generate.py` output so you see “Calling Gemini…
 
 - **problem_texts** (required): list of problem strings.
 - **module_id** (optional): module id; default = `module-<job_id>`.
-- **evaluate** (optional): set to **`true`** to run the browser evaluation loop (test and validate components). Default `false`; use `true` for testing. Requires Chromium in the image.
+- **evaluate** (optional): set to **`true`** to run the browser evaluation loop (same as locally). Default `false`. When `true`, the handler starts `serve.py` on port 8000 before running generation so the evaluator can load `module-viewer.html` at `localhost:8000`; the browser runs headless; the server is stopped after the job. Requires **qa_browseruse_mcp** (in requirements.txt) and Chromium in the image.
 - **user_id** (optional): UUID of the user (required for Supabase push).
 - **lesson_id** (optional): UUID of the lesson (required for Supabase push). If both `user_id` and `lesson_id` are provided, the handler uploads the module to `lesson_assets/{user_id}/{lesson_id}/interactive_pages/{module_id}/` and upserts `lesson_outputs` with `type = 'interactive_pages'`. Set **SUPABASE_URL** and **SUPABASE_SERVICE_KEY** in the RunPod endpoint env.
 
@@ -130,7 +130,16 @@ The mobile app (Study OS) loads the interactive solver in a WebView. You need to
 
 In the Study OS mobile app repo (`smrtr/study-os-mobile`), set `SOLVER_VIEWER_URL` in `apps/mobile/src/config/supabase.ts` to that URL (no trailing slash). The app opens `SOLVER_VIEWER_URL/solver.html?lesson_id=...` in a WebView and injects the user’s Supabase **access token** and Supabase URL into the page (as `window.__SUPABASE_TOKEN__` and `window.__SUPABASE_URL__`). The solver page then uses those to call the `interactive_module_get` Edge Function (which requires a valid JWT) and loads the manifest with signed asset URLs.
 
+## Evaluation on RunPod (same as local)
+
+When `evaluate: true`:
+
+1. **HTTP server** — The handler starts `serve.py` in the background and waits for port 8000 to be ready before running `generate.py`. The evaluator loads `http://localhost:8000/module-viewer.html?module=<id>&question=<q>&step=<s>` and interacts with sliders/inputs/buttons, takes screenshots, and sends them to Gemini for scoring. Failed components are fixed by Gemini and re-queued (same logic as `run_evaluator_queue.py` locally).
+2. **Headless browser** — The handler sets `RUNPOD=1` in the environment of the `generate.py` process; the evaluator uses a headless browser when `RUNPOD` is set.
+3. **Cleanup** — After `generate.py` exits (success or failure), the handler stops the HTTP server.
+
+Requirements: **qa_browseruse_mcp** is in requirements.txt; the Dockerfile installs Chromium. Same evaluator as local.
+
 ## Notes
 
-- **Evaluator:** Set `"evaluate": true` to request the browser evaluation loop. On RunPod's default image, BrowserUse MCP (`qa_browseruse_mcp`) is not installed, so evaluation is **skipped** and the job still **succeeds**—you get the module and a log: "Evaluation skipped: BrowserUse MCP not available." Use `evaluate: false` to avoid the connect attempt.
 - With `user_id` and `lesson_id` the handler uploads to Supabase Storage and upserts `lesson_outputs`.
