@@ -7,7 +7,9 @@ set -e
 ENDPOINT="${RUNPOD_ENDPOINT:?Set RUNPOD_ENDPOINT (e.g. maz6or8l4hb9h3)}"
 API_KEY="${RUNPOD_API_KEY:?Set RUNPOD_API_KEY}"
 
-# Single problem; set "evaluate": true so generate.py runs with --evaluate (test and validate components)
+# Single problem; set "evaluate": true so generate.py runs with --evaluate (test and validate components).
+# To push to Supabase: add "user_id": "YOUR_USER_UUID", "lesson_id": "YOUR_LESSON_UUID" to input,
+# or set RUNPOD_DEFAULT_USER_ID and RUNPOD_DEFAULT_LESSON_ID in the RunPod endpoint env.
 INPUT='{
   "input": {
     "problem_texts": ["Solve for x: 2x + 5 = 13"],

@@ -93,7 +93,19 @@ class ModuleEvaluator:
         except ImportError:
             logger.error("❌ BrowserUse MCP client not found. Is Docker running?")
             raise
-    
+
+    async def start_recording(self, video_path: str) -> bool:
+        """Start screen recording; video saved when stop_recording() or close() is called."""
+        if not self.mcp:
+            return False
+        return await self.mcp.start_recording(video_path)
+
+    async def stop_recording(self):
+        """Stop screen recording and return path to saved video (webm), or None."""
+        if not self.mcp:
+            return None
+        return await self.mcp.stop_recording()
+
     async def evaluate_component(
         self,
         module_id: str,

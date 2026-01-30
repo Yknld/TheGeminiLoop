@@ -4,11 +4,11 @@ RunPod Serverless CPU endpoint handler for The Gemini Loop.
 
 Expects job input:
   - problem_texts: list of problem strings (required)
-  - user_id: uuid (required if pushing to Supabase)
-  - lesson_id: uuid (required if pushing to Supabase)
-  - module_id: optional; default = "module-<timestamp>"
+  - user_id: uuid (optional; can use RUNPOD_DEFAULT_USER_ID env on endpoint instead)
+  - lesson_id: uuid (optional; can use RUNPOD_DEFAULT_LESSON_ID env on endpoint instead)
+  - module_id: optional; default = "module-<job_id>"
   - evaluate: optional bool; default False (skip browser evaluation to keep CPU image small)
-  - push_to_supabase: optional bool; default True if user_id/lesson_id provided
+  - push_to_supabase: optional bool; default True when user_id and lesson_id are set (from input or env)
 
 Returns:
   - module_id, status "ready" | "failed", manifest_path, error (if failed)
@@ -109,8 +109,9 @@ def handler(job):
         problem_texts = [problem_texts]
     module_id = job_input.get("module_id") or f"module-{job.get('id', 'run')}"
     evaluate = job_input.get("evaluate", False)
-    user_id = job_input.get("user_id") or ""
-    lesson_id = job_input.get("lesson_id") or ""
+    # user_id/lesson_id from job input, or from env (e.g. RunPod endpoint env) for default push target
+    user_id = (job_input.get("user_id") or os.environ.get("RUNPOD_DEFAULT_USER_ID") or "").strip()
+    lesson_id = (job_input.get("lesson_id") or os.environ.get("RUNPOD_DEFAULT_LESSON_ID") or "").strip()
     push_to_supabase = job_input.get("push_to_supabase", bool(user_id and lesson_id))
 
     runpod.serverless.progress_update(job, "Starting generation...")
@@ -211,7 +212,7 @@ def handler(job):
                 out["pushed_to_supabase"] = True
         else:
             if not (user_id and lesson_id):
-                print("⏭️  Supabase push skipped (no user_id/lesson_id in job input)", flush=True)
+                print("⏭️  Supabase push skipped (no user_id/lesson_id in job input or RUNPOD_DEFAULT_USER_ID/RUNPOD_DEFAULT_LESSON_ID env)", flush=True)
         # Zip module (if under size limit)
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:

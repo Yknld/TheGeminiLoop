@@ -125,6 +125,8 @@ async def run_evaluation(module_id: str):
     headless = False
     print("🌐 Browser: non-headless" + (" (Xvfb)" if os.environ.get("RUNPOD") else "") + "\n")
     evaluator = ModuleEvaluator(headless=headless)
+    recording_started = False
+    recording_path = Path(f"recordings/{module_id}/evaluation.webm")
     try:
         print("🔌 Connecting to browser...")
         await evaluator.connect()
@@ -133,7 +135,14 @@ async def run_evaluation(module_id: str):
         raise
 
     try:
-        
+        # Start screen recording so we can see what the browser sees
+        recording_path.parent.mkdir(parents=True, exist_ok=True)
+        if await evaluator.start_recording(str(recording_path)):
+            recording_started = True
+            print(f"🎬 Recording to: {recording_path}\n")
+        else:
+            print("⚠️ Recording could not be started\n")
+
         # Load manifest to build initial queue
         manifest_path = Path(f"modules/{module_id}/manifest.json")
         with open(manifest_path) as f:
@@ -415,6 +424,12 @@ async def run_evaluation(module_id: str):
         traceback.print_exc()
     finally:
         if evaluator.mcp:
+            if recording_started:
+                saved = await evaluator.stop_recording()
+                if saved:
+                    print(f"\n🎬 Recording saved: {saved}")
+                else:
+                    print("\n⚠️ Recording stopped (file may be in recordings/...)")
             await evaluator.mcp.close()
             print("\n👋 Browser closed")
 

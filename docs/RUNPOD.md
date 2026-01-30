@@ -56,8 +56,8 @@ Worker logs will now stream `generate.py` output so you see “Calling Gemini…
 - **problem_texts** (required): list of problem strings.
 - **module_id** (optional): module id; default = `module-<job_id>`.
 - **evaluate** (optional): set to **`true`** to run the browser evaluation loop (same as locally). Default `false`. When `true`, the handler starts `serve.py` on port 8000 before running generation so the evaluator can load `module-viewer.html` at `localhost:8000`; the browser runs **non-headless** under Xvfb (virtual display) for reliable screenshots; the server is stopped after the job. Requires **qa_browseruse_mcp** (in requirements.txt), Chromium, and **xvfb** in the image.
-- **user_id** (optional): UUID of the user (required for Supabase push).
-- **lesson_id** (optional): UUID of the lesson (required for Supabase push). If both `user_id` and `lesson_id` are provided, the handler uploads the module to `lesson_assets/{user_id}/{lesson_id}/interactive_pages/{module_id}/` and upserts `lesson_outputs` with `type = 'interactive_pages'`. Set **SUPABASE_URL** and **SUPABASE_SERVICE_KEY** in the RunPod endpoint env.
+- **user_id** (optional): UUID of the user for Supabase push. If omitted, the handler uses **RUNPOD_DEFAULT_USER_ID** from the RunPod endpoint env (if set).
+- **lesson_id** (optional): UUID of the lesson for Supabase push. If omitted, the handler uses **RUNPOD_DEFAULT_LESSON_ID** from the RunPod endpoint env (if set). If both `user_id` and `lesson_id` are available (from input or env), the handler uploads the module to `lesson_assets/{user_id}/{lesson_id}/interactive_pages/{module_id}/` and upserts `lesson_outputs`. Set **SUPABASE_URL** and **SUPABASE_SERVICE_KEY** (and optionally **RUNPOD_DEFAULT_USER_ID** / **RUNPOD_DEFAULT_LESSON_ID**) in the RunPod endpoint env.
 
 **Example curl (evaluator on):**
 

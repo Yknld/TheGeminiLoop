@@ -16,6 +16,7 @@ build/
 
 # Evaluation outputs
 evaluation_results/
+recordings/
 *.backup-*
 debug_json_error.txt
 
