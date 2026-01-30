@@ -56,6 +56,8 @@ Worker logs will now stream `generate.py` output so you see “Calling Gemini…
 - **problem_texts** (required): list of problem strings.
 - **module_id** (optional): module id; default = `module-<job_id>`.
 - **evaluate** (optional): set to **`true`** to run the browser evaluation loop (test and validate components). Default `false`; use `true` for testing. Requires Chromium in the image.
+- **user_id** (optional): UUID of the user (required for Supabase push).
+- **lesson_id** (optional): UUID of the lesson (required for Supabase push). If both `user_id` and `lesson_id` are provided, the handler uploads the module to `lesson_assets/{user_id}/{lesson_id}/interactive_pages/{module_id}/` and upserts `lesson_outputs` with `type = 'interactive_pages'`. Set **SUPABASE_URL** and **SUPABASE_SERVICE_KEY** in the RunPod endpoint env.
 
 **Example curl (evaluator on):**
 
@@ -67,6 +69,15 @@ curl -X POST "https://api.runpod.ai/v2/YOUR_ENDPOINT_ID/run" \
 ```
 
 Or run `./test_runpod.sh` (set `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT`).
+
+**Example curl (with Supabase push):** Replace `USER_UUID` and `LESSON_UUID` with real IDs from your app.
+
+```bash
+curl -X POST "https://api.runpod.ai/v2/YOUR_ENDPOINT_ID/run" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{"input":{"problem_texts":["Solve for x: 2x + 5 = 13"],"user_id":"USER_UUID","lesson_id":"LESSON_UUID","evaluate":true}}'
+```
 
 ## Response
 
@@ -104,6 +115,20 @@ Failure:
   "error": "Error message"
 }
 ```
+
+## Hosting the solver viewer (mobile app)
+
+The mobile app (Study OS) loads the interactive solver in a WebView. You need to host these files from this repo somewhere public and point the app at that URL:
+
+- `solver.html`
+- `homework-app.js`
+- `homework-styles.css`
+
+**Option: Supabase Storage.** Create a public bucket (e.g. `solver`), upload the three files to the bucket root, then set the app config to the bucket’s public URL, e.g.:
+
+`https://<project-ref>.supabase.co/storage/v1/object/public/solver`
+
+In the Study OS mobile app repo (`smrtr/study-os-mobile`), set `SOLVER_VIEWER_URL` in `apps/mobile/src/config/supabase.ts` to that URL (no trailing slash). The app opens `SOLVER_VIEWER_URL/solver.html?lesson_id=...` in a WebView and injects the user’s Supabase **access token** and Supabase URL into the page (as `window.__SUPABASE_TOKEN__` and `window.__SUPABASE_URL__`). The solver page then uses those to call the `interactive_module_get` Edge Function (which requires a valid JWT) and loads the manifest with signed asset URLs.
 
 ## Notes
 

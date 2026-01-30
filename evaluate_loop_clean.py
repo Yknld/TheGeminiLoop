@@ -44,8 +44,16 @@ else:
 # Add GeminiLoop to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "match-me" / "GeminiLoop"))
 
-import google.generativeai as genai
-genai.configure(api_key=api_key)
+from google import genai
+from google.genai.types import Content, Part
+
+_genai_client = None
+
+def _get_genai_client():
+    global _genai_client
+    if _genai_client is None:
+        _genai_client = genai.Client(api_key=api_key) if api_key else genai.Client()
+    return _genai_client
 
 
 class ModuleEvaluator:
@@ -54,8 +62,19 @@ class ModuleEvaluator:
     def __init__(self, headless=False):
         self.headless = headless
         self.mcp = None
-        # Use same model as generate.py - gemini-2.5-flash supports vision
-        self.gemini_model = genai.GenerativeModel('models/gemini-2.5-flash')
+        self._genai_model = "models/gemini-2.5-flash"
+
+    def _call_gemini(self, content_list):
+        """Call Gemini with list of parts (str and/or PIL Images). Returns response with .text."""
+        client = _get_genai_client()
+        parts = []
+        for item in content_list:
+            if isinstance(item, str):
+                parts.append(Part(text=item))
+            else:
+                parts.append(Part(value=item))
+        contents = [Content(parts=parts)]
+        return client.models.generate_content(model=self._genai_model, contents=contents)
         
     async def connect(self):
         """Initialize browser-use client"""
@@ -453,12 +472,9 @@ Respond in JSON:
     "issues": ["<issue if any>"]
 }}"""
         
-        # Call Gemini
+        # Call Gemini (google.genai)
         content = [prompt] + images
-        response = await asyncio.to_thread(
-            self.gemini_model.generate_content,
-            content
-        )
+        response = await asyncio.to_thread(self._call_gemini, content)
         
         # Parse response
         try:
@@ -532,10 +548,7 @@ Respond in JSON:
 Generate the COMPLETE fixed HTML. Return ONLY the HTML code, no explanations.""")
             
             logger.info("⏳ Waiting for Gemini response...")
-            response = await asyncio.to_thread(
-                self.gemini_model.generate_content,
-                content
-            )
+            response = await asyncio.to_thread(self._call_gemini, content)
             
             # Extract HTML from response
             text = response.text
