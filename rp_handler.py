@@ -91,8 +91,10 @@ def _upload_module_to_supabase(module_dir: Path, module_id: str, user_id: str, l
         sel = client.table("lesson_outputs").select("id").eq("lesson_id", lesson_id).eq("type", "interactive_pages").eq("user_id", user_id).execute()
         if sel.data and len(sel.data) > 0:
             client.table("lesson_outputs").update({"status": "ready", "content_json": content_json}).eq("id", sel.data[0]["id"]).execute()
+            print(f"   lesson_outputs updated ({len(uploaded)} files in storage)", flush=True)
         else:
             client.table("lesson_outputs").insert(row).execute()
+            print(f"   lesson_outputs inserted ({len(uploaded)} files in storage)", flush=True)
     except Exception as e:
         return {"error": f"lesson_outputs upsert: {e}", "content_json": content_json}
     return content_json
@@ -180,6 +182,7 @@ def handler(job):
                 "module_id": module_id,
                 "error": "manifest.json not found after generation",
             }
+        print("\n✅ Generation complete. Preparing output...", flush=True)
         manifest = json.loads(manifest_path.read_text())
         module_dir = modules_dir / module_id
         out = {
@@ -195,13 +198,20 @@ def handler(job):
             ),
         }
         if push_to_supabase and user_id and lesson_id:
+            print("\n📤 Pushing module to Supabase...", flush=True)
             runpod.serverless.progress_update(job, "Pushing module to Supabase...")
             result = _upload_module_to_supabase(module_dir, module_id, user_id, lesson_id)
             if "error" in result:
+                print(f"❌ Supabase push failed: {result['error']}", flush=True)
                 out["supabase_error"] = result["error"]
             else:
-                out["storage_prefix"] = result.get("storage_prefix")
+                prefix = result.get("storage_prefix", "")
+                print(f"✅ Module saved to Supabase: {prefix}", flush=True)
+                out["storage_prefix"] = prefix
                 out["pushed_to_supabase"] = True
+        else:
+            if not (user_id and lesson_id):
+                print("⏭️  Supabase push skipped (no user_id/lesson_id in job input)", flush=True)
         # Zip module (if under size limit)
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
