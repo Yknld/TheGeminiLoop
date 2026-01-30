@@ -127,9 +127,15 @@ async def run_evaluation(module_id: str):
     evaluator = ModuleEvaluator(headless=False)
     
     try:
-        # Connect
+        # Connect (requires qa_browseruse_mcp + Docker; not available on RunPod default image)
         print("🔌 Connecting to browser...")
         await evaluator.connect()
+    except (ImportError, ModuleNotFoundError) as e:
+        print(f"⚠️  Evaluation skipped: BrowserUse MCP not available ({e}).")
+        print("   Module was generated successfully. Use evaluate: false on RunPod or install qa_browseruse_mcp + Docker for validation.")
+        return
+    
+    try:
         
         # Load manifest to build initial queue
         manifest_path = Path(f"modules/{module_id}/manifest.json")

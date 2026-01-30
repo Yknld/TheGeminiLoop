@@ -38,7 +38,7 @@ Worker logs will now stream `generate.py` output so you see “Calling Gemini…
 
 ## Request format
 
-**POST** to the endpoint with JSON body:
+**POST** to the endpoint with JSON body. Use **`evaluate`: `true`** to run the evaluator (test and validate components); logs will show "💡 Tip: Add --evaluate flag" if you omit it.
 
 ```json
 {
@@ -48,18 +48,29 @@ Worker logs will now stream `generate.py` output so you see “Calling Gemini…
       "What is the area of a circle with radius 5?"
     ],
     "module_id": "optional-custom-id",
-    "evaluate": false
+    "evaluate": true
   }
 }
 ```
 
 - **problem_texts** (required): list of problem strings.
 - **module_id** (optional): module id; default = `module-<job_id>`.
-- **evaluate** (optional): if `true`, run the browser evaluation loop (requires Chromium in the image; default `false` for CPU-only image).
+- **evaluate** (optional): set to **`true`** to run the browser evaluation loop (test and validate components). Default `false`; use `true` for testing. Requires Chromium in the image.
+
+**Example curl (evaluator on):**
+
+```bash
+curl -X POST "https://api.runpod.ai/v2/YOUR_ENDPOINT_ID/run" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{"input":{"problem_texts":["Solve for x: 2x + 5 = 13"],"evaluate":true}}'
+```
+
+Or run `./test_runpod.sh` (set `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT`).
 
 ## Response
 
-Success:
+Success (with optional zip for small modules):
 
 ```json
 {
@@ -67,8 +78,21 @@ Success:
   "module_id": "algebra-001",
   "manifest_path": "modules/algebra-001/manifest.json",
   "question_count": 2,
-  "version": "2.0"
+  "version": "2.0",
+  "module_zip_base64": "<base64 string if module ≤6MB>",
+  "module_zip_filename": "algebra-001.zip",
+  "launch_instructions": "1. Decode ... 2. Unzip into repo root. 3. python serve.py. 4. Open index.html?module=..."
 }
+```
+
+**To run the module locally:** If the response includes `module_zip_base64`, decode and unzip into your TheGeminiLoop repo root, then run the server and open the URL from `launch_instructions`:
+
+```bash
+# Example: save base64 to file, decode, unzip (use the actual base64 from the job output)
+echo "<paste module_zip_base64 here>" | base64 -d > module.zip
+unzip module.zip -d /path/to/TheGeminiLoop/
+cd /path/to/TheGeminiLoop && python serve.py
+# Open http://localhost:8000/index.html?module=<module_id>
 ```
 
 Failure:
@@ -83,5 +107,5 @@ Failure:
 
 ## Notes
 
-- The CPU Docker image does **not** include Chromium, so `evaluate: true` will fail unless you use a custom image with Chrome/Chromium and the evaluation dependencies.
-- For generation-only (no evaluation), use `evaluate: false` (default). Output is written under `modules/<module_id>/` inside the container; to persist or serve it, add a step that uploads that folder to Supabase Storage (or another store) and return the storage path in the response.
+- **Evaluator:** Set `"evaluate": true` to request the browser evaluation loop. On RunPod's default image, BrowserUse MCP (`qa_browseruse_mcp`) is not installed, so evaluation is **skipped** and the job still **succeeds**—you get the module and a log: "Evaluation skipped: BrowserUse MCP not available." Use `evaluate: false` to avoid the connect attempt.
+- With `user_id` and `lesson_id` the handler uploads to Supabase Storage and upserts `lesson_outputs`.

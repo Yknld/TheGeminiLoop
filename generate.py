@@ -483,6 +483,9 @@ def generate_audio(text, output_path):
                 },
             },
         }
+        if not GEMINI_API_KEY or not GEMINI_API_KEY.strip():
+            print("   ⚠️  TTS skipped: GEMINI_API_KEY is empty (set env var for Gemini TTS)")
+            return False
         response = requests.post(
             f"{url}?key={GEMINI_API_KEY}",
             headers={"Content-Type": "application/json"},
@@ -490,17 +493,28 @@ def generate_audio(text, output_path):
             timeout=60,
         )
         if response.status_code != 200:
+            try:
+                err_body = response.json()
+                err_msg = err_body.get("error", {}).get("message", response.text[:200])
+            except Exception:
+                err_msg = response.text[:200] if response.text else str(response.status_code)
+            print(f"   ⚠️  TTS failed: HTTP {response.status_code} — {err_msg}")
             return False
         data = response.json()
         candidates = data.get("candidates") or []
         if not candidates:
+            pf = data.get("promptFeedback") or {}
+            reason = pf.get("blockReason", "unknown") if pf else "no candidates"
+            print(f"   ⚠️  TTS failed: no candidates (blockReason/promptFeedback: {reason})")
             return False
         parts = (candidates[0].get("content") or {}).get("parts") or []
         if not parts:
+            print("   ⚠️  TTS failed: candidate has no parts")
             return False
         inline = parts[0].get("inlineData") or {}
         b64 = inline.get("data")
         if not b64:
+            print("   ⚠️  TTS failed: no inlineData.data in response (model may not support AUDIO or wrong format)")
             return False
         pcm = base64.b64decode(b64)
         # Gemini TTS returns PCM: 24kHz, mono, 16-bit (s16le)
@@ -511,7 +525,14 @@ def generate_audio(text, output_path):
             wf.setframerate(24000)
             wf.writeframes(pcm)
         return True
-    except Exception:
+    except requests.exceptions.Timeout:
+        print("   ⚠️  TTS failed: request timed out (60s)")
+        return False
+    except requests.exceptions.RequestException as e:
+        print(f"   ⚠️  TTS failed: network error — {e}")
+        return False
+    except Exception as e:
+        print(f"   ⚠️  TTS failed: {type(e).__name__} — {e}")
         return False
 
 
@@ -656,7 +677,7 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
                     elapsed = time.time() - audio_start
                     print(f"   ✅ Audio generated: {processed_step['audio']} ({elapsed:.1f}s)")
                 else:
-                    print("   ⚠️  Audio skipped (TTS unavailable)")
+                    print("   ⚠️  Audio skipped (reason logged above)")
             
             # Generate interactive component or image
             if step["visualizationType"] == "interactive" and step.get("modulePrompt"):
@@ -761,6 +782,7 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
             print(f"\n⚠️  Evaluation failed: {e}")
             print("   Module was generated successfully but testing encountered an error.")
             print("   You can manually test with: python3 run_evaluator_queue.py " + module_id)
+            # Do not re-raise: allow process to exit 0 so RunPod returns the module (no 502/restart)
     elif not args.evaluate:
         print("💡 Tip: Add --evaluate flag to automatically test and validate components")
         print(f"   Or run manually: python3 run_evaluator_queue.py {module_id}\n")
