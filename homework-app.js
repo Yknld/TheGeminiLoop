@@ -215,7 +215,46 @@
                 return null;
             }
         }
+
+        // Load module from API-provided manifest (e.g. from interactive_module_get with signed URLs)
+        async function loadModuleFromApi(manifest) {
+            if (!manifest || !manifest.id) {
+                console.error('❌ [loadModuleFromApi] Invalid manifest: missing id');
+                return null;
+            }
+            const moduleId = manifest.id;
+            console.log(`🔍 [loadModuleFromApi] Loading module ${moduleId} from manifest...`);
+            try {
+                if (manifest.questions && Array.isArray(manifest.questions)) {
+                    const loadedQuestions = await Promise.all(manifest.questions.map((q) => loadQuestionFromManifest(moduleId, q)));
+                    questions = loadedQuestions;
+                    questionTexts = loadedQuestions.map((q, i) => q.problem?.text || `Question ${i + 1}`);
+                    currentQuestionIndex = 0;
+                    updateQuestionNavigation();
+                    loadHomework(loadedQuestions[0], 0);
+                    return loadedQuestions[0];
+                }
+                const questionData = await loadQuestionFromManifest(moduleId, manifest);
+                questions = [questionData];
+                questionTexts = [questionData.problem?.text || 'Question 1'];
+                currentQuestionIndex = 0;
+                updateQuestionNavigation();
+                loadHomework(questionData, 0);
+                return questionData;
+            } catch (error) {
+                console.error('❌ [loadModuleFromApi] Error loading module:', error);
+                return null;
+            }
+        }
         
+        // Resolve asset URL: if already absolute (http/https), use as-is; else relative to module
+        function resolveAssetUrl(moduleId, pathOrUrl) {
+            if (!pathOrUrl) return null;
+            const s = String(pathOrUrl).trim();
+            if (/^https?:\/\//i.test(s)) return s;
+            return `modules/${moduleId}/${s}`;
+        }
+
         // Helper function to load a single question from manifest data
         async function loadQuestionFromManifest(moduleId, questionData) {
             const questionTitle = questionData.problem?.title || 'Unknown Question';
@@ -225,10 +264,10 @@
             let problemVisualization = null;
             if (questionData.problem.visualization) {
                 try {
-                    const vizPath = `modules/${moduleId}/${questionData.problem.visualization}`;
-                    console.log(`   🖼️  Loading visualization from: ${vizPath}`);
-                    const cacheBuster = `?_t=${Date.now()}`;
-                    const vizResponse = await fetch(`${vizPath}${cacheBuster}`);
+                    const vizUrl = resolveAssetUrl(moduleId, questionData.problem.visualization);
+                    console.log(`   🖼️  Loading visualization from: ${vizUrl}`);
+                    const cacheBuster = vizUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
+                    const vizResponse = await fetch(`${vizUrl}${cacheBuster}`);
                     console.log(`   📡 Fetch response status: ${vizResponse.status} ${vizResponse.statusText}`);
                     if (vizResponse.ok) {
                         const svg = await vizResponse.text();
@@ -265,9 +304,9 @@
                         // Load interactive component HTML
                         if (step.component) {
                             try {
-                                // Add cache-busting parameter to always get fresh version
-                                const cacheBuster = `?_t=${Date.now()}`;
-                                const compResponse = await fetch(`modules/${moduleId}/${step.component}${cacheBuster}`);
+                                const compUrl = resolveAssetUrl(moduleId, step.component);
+                                const cacheBuster = compUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
+                                const compResponse = await fetch(`${compUrl}${cacheBuster}`);
                                 if (compResponse.ok) {
                                     stepData.visualization = await compResponse.text();
                                     console.log(`✅ Loaded component for step ${step.id}`);
@@ -280,9 +319,9 @@
                         // Load SVG visual
                         if (step.visual) {
                             try {
-                                // Add cache-busting parameter to always get fresh version
-                                const cacheBuster = `?_t=${Date.now()}`;
-                                const visualResponse = await fetch(`modules/${moduleId}/${step.visual}${cacheBuster}`);
+                                const visualUrl = resolveAssetUrl(moduleId, step.visual);
+                                const cacheBuster = visualUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
+                                const visualResponse = await fetch(`${visualUrl}${cacheBuster}`);
                                 if (visualResponse.ok) {
                                     const svg = await visualResponse.text();
                                     stepData.visualization = `<div class="svg-container">${svg}</div>`;
@@ -295,7 +334,7 @@
                         
                         // Embed pre-generated audio directly
                         if (step.audio) {
-                            stepData.audioPath = `modules/${moduleId}/${step.audio}`;
+                            stepData.audioPath = resolveAssetUrl(moduleId, step.audio) || `modules/${moduleId}/${step.audio}`;
                             // Create embedded audio HTML
                             stepData.embeddedAudio = `<audio preload="auto" src="${stepData.audioPath}"></audio>`;
                         }
@@ -690,6 +729,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
         
         // Make it globally accessible
         window.loadMultipleModules = loadMultipleModules;
+        window.loadModuleFromApi = loadModuleFromApi;
 
         async function loadHomeworkFromAPI(problemText, problemImage = null, addAsNewQuestion = false) {
             console.log('🟡 loadHomeworkFromAPI CALLED');

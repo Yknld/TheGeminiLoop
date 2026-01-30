@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;">
+    <title>Interactive Solver</title>
+    <link rel="stylesheet" href="homework-styles.css">
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true }, options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] } };
+    </script>
+</head>
+<body>
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading...</div>
+        <div class="loading-progress" id="loading-progress">Preparing...</div>
+    </div>
+    <div class="ask-gemini-tooltip" id="ask-gemini-tooltip" style="display: none;"><span class="ask-gemini-tooltip-text">Ask Gemini</span></div>
+    <div class="container">
+        <div class="question-nav">
+            <div class="question-nav-info">
+                <div class="question-selector"><label for="question-select">Question:</label><select id="question-select"><option value="0">Question 1</option></select></div>
+                <div class="question-counter" id="question-counter">1 of 1</div>
+            </div>
+            <div class="question-nav-buttons">
+                <button class="question-nav-btn" id="prev-question-btn" onclick="typeof previousQuestion==='function'&&previousQuestion()">← Previous</button>
+                <button class="question-nav-btn" id="next-question-btn" onclick="typeof nextQuestion==='function'&&nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="problem-section" id="problem-section">
+            <div class="problem-content">
+                <h2 id="problem-title">Problem</h2>
+                <div class="problem-text" id="problem-text">Loading...</div>
+                <img id="problem-image" class="problem-image" src="" alt="" style="display: none;">
+            </div>
+            <div class="problem-visualizer" id="problem-visualizer">
+                <div class="problem-visualizer-content" id="problem-visualizer-content"></div>
+            </div>
+        </div>
+        <div class="video-section" style="display: none;">
+            <div class="video-wrapper">
+                <iframe id="youtube-video" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+        <div class="steps-container">
+            <h3>Solution Steps</h3>
+            <div class="steps-list" id="steps-list"></div>
+        </div>
+    </div>
+    <div class="chatbot-container">
+        <div class="chatbot-panel" id="chatbot-panel">
+            <div class="chatbot-header">
+                <div><span>Live Tutor</span><div class="chatbot-status" id="chatbot-status"><span class="status-dot offline" id="status-dot"></span><span id="status-text">Offline</span></div></div>
+                <button class="chatbot-close" id="chatbot-close" aria-label="Close">×</button>
+            </div>
+            <div class="chatbot-messages" id="chatbot-messages"><div class="chatbot-message bot">How can I help with this problem?</div></div>
+            <div class="chatbot-input-container">
+                <textarea class="chatbot-input" id="chatbot-input" placeholder="Ask..." rows="1"></textarea>
+                <button class="chatbot-send" id="chatbot-send">Send</button>
+            </div>
+        </div>
+        <button class="chatbot-button" id="chatbot-button"></button>
+    </div>
+    <div class="resources-modal" id="resources-modal">
+        <div class="resources-modal-content">
+            <div class="resources-modal-header"><h3 id="resources-modal-title">Resources</h3><button class="resources-modal-close" id="resources-modal-close">×</button></div>
+            <div id="resources-modal-body"></div>
+        </div>
+    </div>
+    <div class="module-modal" id="module-modal">
+        <div class="module-modal-content">
+            <div class="module-modal-header"><h3 id="module-modal-title">Module</h3><button class="module-modal-close" id="module-modal-close">×</button></div>
+            <div class="module-modal-body" id="module-modal-body"></div>
+        </div>
+    </div>
+    <script src="homework-app.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', async function() {
+            function waitFor(name) {
+                return new Promise(function(resolve, reject) {
+                    var attempts = 0;
+                    function check() {
+                        if (typeof window[name] === 'function') return resolve();
+                        if (++attempts >= 50) return reject(new Error(name + ' not found'));
+                        setTimeout(check, 100);
+                    }
+                    check();
+                });
+            }
+            try { await waitFor('loadModuleFromApi'); } catch (e) {
+                var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                alert('Failed to load viewer.'); return;
+            }
+            var params = new URLSearchParams(window.location.search);
+            var lessonId = params.get('lesson_id');
+            var token = window.__SUPABASE_TOKEN__;
+            var supabaseUrl = (window.__SUPABASE_URL__ || '').replace(/\/$/, '');
+            if (lessonId && token && supabaseUrl) {
+                try {
+                    var r = await fetch(supabaseUrl + '/functions/v1/interactive_module_get?lesson_id=' + encodeURIComponent(lessonId), { headers: { 'Authorization': 'Bearer ' + token } });
+                    var data = await r.json();
+                    if (!r.ok) throw new Error(data.error || 'Failed to load module');
+                    if (data.manifest) {
+                        await window.loadModuleFromApi(data.manifest);
+                    } else throw new Error('No manifest');
+                } catch (err) {
+                    var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                    alert(err.message || 'Failed to load interactive module.'); return;
+                }
+                var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                return;
+            }
+            var moduleId = params.get('module');
+            if (moduleId && typeof window.loadHomeworkFromModule === 'function') {
+                try {
+                    await window.loadHomeworkFromModule(moduleId);
+                } catch (err) {
+                    var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                    alert(err.message || 'Failed to load module.'); return;
+                }
+                var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                return;
+            }
+            var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+            alert('Add ?lesson_id=UUID (with token) or ?module=MODULE_ID');
+        });
+    </script>
+</body>
+</html>
