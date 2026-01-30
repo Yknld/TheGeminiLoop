@@ -28,9 +28,8 @@ COPY generate.py evaluate_loop_clean.py run_evaluator_queue.py ./
 COPY serve.py index.html module-viewer.html homework-app.js homework-styles.css ./
 COPY modules ./modules
 
-# Local package: qa_browseruse_mcp (deps already in requirements.txt)
+# Local package: qa_browseruse_mcp (found via sys.path in evaluate_loop_clean.py, no pip install)
 COPY qa_browseruse_mcp ./qa_browseruse_mcp
-RUN pip install --no-cache-dir --no-deps -e ./qa_browseruse_mcp
 
 COPY rp_handler.py handler.py ./
 CMD ["python", "-u", "handler.py"]
