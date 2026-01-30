@@ -22,9 +22,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load API key from index.html
+# Load API key: env var first (RunPod / production), then index.html (local dev)
 def load_api_key():
-    """Load Gemini API key from index.html"""
+    key = os.environ.get("GOOGLE_AI_STUDIO_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    if key and key.strip():
+        return key.strip()
     html_path = Path(__file__).parent / "index.html"
     if html_path.exists():
         content = html_path.read_text()
@@ -33,13 +35,12 @@ def load_api_key():
             return match.group(1)
     return None
 
-# Set API key
 api_key = load_api_key()
 if api_key:
     os.environ["GOOGLE_AI_STUDIO_API_KEY"] = api_key
-    logger.info("✅ Loaded Gemini API key from index.html")
+    logger.info("✅ Loaded Gemini API key (env or index.html)")
 else:
-    logger.warning("⚠️  No API key found in index.html")
+    logger.warning("⚠️  No Gemini API key: set GOOGLE_AI_STUDIO_API_KEY or GEMINI_API_KEY, or add to index.html")
 
 # Prefer qa_browseruse_mcp in same repo (RunPod / local); fallback for match-me layout
 _repo = Path(__file__).resolve().parent

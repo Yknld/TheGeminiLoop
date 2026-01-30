@@ -29,8 +29,15 @@ import requests
 from pathlib import Path
 from datetime import datetime
 
-# Configuration (env vars override for RunPod / production)
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDA-rWxab0kt41jbIhJk0cv_7SYxdhbmUI")
+# Configuration: env first (RunPod), then index.html (local dev). No hardcoded key.
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_AI_STUDIO_API_KEY") or ""
+if not GEMINI_API_KEY.strip():
+    import re
+    _html = Path(__file__).resolve().parent / "index.html"
+    if _html.exists():
+        _m = re.search(r'<meta name="gemini-api-key" content="([^"]+)"', _html.read_text())
+        if _m:
+            GEMINI_API_KEY = _m.group(1)
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://euxfugfzmpsemkjpcpuz.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1eGZ1Z2Z6bXBzZW1ranBjcHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMDkyMDYsImV4cCI6MjA4MzU4NTIwNn0.bsfC3T5WoUhGrS-6VuowULRHciY7BpzMCBQ3F4fZFRI")
 
