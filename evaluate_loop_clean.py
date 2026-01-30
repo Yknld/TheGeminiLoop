@@ -289,6 +289,22 @@ class ModuleEvaluator:
                     except Exception as ss_err:
                         logger.error(f"Screenshot failed: {ss_err}")
                         raise Exception(f"Browser closed during interaction: {ss_err}")
+                
+                # If no sliders/inputs/buttons (e.g. drag-and-drop only), we only have initial screenshot.
+                # Take a second screenshot after a short delay so Gemini gets at least two frames.
+                if len(screenshots) == 1:
+                    await asyncio.sleep(2)
+                    screenshot_path = screenshots_dir / "after_delay.png"
+                    try:
+                        logger.info(f"   No sliders/inputs/buttons; taking second frame: {screenshot_path}")
+                        await self.mcp.call_tool("browser_take_screenshot", {
+                            "fullPage": True,
+                            "filename": str(screenshot_path)
+                        })
+                        screenshots.append(screenshot_path)
+                        interaction_log.append("Second frame captured (no standard controls to interact with)")
+                    except Exception as ss_err:
+                        logger.warning(f"Second screenshot failed: {ss_err}")
             
             # Evaluate with Gemini vision
             logger.info("🔍 Evaluating with Gemini vision...")
