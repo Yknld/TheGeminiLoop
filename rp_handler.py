@@ -45,9 +45,9 @@ def _upload_module_to_supabase(module_dir: Path, module_id: str, user_id: str, l
         from supabase import create_client
     except ImportError:
         return {"error": "supabase package not installed"}
-    url = os.environ.get("SUPABASE_URL")
+    url = (os.environ.get("SUPABASE_URL") or "").strip().rstrip("/") + "/"
     key = os.environ.get("SUPABASE_SERVICE_KEY")
-    if not url or not key:
+    if not url or url == "/" or not key:
         return {"error": "SUPABASE_URL and SUPABASE_SERVICE_KEY required for push"}
     client = create_client(url, key)
     storage_prefix = f"{user_id}/{lesson_id}/{STORAGE_PREFIX}/{module_id}"
@@ -68,7 +68,9 @@ def _upload_module_to_supabase(module_dir: Path, module_id: str, user_id: str, l
         elif f.suffix == ".wav":
             mime = "audio/wav"
         try:
-            client.storage.from_(BUCKET).upload(path, content, {"content-type": mime, "upsert": True})
+            # file_options: only str values (client may send as headers); upsert as "true" string
+            file_options = {"content-type": mime, "upsert": "true"}
+            client.storage.from_(BUCKET).upload(path, content, file_options)
             uploaded.append(path)
         except Exception as e:
             return {"error": f"upload {path}: {e}"}
