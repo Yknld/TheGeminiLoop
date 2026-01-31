@@ -42,7 +42,7 @@ def main():
 
     if out.get("status") == "failed":
         print("Job failed:", out.get("error", "unknown"), file=sys.stderr)
-        sys.exit(1)
+        # Still extract evaluation_results and artifacts if present (e.g. Supabase failed but screenshots saved)
 
     module_id = out.get("module_id", "module-unknown")
     base = Path(args.out)
@@ -80,6 +80,9 @@ def main():
     print(f"\nDone. Module: {base / 'modules' / module_id}")
     print(f"  View: cd GeminiLoop && python serve.py && open http://localhost:8000/index.html?module={module_id}")
     print(f"  Recording: {base / 'recordings' / module_id / 'evaluation.webm'}")
+
+    if out.get("status") == "failed":
+        sys.exit(1)
 
 
 if __name__ == "__main__":

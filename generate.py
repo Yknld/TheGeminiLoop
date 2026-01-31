@@ -782,9 +782,11 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
             from run_evaluator_queue import run_evaluation
             asyncio.run(run_evaluation(module_id))
         except Exception as e:
-            print(f"\n⚠️  Evaluation failed: {e}")
-            print("   Module was generated successfully but testing encountered an error.")
-            print("   You can manually test with: python3 run_evaluator_queue.py " + module_id)
+            import traceback
+            print(f"\n⚠️  Evaluation failed: {e}", flush=True)
+            traceback.print_exc()
+            print("   Module was generated successfully but testing encountered an error.", flush=True)
+            print("   You can manually test with: python3 run_evaluator_queue.py " + module_id, flush=True)
             # Do not re-raise: allow process to exit 0 so RunPod returns the module
     elif not args.evaluate:
         print("💡 Tip: Add --evaluate flag to automatically test and validate components")

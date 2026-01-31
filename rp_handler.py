@@ -7,7 +7,7 @@ Expects job input:
   - user_id: uuid (optional; can use RUNPOD_DEFAULT_USER_ID env on endpoint instead)
   - lesson_id: uuid (optional; can use RUNPOD_DEFAULT_LESSON_ID env on endpoint instead)
   - module_id: optional; default = "module-<job_id>"
-  - evaluate: optional bool; default False (skip browser evaluation to keep CPU image small)
+  - evaluate: optional bool; default True (run browser evaluation; set false to skip)
   - push_to_supabase: optional bool; default True when user_id and lesson_id are set (from input or env)
 
 Returns:
@@ -37,6 +37,31 @@ MAX_ZIP_BYTES = 6 * 1024 * 1024
 
 BUCKET = "lesson_assets"
 STORAGE_PREFIX = "interactive_pages"
+
+
+def _attach_eval_artifacts(workdir: Path, module_id: str, out: dict) -> None:
+    """Attach evaluation_results_json and artifacts zip to out if they exist on disk.
+    So failed jobs (e.g. Supabase error) still return screenshots and results."""
+    try:
+        eval_results_path = workdir / f"evaluation_results/{module_id}_queue/evaluation_results.json"
+        if eval_results_path.exists():
+            out["evaluation_results_json"] = eval_results_path.read_text()
+        eval_dir = workdir / f"evaluation_results/{module_id}_queue"
+        recording_path = workdir / f"recordings/{module_id}/evaluation.webm"
+        artifacts_buf = io.BytesIO()
+        with zipfile.ZipFile(artifacts_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            if eval_dir.exists():
+                for f in eval_dir.rglob("*"):
+                    if f.is_file():
+                        zf.write(f, f.relative_to(workdir))
+            if recording_path.exists():
+                zf.write(recording_path, f"recordings/{module_id}/evaluation.webm")
+        artifacts_bytes = artifacts_buf.getvalue()
+        if artifacts_bytes and len(artifacts_bytes) <= MAX_ZIP_BYTES:
+            out["artifacts_zip_base64"] = base64.b64encode(artifacts_bytes).decode("ascii")
+            out["artifacts_zip_filename"] = f"{module_id}-artifacts.zip"
+    except Exception:
+        pass  # keep existing out; don't lose error payload
 
 
 def _upload_module_to_supabase(module_dir: Path, module_id: str, user_id: str, lesson_id: str) -> dict:
@@ -110,7 +135,10 @@ def handler(job):
     if isinstance(problem_texts, str):
         problem_texts = [problem_texts]
     module_id = job_input.get("module_id") or f"module-{job.get('id', 'run')}"
-    evaluate = job_input.get("evaluate", False)
+    # Default evaluate=True so generation always runs browser evaluation unless explicitly disabled
+    evaluate = job_input.get("evaluate", True)
+    if "evaluate" not in job_input:
+        print("ℹ️  evaluate not in input; defaulting to True (run evaluation)", flush=True)
     # user_id/lesson_id from job input, or from env (e.g. RunPod endpoint env) for default push target
     user_id = (job_input.get("user_id") or os.environ.get("RUNPOD_DEFAULT_USER_ID") or "").strip()
     lesson_id = (job_input.get("lesson_id") or os.environ.get("RUNPOD_DEFAULT_LESSON_ID") or "").strip()
@@ -173,18 +201,14 @@ def handler(job):
                 except subprocess.TimeoutExpired:
                     serve_proc.kill()
         if proc.returncode != 0:
-            return {
-                "status": "failed",
-                "module_id": module_id,
-                "error": "generate.py exited with non-zero code",
-            }
+            out = {"status": "failed", "module_id": module_id, "error": "generate.py exited with non-zero code"}
+            _attach_eval_artifacts(workdir, module_id, out)
+            return out
         manifest_path = modules_dir / module_id / "manifest.json"
         if not manifest_path.exists():
-            return {
-                "status": "failed",
-                "module_id": module_id,
-                "error": "manifest.json not found after generation",
-            }
+            out = {"status": "failed", "module_id": module_id, "error": "manifest.json not found after generation"}
+            _attach_eval_artifacts(workdir, module_id, out)
+            return out
         print("\n✅ Generation complete. Preparing output...", flush=True)
         manifest = json.loads(manifest_path.read_text())
         module_dir = modules_dir / module_id
@@ -203,7 +227,10 @@ def handler(job):
         if push_to_supabase and user_id and lesson_id:
             print("\n📤 Pushing module to Supabase...", flush=True)
             runpod.serverless.progress_update(job, "Pushing module to Supabase...")
-            result = _upload_module_to_supabase(module_dir, module_id, user_id, lesson_id)
+            try:
+                result = _upload_module_to_supabase(module_dir, module_id, user_id, lesson_id)
+            except Exception as e:
+                result = {"error": str(e)}
             if "error" in result:
                 print(f"❌ Supabase push failed: {result['error']}", flush=True)
                 out["supabase_error"] = result["error"]
@@ -234,29 +261,16 @@ def handler(job):
             )
         else:
             out["module_zip_skipped"] = f"Module zip exceeds {MAX_ZIP_BYTES // (1024*1024)}MB; not included. Use storage upload or run generation locally."
-        # Attach evaluation results (JSON) and artifacts zip (screenshots + recording) for pull
-        eval_results_path = workdir / f"evaluation_results/{module_id}_queue/evaluation_results.json"
-        if eval_results_path.exists():
-            out["evaluation_results_json"] = eval_results_path.read_text()
-        eval_dir = workdir / f"evaluation_results/{module_id}_queue"
-        recording_path = workdir / f"recordings/{module_id}/evaluation.webm"
-        artifacts_buf = io.BytesIO()
-        with zipfile.ZipFile(artifacts_buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            if eval_dir.exists():
-                for f in eval_dir.rglob("*"):
-                    if f.is_file():
-                        zf.write(f, f.relative_to(workdir))
-            if recording_path.exists():
-                zf.write(recording_path, f"recordings/{module_id}/evaluation.webm")
-        artifacts_bytes = artifacts_buf.getvalue()
-        if artifacts_bytes and len(artifacts_bytes) <= MAX_ZIP_BYTES:
-            out["artifacts_zip_base64"] = base64.b64encode(artifacts_bytes).decode("ascii")
-            out["artifacts_zip_filename"] = f"{module_id}-artifacts.zip"
+        _attach_eval_artifacts(workdir, module_id, out)
         return out
     except subprocess.TimeoutExpired:
-        return {"status": "failed", "module_id": module_id, "error": "Generation timed out (30m)"}
+        out = {"status": "failed", "module_id": module_id, "error": "Generation timed out (30m)"}
+        _attach_eval_artifacts(workdir, module_id, out)
+        return out
     except Exception as e:
-        return {"status": "failed", "module_id": module_id, "error": str(e)}
+        out = {"status": "failed", "module_id": module_id, "error": str(e)}
+        _attach_eval_artifacts(workdir, module_id, out)
+        return out
 
 
 runpod.serverless.start({"handler": handler})

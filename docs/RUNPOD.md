@@ -55,9 +55,11 @@ Worker logs will now stream `generate.py` output so you see “Calling Gemini…
 
 - **problem_texts** (required): list of problem strings.
 - **module_id** (optional): module id; default = `module-<job_id>`.
-- **evaluate** (optional): set to **`true`** to run the browser evaluation loop (same as locally). Default `false`. When `true`, the handler starts `serve.py` on port 8000 before running generation so the evaluator can load `module-viewer.html` at `localhost:8000`; the browser runs **non-headless** under Xvfb (virtual display) for reliable screenshots; the server is stopped after the job. Requires **qa_browseruse_mcp** (in requirements.txt), Chromium, and **xvfb** in the image.
+- **evaluate** (optional): set to **`true`** to run the browser evaluation loop (same as locally). **Default `true`** (evaluation runs unless you pass `"evaluate": false`). When true, the handler starts `serve.py` on port 8000 before running generation so the evaluator can load `module-viewer.html` at `localhost:8000`; the browser runs **non-headless** under Xvfb (virtual display) for reliable screenshots; the server is stopped after the job. Requires **qa_browseruse_mcp** (in requirements.txt), Chromium, and **xvfb** in the image. Pass `"evaluate": false` to skip evaluation (faster, no screenshots/artifacts).
 - **user_id** (optional): UUID of the user for Supabase push. If omitted, the handler uses **RUNPOD_DEFAULT_USER_ID** from the RunPod endpoint env (if set).
 - **lesson_id** (optional): UUID of the lesson for Supabase push. If omitted, the handler uses **RUNPOD_DEFAULT_LESSON_ID** from the RunPod endpoint env (if set). If both `user_id` and `lesson_id` are available (from input or env), the handler uploads the module to `lesson_assets/{user_id}/{lesson_id}/interactive_pages/{module_id}/` and upserts `lesson_outputs`. Set **SUPABASE_URL** and **SUPABASE_SERVICE_KEY** (and optionally **RUNPOD_DEFAULT_USER_ID** / **RUNPOD_DEFAULT_LESSON_ID**) in the RunPod endpoint env.
+
+**Supabase schema:** Push to Supabase requires the `lesson_outputs.type` check constraint to include `'interactive_pages'`. In the Study OS mobile repo (`smrtr/study-os-mobile`), run migration **019_add_interactive_pages.sql** on your Supabase project (e.g. `supabase db push` from that repo, or run the migration SQL in the Supabase SQL Editor). Otherwise you get: `new row for relation "lesson_outputs" violates check constraint "lesson_outputs_type_check"`.
 
 **Example curl (evaluator on):**
 
@@ -69,6 +71,8 @@ curl -X POST "https://api.runpod.ai/v2/YOUR_ENDPOINT_ID/run" \
 ```
 
 Or run `./test_runpod.sh` (set `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT`).
+
+**Multiple questions:** The HTML viewer and manifest support multiple questions (Q1, Q2, …). To test with several problems at once, use `./test_runpod_multi.sh` (sends 3 problem_texts) or pass a `problem_texts` array with multiple strings in your POST body. When the job completes, pull with `./pull_runpod_results.sh JOB_ID --out .` and open `http://localhost:8000/index.html?module=<module_id>` to switch between questions in the UI.
 
 **Example curl (with Supabase push):** Replace `USER_UUID` and `LESSON_UUID` with real IDs from your app.
 
@@ -99,14 +103,29 @@ Success (with optional zip for small modules):
 **To pull the module, evaluation results, and recording:** After the job completes, GET the status (the response includes the handler output). Then run:
 
 ```bash
-# Save completed job response (from GET .../status/{job_id})
-curl -s -H "Authorization: Bearer $RUNPOD_API_KEY" "https://api.runpod.ai/v2/$RUNPOD_ENDPOINT/status/$JOB_ID" > status.json
+# One-liner: fetch status and extract (set RUNPOD_API_KEY and RUNPOD_ENDPOINT)
+./pull_runpod_results.sh JOB_ID --out .
 
-# Extract module zip, evaluation_results.json, and artifacts zip (screenshots + evaluation.webm)
+# Or manually:
+curl -s -H "Authorization: Bearer $RUNPOD_API_KEY" "https://api.runpod.ai/v2/$RUNPOD_ENDPOINT/status/$JOB_ID" > status.json
 python pull_runpod_output.py status.json --out .
 ```
 
 This creates `modules/<module_id>/`, `evaluation_results/<module_id>_queue/`, and `recordings/<module_id>/evaluation.webm`. Open the recording (e.g. in a browser) to see what the evaluator saw.
+
+**Pull module from Supabase (after push):** If the module was saved to Supabase (e.g. `Module saved to Supabase: user_id/lesson_id/interactive_pages/module_id`), pull it locally with `pull_from_supabase.py` (requires `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`):
+
+```bash
+# By full storage prefix
+python pull_from_supabase.py "2202c52b-a017-4f1a-8330-24c9eb5224c4/0fed25d6-899d-49c5-89b8-238658cec1be/interactive_pages/module-d9a45632-8268-49a8-b3bd-2b56ff358963-u1"
+
+# Or by user, lesson, module
+python pull_from_supabase.py --user 2202c52b-a017-4f1a-8330-24c9eb5224c4 --lesson 0fed25d6-899d-49c5-89b8-238658cec1be --module module-d9a45632-8268-49a8-b3bd-2b56ff358963-u1
+```
+
+Evaluator screenshots and `evaluation_results.json` are in the RunPod job output (artifacts zip), not in Supabase. Use `pull_runpod_results.sh JOB_ID` (or GET status and `pull_runpod_output.py`) to get them; they are extracted to `evaluation_results/<module_id>_queue/` and `recordings/<module_id>/evaluation.webm`.
+
+**SSH and file transfer:** The basic RunPod SSH command (`user@ssh.runpod.io`) is a **proxy connection** and does **not** support SCP or SFTP, so you cannot `scp` or `rsync` files through it. For serverless runs, results are only available via the API (use `pull_runpod_results.sh` or `pull_runpod_output.py` with a saved status response). For Pods, use “SSH over exposed TCP” (public IP + port) for SCP/rsync, or use `runpodctl send` on the Pod and `runpodctl receive CODE` locally.
 
 **Manual decode:** If you only have `module_zip_base64`, decode and unzip into your TheGeminiLoop repo root:
 
@@ -140,6 +159,15 @@ The mobile app (Study OS) loads the interactive solver in a WebView. You need to
 `https://<project-ref>.supabase.co/storage/v1/object/public/solver`
 
 In the Study OS mobile app repo (`smrtr/study-os-mobile`), set `SOLVER_VIEWER_URL` in `apps/mobile/src/config/supabase.ts` to that URL (no trailing slash). The app opens `SOLVER_VIEWER_URL/solver.html?lesson_id=...` in a WebView and injects the user’s Supabase **access token** and Supabase URL into the page (as `window.__SUPABASE_TOKEN__` and `window.__SUPABASE_URL__`). The solver page then uses those to call the `interactive_module_get` Edge Function (which requires a valid JWT) and loads the manifest with signed asset URLs.
+
+## Why evaluation might not run (generation only)
+
+If the job completes with a module but **no evaluation** (no screenshots, no `evaluation_results`, no recording), common causes:
+
+1. **Evaluation threw an exception** — e.g. browser/MCP startup failed, or a bug in the evaluator. The process still exits 0 so the handler returns the module. **Check the RunPod job logs**: you should see `EVALUATION PHASE` followed by `Evaluation failed: <error>` and a full traceback. Fix the underlying error (dependencies, env, or code) and redeploy.
+2. **Job/worker timeout** — For multiple questions, generation can take 15–25+ minutes; evaluation adds more. If the RunPod worker or endpoint has a max execution time (e.g. 10–15 min), the process may be killed after generation finishes and before or during evaluation. **Fix**: Increase the endpoint’s max duration in the RunPod dashboard, or run with fewer questions per job. The handler allows up to 30 minutes (`proc.wait(timeout=1800)`); ensure the endpoint limit is at least that if you want evaluation.
+
+After fixing, redeploy the handler and run again. The next failure will log a full traceback when evaluation fails.
 
 ## Evaluation on RunPod (same as local)
 
