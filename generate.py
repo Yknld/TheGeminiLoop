@@ -474,9 +474,59 @@ Return ONLY the SVG code, no explanations, no markdown."""
 
 
 def generate_audio(text, output_path):
-    """Generate TTS audio using Gemini TTS API (returns PCM; saved as WAV)."""
+    """Generate TTS audio using Gemini TTS only (Docker loop uses no other TTS backend).
+    Uses google-genai SDK; falls back to REST if SDK fails."""
     import base64
     import wave
+    if not GEMINI_API_KEY or not GEMINI_API_KEY.strip():
+        print("   ⚠️  TTS skipped: GEMINI_API_KEY is empty (set env var for Gemini TTS)")
+        return False
+    try:
+        # Prefer official Gemini TTS via google-genai SDK
+        from google import genai
+        from google.genai.types import GenerateContentConfig, SpeechConfig, VoiceConfig, PrebuiltVoiceConfig
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        response = client.models.generate_content(
+            model=GEMINI_TTS_MODEL,
+            contents=text,
+            config=GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=SpeechConfig(
+                    voice_config=VoiceConfig(
+                        prebuilt_voice_config=PrebuiltVoiceConfig(voice_name=GEMINI_TTS_VOICE)
+                    )
+                ),
+            ),
+        )
+        candidates = getattr(response, "candidates", None) or []
+        if not candidates:
+            pf = getattr(response, "prompt_feedback", None) or {}
+            reason = getattr(pf, "block_reason", None) or "no candidates"
+            print(f"   ⚠️  TTS failed: no candidates (blockReason: {reason})")
+            return False
+        parts = getattr(candidates[0].content, "parts", None) or []
+        if not parts:
+            print("   ⚠️  TTS failed: candidate has no parts")
+            return False
+        inline = parts[0].inline_data
+        if not inline or not getattr(inline, "data", None):
+            print("   ⚠️  TTS failed: no inline_data.data (model may not support AUDIO)")
+            return False
+        # inline.data can be bytes or base64 str depending on SDK
+        raw = inline.data
+        pcm = raw if isinstance(raw, bytes) else base64.b64decode(raw)
+        wav_path = output_path.with_suffix(".wav") if output_path.suffix != ".wav" else output_path
+        with wave.open(str(wav_path), "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)  # 16-bit
+            wf.setframerate(24000)
+            wf.writeframes(pcm)
+        return True
+    except ImportError:
+        pass  # fall back to REST
+    except Exception as sdk_err:
+        print(f"   ⚠️  Gemini TTS SDK failed ({type(sdk_err).__name__}), trying REST...")
+    # Fallback: Gemini TTS via REST (same API, no other TTS)
     try:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_TTS_MODEL}:generateContent"
         payload = {
@@ -490,9 +540,6 @@ def generate_audio(text, output_path):
                 },
             },
         }
-        if not GEMINI_API_KEY or not GEMINI_API_KEY.strip():
-            print("   ⚠️  TTS skipped: GEMINI_API_KEY is empty (set env var for Gemini TTS)")
-            return False
         response = requests.post(
             f"{url}?key={GEMINI_API_KEY}",
             headers={"Content-Type": "application/json"},
@@ -524,11 +571,10 @@ def generate_audio(text, output_path):
             print("   ⚠️  TTS failed: no inlineData.data in response (model may not support AUDIO or wrong format)")
             return False
         pcm = base64.b64decode(b64)
-        # Gemini TTS returns PCM: 24kHz, mono, 16-bit (s16le)
         wav_path = output_path.with_suffix(".wav") if output_path.suffix != ".wav" else output_path
         with wave.open(str(wav_path), "wb") as wf:
             wf.setnchannels(1)
-            wf.setsampwidth(2)  # 16-bit
+            wf.setsampwidth(2)
             wf.setframerate(24000)
             wf.writeframes(pcm)
         return True
@@ -599,11 +645,12 @@ def main():
     overall_start_time = time.time()
     
     for q_idx, problem_text in enumerate(problem_texts, 1):
-        print("\n" + "="*70)
-        print(f"📚 QUESTION {q_idx} of {len(problem_texts)}")
-        print("="*70)
+        print("\n" + "="*70, flush=True)
+        print(f"📚 QUESTION {q_idx} of {len(problem_texts)}", flush=True)
+        print("="*70, flush=True)
         preview = problem_text[:100] + "..." if len(problem_text) > 100 else problem_text
-        print(f"📝 Problem: {preview}\n")
+        print(f"📝 Problem: {preview}\n", flush=True)
+        sys.stdout.flush()
         
         # Generate module structure for this question
         print(f"1️⃣  Calling Gemini API to generate question {q_idx} structure...")
@@ -718,7 +765,8 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
             processed_steps.append(processed_step)
         
         print("\n" + "━" * 70)
-        
+        sys.stdout.flush()
+
         # Create question object
         question_data = {
             "id": q_idx - 1,  # 0-indexed for JavaScript
@@ -736,7 +784,8 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
         print(f"   🔊 Audio files: {sum(1 for s in processed_steps if s['audio'])}")
         print(f"   🎮 Interactive components: {sum(1 for s in processed_steps if s['component'])}")
         print(f"   🖼️  Visual diagrams: {sum(1 for s in processed_steps if s['visual'])}")
-    
+        sys.stdout.flush()
+
     # Step 3: Create manifest with all questions
     print("\n" + "="*70)
     print("4️⃣  Creating manifest...")
@@ -770,17 +819,21 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
     print(f"\n⏱️  Total time: {overall_elapsed:.1f}s ({overall_elapsed/60:.1f} minutes)")
     print("\n✅ Load in browser: template.html?module=" + module_id)
     print("="*70 + "\n")
-    
+    sys.stdout.flush()
+
     # Step 5: Run evaluation loop if requested (no skipping)
     if args.evaluate and not args.no_evaluate:
-        print("\n" + "="*70)
-        print("🔍 EVALUATION PHASE")
-        print("="*70)
-        print("Starting automated testing and validation...\n")
+        print("\n" + "="*70, flush=True)
+        print("🔍 EVALUATION PHASE", flush=True)
+        print("="*70, flush=True)
+        print("Starting automated testing and validation...\n", flush=True)
+        sys.stdout.flush()
         try:
             import asyncio
             from run_evaluator_queue import run_evaluation
             asyncio.run(run_evaluation(module_id))
+            print("\n✅ EVALUATION COMPLETE", flush=True)
+            sys.stdout.flush()
         except Exception as e:
             import traceback
             print(f"\n⚠️  Evaluation failed: {e}", flush=True)
