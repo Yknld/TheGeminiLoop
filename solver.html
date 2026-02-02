@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="gemini-api-key" content="AIzaSyA6-D3_AU99h_TNWN5EZ49-w6osOGPjqGs">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;">
     <title>Interactive Solver</title>
     <link rel="stylesheet" href="homework-styles.css">
@@ -17,7 +18,6 @@
         <div class="loading-text">Loading...</div>
         <div class="loading-progress" id="loading-progress">Preparing...</div>
     </div>
-    <div class="ask-gemini-tooltip" id="ask-gemini-tooltip" style="display: none;"><span class="ask-gemini-tooltip-text">Ask Gemini</span></div>
     <div class="container">
         <div class="question-nav">
             <div class="question-nav-info">
@@ -61,7 +61,11 @@
                 <button class="chatbot-send" id="chatbot-send">Send</button>
             </div>
         </div>
-        <button class="chatbot-button" id="chatbot-button"></button>
+        <button class="chatbot-button" id="chatbot-button" aria-label="Live Tutor">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+        </button>
     </div>
     <div class="resources-modal" id="resources-modal">
         <div class="resources-modal-content">
@@ -77,6 +81,12 @@
     </div>
     <script src="homework-app.js"></script>
     <script>
+        // How the solver pulls module content:
+        // 1. Auth: __SUPABASE_TOKEN__, __SUPABASE_URL__, __LESSON_ID__ (injected by parent or from URL).
+        // 2. Fetch manifest: GET supabaseUrl/functions/v1/interactive_module_get?lesson_id=UUID with Bearer token.
+        // 3. API returns { manifest } with problem text, steps, and signed URLs for assets (visualization, component, visual, audio).
+        // 4. loadModuleFromApi(manifest) in homework-app.js: for each question, loadQuestionFromManifest fetches each asset URL (resolveAssetUrl returns signed URLs as-is), then loadHomework() fills the DOM and hideLoadingOverlay().
+        // 5. If embedded in iframe (e.g. Study OS), parent can postMessage({ type: 'auth', token, url, lessonId }) so we set globals and call doLoad().
         window.addEventListener('DOMContentLoaded', async function() {
             function waitFor(name) {
                 return new Promise(function(resolve, reject) {
@@ -94,26 +104,83 @@
                 alert('Failed to load viewer.'); return;
             }
             var params = new URLSearchParams(window.location.search);
-            var lessonId = params.get('lesson_id');
-            var token = window.__SUPABASE_TOKEN__;
-            var supabaseUrl = (window.__SUPABASE_URL__ || '').replace(/\/$/, '');
-            if (lessonId && token && supabaseUrl) {
+            var loadStarted = false;
+            function getLessonId() { return (typeof window.__LESSON_ID__ === 'string' && window.__LESSON_ID__) || params.get('lesson_id'); }
+            function getToken() { return window.__SUPABASE_TOKEN__; }
+            function getSupabaseUrl() { return (window.__SUPABASE_URL__ || '').replace(/\/$/, ''); }
+
+            window.addEventListener('message', function(ev) {
+                var d = ev.data;
+                if (d && d.type === 'auth' && d.token && d.url) {
+                    window.__SUPABASE_TOKEN__ = d.token;
+                    window.__SUPABASE_URL__ = (d.url || '').replace(/\/$/, '');
+                    if (d.lessonId) window.__LESSON_ID__ = d.lessonId;
+                    doLoad();
+                }
+            });
+
+            async function doLoad() {
+                if (loadStarted) return;
+                var lessonId = getLessonId();
+                var token = getToken();
+                var supabaseUrl = getSupabaseUrl();
+                if (!lessonId || !token || !supabaseUrl) return;
+                loadStarted = true;
                 try {
                     var r = await fetch(supabaseUrl + '/functions/v1/interactive_module_get?lesson_id=' + encodeURIComponent(lessonId), { headers: { 'Authorization': 'Bearer ' + token } });
-                    var data = await r.json();
-                    if (!r.ok) throw new Error(data.error || 'Failed to load module');
+                    var data;
+                    try { data = await r.json(); } catch (_) { data = {}; }
+                    if (!r.ok) {
+                        var msg = (data && data.error) ? data.error : ('Failed to load module (' + r.status + ')');
+                        var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                        var titleEl = document.getElementById('problem-title');
+                        var textEl = document.getElementById('problem-text');
+                        if (titleEl) titleEl.textContent = 'No module';
+                        if (textEl) {
+                            if (msg.indexOf('No interactive module found') !== -1) {
+                                textEl.innerHTML = 'This lesson doesn\'t have an interactive module yet. Generate one using the GeminiLoop pipeline (RunPod) with this lesson ID and push to Supabase, or try another lesson that already has one.';
+                            } else {
+                                textEl.textContent = msg;
+                            }
+                        }
+                        if (msg.indexOf('No interactive module found') === -1) alert(msg);
+                        return;
+                    }
                     if (data.manifest) {
-                        await window.loadModuleFromApi(data.manifest);
-                    } else throw new Error('No manifest');
+                        var result = await window.loadModuleFromApi(data.manifest);
+                        if (!result) {
+                            var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                            var titleEl = document.getElementById('problem-title');
+                            var textEl = document.getElementById('problem-text');
+                            if (titleEl) titleEl.textContent = 'Load failed';
+                            if (textEl) textEl.textContent = 'Failed to load module content. Check the console for errors (e.g. CORS or missing assets).';
+                            return;
+                        }
+                    } else {
+                        var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                        var textEl = document.getElementById('problem-text');
+                        if (textEl) textEl.textContent = 'No manifest in response.';
+                        alert('No manifest');
+                        return;
+                    }
                 } catch (err) {
                     var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
-                    alert(err.message || 'Failed to load interactive module.'); return;
+                    var textEl = document.getElementById('problem-text');
+                    var msg = err.message || 'Failed to load interactive module.';
+                    if (textEl) textEl.textContent = msg;
+                    alert(msg);
+                    return;
                 }
                 var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+            }
+
+            if (getLessonId() && getToken() && getSupabaseUrl()) {
+                await doLoad();
                 return;
             }
             var moduleId = params.get('module');
             if (moduleId && typeof window.loadHomeworkFromModule === 'function') {
+                loadStarted = true;
                 try {
                     await window.loadHomeworkFromModule(moduleId);
                 } catch (err) {
@@ -123,8 +190,19 @@
                 var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
                 return;
             }
-            var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
-            alert('Add ?lesson_id=UUID (with token) or ?module=MODULE_ID');
+            if (window !== window.top) {
+                var progressEl = document.getElementById('loading-progress');
+                if (progressEl) progressEl.textContent = 'Waiting for auth…';
+                setTimeout(function() {
+                    if (loadStarted) return;
+                    var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                    var textEl = document.getElementById('problem-text');
+                    if (textEl) textEl.textContent = 'No auth received. Open this lesson from the app.';
+                }, 5000);
+            } else {
+                var ol = document.getElementById('loading-overlay'); if (ol) ol.classList.add('hidden');
+                alert('Add ?lesson_id=UUID (with token) or ?module=MODULE_ID');
+            }
         });
     </script>
 </body>

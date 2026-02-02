@@ -41,6 +41,20 @@
             }
         }
 
+        /** If content looks like HTML-entity-encoded (e.g. &lt;div&gt;), decode once so it renders as HTML. */
+        function ensureHtml(content) {
+            if (!content || typeof content !== 'string') return content;
+            const trimmed = content.trim();
+            if (!trimmed.startsWith('&lt;') && !trimmed.startsWith('&amp;')) return content;
+            const div = document.createElement('div');
+            div.innerHTML = content;
+            if (div.childNodes.length === 1 && div.childNodes[0].nodeType === Node.TEXT_NODE) {
+                const decoded = div.childNodes[0].textContent;
+                div.innerHTML = decoded;
+            }
+            return div.innerHTML;
+        }
+
         // Initialize - set up questions but don't load them all at once
         async function init() {
             console.log('🟢 INIT FUNCTION CALLED');
@@ -283,14 +297,15 @@
                 console.log(`   ⚠️  No visualization path in manifest for "${questionTitle}"`);
             }
             
-            // Convert manifest format to homework data format
+            // Convert manifest format to homework data format (steps may be missing from API manifest)
+            const stepsList = Array.isArray(questionData.steps) ? questionData.steps : [];
             const homeworkData = {
                 id: moduleId,
                 problem: {
                     ...questionData.problem,
                     visualization: problemVisualization
                 },
-                steps: await Promise.all(questionData.steps.map(async (step) => {
+                steps: await Promise.all(stepsList.map(async (step) => {
                     const stepData = {
                         explanation: step.explanation,
                         inputLabel: step.inputLabel,
@@ -845,7 +860,8 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
             if (data.problem) {
                 document.getElementById('problem-title').textContent = data.problem.title || "Homework Problem";
                 const problemTextEl = document.getElementById('problem-text');
-                problemTextEl.innerHTML = data.problem.text || "Problem description will appear here.";
+                const problemText = data.problem.text || "Problem description will appear here.";
+                problemTextEl.innerHTML = ensureHtml(problemText);
                 
                 // Trigger MathJax to render the math (with small delay to ensure ready)
                 setTimeout(() => {
@@ -886,7 +902,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                     // PRIORITY 1: Use pre-loaded visualization from module
                     if (data.problem && data.problem.visualization) {
                         console.log('✅ Loading PRE-GENERATED problem visualization');
-                        problemVisualizer.innerHTML = data.problem.visualization;
+                        problemVisualizer.innerHTML = ensureHtml(data.problem.visualization);
                         // Save to cache
                         if (!questionStates[currentQuestionIndex]) {
                             questionStates[currentQuestionIndex] = {};
@@ -896,7 +912,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                     // PRIORITY 2: Check if cached
                     else if (questionStates[currentQuestionIndex]?.problemVisualization) {
                         console.log('✅ Loading cached problem visualization');
-                        problemVisualizer.innerHTML = questionStates[currentQuestionIndex].problemVisualization;
+                        problemVisualizer.innerHTML = ensureHtml(questionStates[currentQuestionIndex].problemVisualization);
                     }
                     // PRIORITY 3: Generate at runtime (fallback)
                     else {
@@ -1750,14 +1766,14 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                                 iframe.style.border = 'none';
                                 iframe.style.borderRadius = '8px';
                                 iframe.sandbox = 'allow-scripts allow-same-origin allow-forms';
-                                
+                                iframe.title = 'Step ' + (index + 1) + ' interactive';
+
                                 vizEl.appendChild(iframe);
-                                
-                                // Write HTML directly to iframe
-                                iframe.contentDocument.open();
-                                iframe.contentDocument.write(step.visualization);
-                                iframe.contentDocument.close();
-                                
+
+                                // Use srcdoc so scripts run reliably (same idea as mobile WebView html+baseUrl)
+                                const html = ensureHtml(step.visualization);
+                                iframe.srcdoc = html;
+
                                 // Auto-adjust iframe height to content after load
                                 iframe.addEventListener('load', () => {
                                     try {
@@ -1816,11 +1832,8 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                                 iframe.sandbox = 'allow-scripts allow-same-origin allow-forms';
                                 
                                 vizEl.appendChild(iframe);
-                                
-                                // Write cached HTML to iframe
-                                iframe.contentDocument.open();
-                                iframe.contentDocument.write(cachedViz);
-                                iframe.contentDocument.close();
+
+                                iframe.srcdoc = ensureHtml(cachedViz);
                                 
                                 // Auto-adjust iframe height to content
                                 setTimeout(() => {
@@ -4904,15 +4917,18 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
         // Initialize status
         updateChatbotStatus('offline', 'Offline');
 
-        // Text Selection - Ask Gemini Feature
+        // Text Selection - Ask Gemini Feature (popup only when user selects text on the question)
         const askGeminiTooltip = document.createElement('div');
         askGeminiTooltip.className = 'ask-gemini-tooltip';
+        askGeminiTooltip.setAttribute('role', 'button');
+        askGeminiTooltip.setAttribute('aria-label', 'Ask Gemini about selection');
         askGeminiTooltip.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
             Ask Gemini
         `;
+        askGeminiTooltip.style.display = 'none';
         document.body.appendChild(askGeminiTooltip);
 
         let selectedText = '';
@@ -4921,7 +4937,7 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
             selectedText = text;
             // Store text in data attribute so it persists even if selectedText gets cleared
             askGeminiTooltip.setAttribute('data-selected-text', text);
-            askGeminiTooltip.style.display = 'block';
+            askGeminiTooltip.style.display = 'flex';
             askGeminiTooltip.style.left = `${x}px`;
             askGeminiTooltip.style.top = `${y - 50}px`;
             

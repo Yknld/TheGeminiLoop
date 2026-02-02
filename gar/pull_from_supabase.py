@@ -20,6 +20,17 @@ import os
 import sys
 from pathlib import Path
 
+# Load .env from script directory if present
+_script_dir = Path(__file__).resolve().parent
+_env_file = _script_dir / ".env"
+if _env_file.exists():
+    for line in _env_file.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, _, v = line.partition("=")
+            if k.strip():
+                os.environ.setdefault(k.strip(), v.strip())
+
 # Default bucket and path layout (must match rp_handler)
 BUCKET = "lesson_assets"
 INTERACTIVE_PAGES = "interactive_pages"
@@ -74,9 +85,9 @@ def main():
         ap.error("Provide either prefix or --user, --lesson, and --module")
 
     url = (os.environ.get("SUPABASE_URL") or "").strip().rstrip("/") + "/"
-    key = os.environ.get("SUPABASE_SERVICE_KEY")
+    key = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not url or url == "/" or not key:
-        print("Set SUPABASE_URL and SUPABASE_SERVICE_KEY", file=sys.stderr)
+        print("Set SUPABASE_URL and SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY) in .env or environment.", file=sys.stderr)
         sys.exit(1)
 
     try:

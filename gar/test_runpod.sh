@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 # Test RunPod endpoint with evaluator ON (--evaluate).
-# Usage: RUNPOD_API_KEY=your_key RUNPOD_ENDPOINT=maz6or8l4hb9h3 ./test_runpod.sh
-# Or:   export RUNPOD_API_KEY=... RUNPOD_ENDPOINT=... && ./test_runpod.sh
+# Usage: ./test_runpod.sh  (uses .env for RUNPOD_API_KEY and RUNPOD_ENDPOINT)
+# Or:   RUNPOD_API_KEY=... RUNPOD_ENDPOINT=... ./test_runpod.sh
 
 set -e
-ENDPOINT="${RUNPOD_ENDPOINT:?Set RUNPOD_ENDPOINT (e.g. maz6or8l4hb9h3)}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "${SCRIPT_DIR}/.env" ]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "${SCRIPT_DIR}/.env"
+  set +a
+fi
+ENDPOINT="${RUNPOD_ENDPOINT:?Set RUNPOD_ENDPOINT (e.g. in .env or env)}"
 API_KEY="${RUNPOD_API_KEY:?Set RUNPOD_API_KEY}"
 
 # Single problem; set "evaluate": true so generate.py runs with --evaluate (test and validate components).
@@ -35,10 +42,10 @@ if [ -z "$JOB_ID" ]; then
   echo "No job id in response. Check RUNPOD_API_KEY and RUNPOD_ENDPOINT."
   exit 1
 fi
-echo "Job ID: $JOB_ID"
+echo "$JOB_ID" > "${SCRIPT_DIR}/last_runpod_job_id.txt"
+echo "Job ID: $JOB_ID (saved to last_runpod_job_id.txt)"
 echo ""
 echo "Poll until COMPLETED, then pull module + artifacts:"
-echo "  curl -s -H \"Authorization: Bearer \$RUNPOD_API_KEY\" \"https://api.runpod.ai/v2/${ENDPOINT}/status/${JOB_ID}\" > status.json"
-echo "  python pull_runpod_output.py status.json --out ."
+echo "  ./pull_runpod_results.sh $JOB_ID --out ."
 echo ""
-echo "Or poll once: curl -s -H \"Authorization: Bearer \$RUNPOD_API_KEY\" \"https://api.runpod.ai/v2/${ENDPOINT}/status/${JOB_ID}\""
+echo "Or use saved job id: ./pull_runpod_results.sh \$(cat last_runpod_job_id.txt) --out ."

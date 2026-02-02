@@ -114,8 +114,9 @@ async def run_evaluation(module_id: str):
     Args:
         module_id: The module ID to evaluate
     """
-    print(f"🔍 Evaluating module: {module_id}")
-    print(f"🚀 Using async queue-based evaluation\n")
+    print(f"🔍 Evaluating module: {module_id}", flush=True)
+    print(f"🚀 Using async queue-based evaluation\n", flush=True)
+    sys.stdout.flush()
 
     from evaluate_loop_clean import ModuleEvaluator, logger
     import json
@@ -128,7 +129,8 @@ async def run_evaluation(module_id: str):
     recording_started = False
     recording_path = Path(f"recordings/{module_id}/evaluation.webm")
     try:
-        print("🔌 Connecting to browser...")
+        print("🔌 Connecting to browser...", flush=True)
+        sys.stdout.flush()
         await evaluator.connect()
     except (ImportError, ModuleNotFoundError) as e:
         print(f"❌ BrowserUse MCP not available: {e}")
@@ -176,7 +178,8 @@ async def run_evaluation(module_id: str):
                     queue.append(task)
         
         total_components = len(queue)
-        print(f"📊 Found {total_components} components to evaluate\n")
+        print(f"📊 Found {total_components} components to evaluate\n", flush=True)
+        sys.stdout.flush()
         
         passed_components = []
         failed_components = []
@@ -386,8 +389,9 @@ async def run_evaluation(module_id: str):
         print(f"Passed: {total_passed} ✅")
         print(f"Failed: {total_failed} ❌")
         print(f"Status: {'✅ ALL PASSED' if all_passed else '❌ SOME FAILED'}")
-        print("="*70 + "\n")
-        
+        print("="*70 + "\n", flush=True)
+        sys.stdout.flush()
+
         # Save results to JSON
         results_dir = Path(f"evaluation_results/{module_id}_queue")
         results_dir.mkdir(parents=True, exist_ok=True)

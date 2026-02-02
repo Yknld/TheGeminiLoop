@@ -180,6 +180,7 @@ def handler(job):
 
     try:
         runpod.serverless.progress_update(job, "Running generate.py (this can take 2–10+ min)...")
+        print("ℹ️  If logs stop with no error, RunPod may have killed the worker (check endpoint max execution time).", flush=True)
         proc = subprocess.Popen(
             cmd,
             cwd=str(workdir),

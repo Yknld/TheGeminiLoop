@@ -14,11 +14,13 @@ env/
 dist/
 build/
 
-# Evaluation outputs
+# Evaluation outputs (also moved to gar/ when present)
 evaluation_results/
+evaluation_results_runpod/
 recordings/
 status.json
 status_*.json
+last_runpod_job_id.txt
 *.backup-*
 debug_json_error.txt
 
@@ -30,3 +32,11 @@ Thumbs.db
 
 # Optional: uncomment to avoid committing generated modules (e.g. for CI)
 # modules/
+
+# gar/ — archived modules and run artifacts (keep gar/*.py, gar/*.sh, gar/README.md)
+gar/module-*/
+gar/physics-*/
+gar/test-*/
+gar/last_runpod_job_id.txt
+gar/status*.json
+gar/status_*.json

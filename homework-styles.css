@@ -772,6 +772,28 @@ body {
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+/* ==================== ASK GEMINI TOOLTIP (selection popup) ==================== */
+.ask-gemini-tooltip {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    padding: 10px 14px;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    white-space: nowrap;
+    flex-direction: row;
+    align-items: center;
+    pointer-events: auto;
+}
+.ask-gemini-tooltip:hover {
+    background: var(--primary-dark);
+}
+
 /* ==================== CHATBOT ==================== */
 .chatbot-container {
     position: fixed;
@@ -1045,30 +1067,244 @@ body {
     border-radius: 8px;
 }
 
-/* ==================== RESPONSIVE ==================== */
+/* ==================== RESPONSIVE – MOBILE NATIVE ==================== */
 @media (max-width: 768px) {
+    body {
+        padding-top: 56px;
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        padding-bottom: env(safe-area-inset-bottom);
+        -webkit-text-size-adjust: 100%;
+    }
+
     .container {
+        padding: 12px 16px 24px;
+        max-width: none;
+    }
+
+    .question-nav {
+        padding: 10px 12px 12px;
+        flex-wrap: nowrap;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+    }
+
+    .question-nav-info {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .question-selector label {
+        font-size: 13px;
+    }
+
+    .question-selector select {
+        min-height: 44px;
+        padding: 10px 36px 10px 12px;
+        font-size: 15px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .question-counter {
+        font-size: 13px;
+        padding: 6px 10px;
+        flex-shrink: 0;
+    }
+
+    .question-nav-buttons {
+        flex-shrink: 0;
+        gap: 8px;
+    }
+
+    .question-nav-btn {
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 15px;
+    }
+
+    .problem-section {
+        grid-template-columns: 1fr;
+        padding: 16px;
+        margin-bottom: 16px;
+        gap: 16px;
+    }
+
+    #problem-title {
+        font-size: 20px;
+        line-height: 1.35;
+        margin-bottom: 6px;
+    }
+
+    .problem-text {
+        font-size: 17px;
+        line-height: 1.6;
+        margin-bottom: 16px;
+    }
+
+    .problem-visualizer {
+        min-height: 200px;
+        padding: 12px;
+        order: 1;
+    }
+
+    .problem-visualizer-content svg,
+    .problem-visualizer-content .svg-container svg {
+        max-height: 280px;
+        min-height: 160px;
+    }
+
+    .problem-content {
+        order: 0;
+    }
+
+    .steps-container {
         padding: 16px;
     }
-    
-    .question-nav {
-        flex-direction: column;
-        align-items: stretch;
+
+    .steps-container h3 {
+        font-size: 18px;
+        margin-bottom: 14px;
     }
-    
-    .question-nav-info {
-        flex-direction: column;
-        align-items: stretch;
+
+    .step-card {
+        border-radius: 10px;
     }
-    
+
+    .step-header {
+        min-height: 52px;
+        padding: 12px 14px;
+    }
+
+    .step-number {
+        width: 36px;
+        height: 36px;
+        font-size: 15px;
+        margin-right: 10px;
+    }
+
+    .step-title {
+        font-size: 15px;
+    }
+
+    .step-content {
+        grid-template-columns: 1fr;
+        padding: 14px;
+        gap: 16px;
+    }
+
+    .step-visualization-wrapper {
+        min-height: 220px;
+    }
+
+    .input-section {
+        padding: 14px;
+        margin-top: 14px;
+    }
+
+    .input-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .input-field {
+        min-height: 48px;
+        padding: 14px 16px;
+        font-size: 16px;
+    }
+
+    .submit-btn {
+        min-height: 48px;
+        padding: 14px 20px;
+        font-size: 16px;
+        width: 100%;
+    }
+
+    .reveal-answer-btn {
+        min-height: 44px;
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+
+    .step-microphone-button {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
+    }
+
+    .step-resources-button {
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
     .chatbot-panel {
-        width: calc(100vw - 32px);
-        right: 16px;
-        bottom: 16px;
+        top: env(safe-area-inset-top);
+        left: env(safe-area-inset-left);
+        right: env(safe-area-inset-right);
+        bottom: env(safe-area-inset-bottom);
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        border-radius: 0;
     }
-    
+
     .chatbot-button {
-        right: 16px;
-        bottom: 16px;
+        right: max(16px, env(safe-area-inset-right));
+        bottom: max(20px, env(safe-area-inset-bottom));
+    }
+
+    .chatbot-input-container {
+        padding: 12px 16px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+
+    .chatbot-input {
+        min-height: 44px;
+        font-size: 16px;
+    }
+
+    .chatbot-send {
+        min-height: 44px;
+        padding: 12px 18px;
+    }
+
+    .ask-gemini-tooltip {
+        min-height: 44px;
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+
+    .resources-modal {
+        padding: 16px;
+        align-items: flex-end;
+    }
+
+    .module-modal-body iframe {
+        min-height: 60vh;
+    }
+}
+
+/* Extra small phones: slightly tighter spacing */
+@media (max-width: 480px) {
+    .container {
+        padding: 10px 12px 20px;
+    }
+
+    .question-nav {
+        padding: 8px 10px 10px;
+    }
+
+    #problem-title {
+        font-size: 18px;
+    }
+
+    .problem-text {
+        font-size: 16px;
     }
 }
