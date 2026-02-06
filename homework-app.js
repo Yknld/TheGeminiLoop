@@ -1593,6 +1593,14 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
 
                 // Create input section
                 const isStepCompleted = savedState && savedState.completedSteps && savedState.completedSteps[index];
+                const isRevealed = savedState && savedState.stepStates && savedState.stepStates.revealed && savedState.stepStates.revealed[index];
+                const correctAnswerRaw = step.correctAnswer || step.expectedAnswer || '';
+                const correctAnswerDisplay = correctAnswerRaw.split('|').map(s => s.trim()).filter(Boolean);
+                const primaryAnswer = correctAnswerDisplay[0] || '—';
+                const otherAccepted = correctAnswerDisplay.length > 1 ? correctAnswerDisplay.slice(1).join(', ') : '';
+                const feedbackText = isStepCompleted
+                    ? (isRevealed ? `Correct answer: ${primaryAnswer}${otherAccepted ? ` (also accepted: ${otherAccepted})` : ''}` : 'Correct! ✓')
+                    : '';
                 const stepInputSection = document.createElement('div');
                 stepInputSection.className = 'step-input-section';
                 stepInputSection.innerHTML = `
@@ -1615,7 +1623,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                     >
                         Submit
                     </button>
-                    <div class="step-feedback" id="step-feedback-${index}" style="display: ${isStepCompleted ? 'block' : 'none'};">${isStepCompleted ? 'Correct! ✓' : ''}</div>
+                    <div class="step-feedback" id="step-feedback-${index}" style="display: ${isStepCompleted ? 'block' : 'none'};">${feedbackText}</div>
                     <button 
                         class="reveal-answer-btn" 
                         id="reveal-answer-${index}"
@@ -2340,6 +2348,22 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
             }).join('');
 
             modalBody.innerHTML = `<div class="resources-videos-list">${videosHTML}</div>`;
+
+            // Render math in "Recommended for" text (e.g. $x$, $+5$)
+            const runMathJax = () => {
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([modalBody]).catch((err) => {
+                        console.warn('MathJax typeset error in resources modal:', err);
+                    });
+                }
+            };
+            setTimeout(() => {
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    runMathJax();
+                } else if (window.MathJax && window.MathJax.startup) {
+                    window.MathJax.startup.promise.then(runMathJax);
+                }
+            }, 50);
         }
 
         // Close modal handlers
@@ -2722,21 +2746,29 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
         }
 
         function handleRevealAnswer(e) {
-            const stepIndex = parseInt(e.target.getAttribute('data-step-index'));
+            const revealBtn = e.target.closest('.reveal-answer-btn');
+            if (!revealBtn) return;
+            const stepIndex = parseInt(revealBtn.getAttribute('data-step-index'), 10);
+            if (isNaN(stepIndex)) return;
             const step = homeworkData.steps[stepIndex];
-            const correctAnswer = step.correctAnswer || step.expectedAnswer || '';
+            if (!step) return;
+            const correctAnswerRaw = step.correctAnswer || step.expectedAnswer || '';
+            const parts = correctAnswerRaw.split('|').map(s => s.trim()).filter(Boolean);
+            const primaryAnswer = parts[0] || '—';
+            const otherAccepted = parts.length > 1 ? parts.slice(1).join(', ') : '';
+            const displayText = `Correct answer: ${primaryAnswer}${otherAccepted ? ` (also accepted: ${otherAccepted})` : ''}`;
             const feedback = document.getElementById(`step-feedback-${stepIndex}`);
             const stepCard = document.getElementById(`step-${stepIndex}`);
             const input = document.getElementById(`step-input-${stepIndex}`);
             const submitBtn = document.getElementById(`step-submit-${stepIndex}`);
-            const revealBtn = e.target;
 
-            // Reveal the answer
             stepStates.revealed[stepIndex] = true;
-            feedback.textContent = `The correct answer is: ${correctAnswer}`;
-            feedback.className = 'step-feedback revealed';
-            feedback.style.display = 'block';
-            revealBtn.style.display = 'none';
+            if (feedback) {
+                feedback.textContent = displayText;
+                feedback.className = 'step-feedback revealed';
+                feedback.style.display = 'block';
+            }
+            if (revealBtn) revealBtn.style.display = 'none';
             
             // Disable input and submit
             input.disabled = true;
@@ -2751,7 +2783,10 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                 questionStates[currentQuestionIndex].completedSteps = {};
             }
             questionStates[currentQuestionIndex].completedSteps[stepIndex] = true;
-            
+            if (!questionStates[currentQuestionIndex].stepStates) questionStates[currentQuestionIndex].stepStates = { attempts: {}, completed: {}, revealed: {} };
+            if (!questionStates[currentQuestionIndex].stepStates.revealed) questionStates[currentQuestionIndex].stepStates.revealed = {};
+            questionStates[currentQuestionIndex].stepStates.revealed[stepIndex] = true;
+
             // Check if this is the final step of the question
             const isFinalStep = stepIndex === homeworkData.steps.length - 1;
             if (isFinalStep) {
