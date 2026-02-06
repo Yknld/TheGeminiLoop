@@ -1727,6 +1727,16 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                 stepContent.appendChild(vizWrapper); // Use wrapper instead of stepVisualization directly
                 stepCard.appendChild(stepHeader);
                 stepCard.appendChild(stepContent);
+                // Use pre-generated WAV from manifest when available (Gemini 2.5 TTS)
+                if (step.audioPath) {
+                    const audioEl = document.createElement('audio');
+                    audioEl.id = `step-audio-element-${index}`;
+                    audioEl.preload = 'auto';
+                    audioEl.src = step.audioPath;
+                    audioEl.style.display = 'none';
+                    stepCard.appendChild(audioEl);
+                    audioElements.set(index, { element: audioEl, type: 'audio' });
+                }
                 stepsList.appendChild(stepCard);
                 
                 // Generate/load visualization for ALL steps AFTER element is in DOM
@@ -1874,15 +1884,8 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                     }
                 }
                 
-                // Automatically generate and embed audio for each step
-                // Generate audio asynchronously without blocking rendering
-                setTimeout(async () => {
-                    try {
-                        await generateAndEmbedStepAudio(currentQuestionIndex, index, step);
-                    } catch (error) {
-                        console.error(`Error generating audio for step ${index}:`, error);
-                    }
-                }, 100 * (index + 1)); // Stagger audio generation to avoid overwhelming the API
+                // Audio is generated in the backend loop (generate.py); no client-side generation on page load.
+                // Only pre-generated WAV from manifest (step.audioPath) is used; play on click.
                 
                 } catch (error) {
                     console.error(`❌ [renderSteps] Error building step ${index}:`, error);
@@ -1983,30 +1986,34 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
             });
         }
 
-        // Attach resources button handlers
+        // Attach resources button handlers (called after renderSteps)
         function attachResourcesHandlers() {
-            document.querySelectorAll('.step-resources-button').forEach(btn => {
-                btn.addEventListener('click', handleResourcesClick);
-            });
+            // Handlers are attached via document-level delegation below
         }
 
-        // Handle resources button click
+        // Handle resources button click (event delegation so it works for dynamically added buttons)
         async function handleResourcesClick(e) {
-            const stepIndex = parseInt(e.target.closest('.step-resources-button').getAttribute('data-step-index'));
-            const step = homeworkData.steps[stepIndex];
-            
+            const button = e.target.closest('.step-resources-button');
+            if (!button) return;
+            e.preventDefault();
+            const stepIndex = parseInt(button.getAttribute('data-step-index'), 10);
+            if (isNaN(stepIndex)) return;
+            const step = homeworkData && homeworkData.steps && homeworkData.steps[stepIndex];
             if (!step) {
                 console.error('Step not found:', stepIndex);
                 return;
             }
 
-            // Show modal
             const modal = document.getElementById('resources-modal');
             const modalBody = document.getElementById('resources-modal-body');
             const modalTitle = document.getElementById('resources-modal-title');
-            const resourcesButton = document.getElementById(`step-resources-${stepIndex}`);
-            
+            if (!modal || !modalBody || !modalTitle) {
+                console.error('Resources modal elements not found. Ensure index.html includes #resources-modal.');
+                return;
+            }
+
             modal.classList.add('active');
+            const resourcesButton = document.getElementById(`step-resources-${stepIndex}`);
             modalTitle.textContent = `Learning Resources - Step ${stepIndex + 1}`;
 
             // Check if videos are already cached
@@ -2188,9 +2195,11 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
             // Use the new step-based YouTube recommendations function
             const youtubeApiUrl = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/youtube_step_recommendations`;
 
-            // Build topic from step explanation and problem context
-            const topic = step.explanation || `Step ${stepIndex + 1}`;
-            const problemContext = homeworkData.problem ? homeworkData.problem.text : '';
+            // Build question + step payload for Gemini (create search query) then YouTube Data API
+            const questionText = homeworkData.problem ? (homeworkData.problem.text || '').trim() : '';
+            const stepExplanation = (step.explanation || '').trim();
+            const stepQuestion = (step.inputLabel || '').trim();
+            const topic = [stepExplanation, stepQuestion].filter(Boolean).join(' ') || `Step ${stepIndex + 1}`;
 
             const headers = {
                 'Content-Type': 'application/json',
@@ -2198,9 +2207,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                 'apikey': supabaseKey
             };
 
-            console.log('🎥 [YOUTUBE] Fetching videos for step', stepIndex + 1);
-            console.log('🎥 [YOUTUBE] API URL:', youtubeApiUrl);
-            console.log('🎥 [YOUTUBE] Topic:', topic.substring(0, 50));
+            console.log('🎥 [YOUTUBE] Fetching videos for step', stepIndex + 1, '(question + step → Gemini → YouTube)');
 
             try {
                 const response = await fetch(youtubeApiUrl, {
@@ -2208,9 +2215,9 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                     headers: headers,
                     body: JSON.stringify({
                         topic: topic,
-                        contentContext: problemContext,
-                        count: 3,
-                        preferredDurationMin: [5, 20]
+                        contentContext: questionText,
+                        count: 5,
+                        preferredDurationMin: [3, 25]
                     })
                 });
 
@@ -3911,10 +3918,19 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
             }
         });
 
-        // Google Cloud TTS API configuration
-        // Using Supabase Edge Function as secure proxy
-        // Set SUPABASE_URL and SUPABASE_ANON_KEY from your Supabase project
-        // The edge function URL will be: ${SUPABASE_URL}/functions/v1/tts
+        // Feeling stuck? — open resources modal (delegated so it works for dynamic steps)
+        document.addEventListener('click', async (e) => {
+            if (e.target.closest('.step-resources-button')) {
+                await handleResourcesClick(e);
+            }
+        });
+
+        // Gemini 2.5 TTS (primary) / Supabase proxy (optional) / browser TTS fallback
+        const GEMINI_TTS_MODEL = 'gemini-2.5-flash-preview-tts';
+        const GEMINI_TTS_VOICE = (() => {
+            const meta = document.querySelector('meta[name="gemini-tts-voice"]');
+            return (meta && meta.getAttribute('content')) || 'Kore';
+        })();
         
         // Get Supabase configuration from meta tags or use defaults
         function getSupabaseConfig() {
@@ -3947,27 +3963,22 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
             return { supabaseUrl, supabaseKey };
         }
         
-        // Build TTS proxy URL from Supabase configuration
+        // Build TTS proxy URL from Supabase configuration (optional; used when no Gemini key)
         function getTTSProxyURL() {
             const { supabaseUrl } = getSupabaseConfig();
             if (supabaseUrl) {
-                // Remove trailing slash if present
                 const baseUrl = supabaseUrl.replace(/\/$/, '');
                 return `${baseUrl}/functions/v1/tts`;
             }
-            return ''; // Fallback to empty (will use browser TTS)
+            return '';
         }
         
         const TTS_PROXY_URL = getTTSProxyURL();
-        const TTS_API_KEY = ''; // Not needed when using Supabase Edge Function
         
-        // Get TTS API key from meta tag if available, otherwise use Gemini API key as fallback
-        function getTTSApiKey() {
+        // Gemini API key for Gemini 2.5 TTS (same key as for chat)
+        function getGeminiTTSApiKey() {
             const ttsApiKeyMeta = document.querySelector('meta[name="tts-api-key"]');
-            if (ttsApiKeyMeta) {
-                return ttsApiKeyMeta.getAttribute('content');
-            }
-            // Fallback to Gemini API key (may not work for TTS, but we'll try)
+            if (ttsApiKeyMeta) return ttsApiKeyMeta.getAttribute('content');
             const geminiApiKeyMeta = document.querySelector('meta[name="gemini-api-key"]');
             return geminiApiKeyMeta ? geminiApiKeyMeta.getAttribute('content') : '';
         }
@@ -3975,112 +3986,119 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
         // Cache for generated audio URLs
         const audioCache = new Map();
         
-        // Generate audio using Google Cloud Text-to-Speech API
+        // Build WAV blob from PCM bytes (16-bit mono 24kHz, matching generate.py)
+        function pcmToWavBlob(pcmBytes) {
+            const sampleRate = 24000;
+            const numChannels = 1;
+            const bitsPerSample = 16;
+            const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+            const dataSize = pcmBytes.length;
+            const headerSize = 44;
+            const buffer = new ArrayBuffer(headerSize + dataSize);
+            const view = new DataView(buffer);
+            const writeStr = (offset, str) => {
+                for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+            };
+            writeStr(0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeStr(8, 'WAVE');
+            writeStr(12, 'fmt ');
+            view.setUint32(16, 16, true); // chunk size
+            view.setUint16(20, 1, true);  // PCM
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, numChannels * (bitsPerSample / 8), true);
+            view.setUint16(34, bitsPerSample, true);
+            writeStr(36, 'data');
+            view.setUint32(40, dataSize, true);
+            new Uint8Array(buffer).set(pcmBytes, headerSize);
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+        
+        // Generate audio using Gemini 2.5 TTS (preferred) or proxy fallback
         async function generateTTSAudio(text, questionIndex, stepIndex) {
-            // Check cache first with composite key (question + step)
             const cacheKey = `q${questionIndex}-s${stepIndex}`;
             if (audioCache.has(cacheKey)) {
                 return audioCache.get(cacheKey);
             }
             
-            const apiKey = TTS_API_KEY || getTTSApiKey();
+            const geminiKey = getGeminiTTSApiKey();
             
-            if (!apiKey && !TTS_PROXY_URL) {
-                console.warn('No TTS API key or proxy URL configured. Using browser TTS fallback.');
+            if (!geminiKey && !TTS_PROXY_URL) {
+                console.warn('No Gemini API key or TTS proxy configured. Using browser TTS fallback.');
                 return null;
             }
             
             try {
-                // Use Google Cloud Text-to-Speech API
-                // Option 1: Use backend proxy (recommended)
                 let audioUrl;
                 
-                if (TTS_PROXY_URL) {
-                    // Call Supabase Edge Function
-                    const { supabaseKey } = getSupabaseConfig();
-                    const headers = {
-                        'Content-Type': 'application/json',
+                // Prefer Gemini 2.5 TTS when API key is available
+                if (geminiKey) {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${encodeURIComponent(geminiKey)}`;
+                    const payload = {
+                        contents: [{ parts: [{ text: text }] }],
+                        generationConfig: {
+                            responseModalities: ['AUDIO'],
+                            speechConfig: {
+                                voiceConfig: {
+                                    prebuiltVoiceConfig: { voiceName: GEMINI_TTS_VOICE }
+                                }
+                            }
+                        }
                     };
-                    
-                    // Add Supabase auth header if available
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        const err = await response.text();
+                        throw new Error(`Gemini TTS: ${response.status} ${err}`);
+                    }
+                    const data = await response.json();
+                    const candidates = (data && data.candidates) || [];
+                    const parts = (candidates[0] && candidates[0].content && candidates[0].content.parts) || [];
+                    const inlineData = (parts[0] && parts[0].inlineData) || {};
+                    const b64 = inlineData.data;
+                    if (!b64) {
+                        const reason = (data.promptFeedback && data.promptFeedback.blockReason) || 'no audio in response';
+                        throw new Error(`Gemini TTS: ${reason}`);
+                    }
+                    const binary = atob(b64);
+                    const pcmBytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) pcmBytes[i] = binary.charCodeAt(i);
+                    const wavBlob = pcmToWavBlob(pcmBytes);
+                    audioUrl = URL.createObjectURL(wavBlob);
+                } else if (TTS_PROXY_URL) {
+                    // Proxy fallback (proxy should use Gemini TTS or return WAV/MP3)
+                    const { supabaseKey } = getSupabaseConfig();
+                    const headers = { 'Content-Type': 'application/json' };
                     if (supabaseKey) {
                         headers['Authorization'] = `Bearer ${supabaseKey}`;
                         headers['apikey'] = supabaseKey;
                     }
-                    
                     const response = await fetch(TTS_PROXY_URL, {
                         method: 'POST',
                         headers: headers,
                         body: JSON.stringify({
                             text: text,
-                            languageCode: 'en-US',
-                            voiceName: 'en-US-Neural2-D',
-                            audioEncoding: 'MP3'
+                            voiceName: GEMINI_TTS_VOICE,
+                            model: GEMINI_TTS_MODEL
                         })
                     });
-                    
-                    if (!response.ok) {
-                        throw new Error(`TTS API error: ${response.statusText}`);
-                    }
-                    
+                    if (!response.ok) throw new Error(`TTS proxy: ${response.statusText}`);
                     const blob = await response.blob();
                     audioUrl = URL.createObjectURL(blob);
-                    } else {
-                        // Option 2: Direct API call (requires CORS and API key)
-                        // This is a simplified approach - for production, use a backend proxy
-                        // Note: This will likely fail due to CORS restrictions unless CORS is enabled
-                        const TTS_API_ENDPOINT = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-                    
-                    const requestBody = {
-                        input: { text: text },
-                        voice: {
-                            languageCode: 'en-US',
-                            name: 'en-US-Neural2-D',
-                            ssmlGender: 'NEUTRAL'
-                        },
-                        audioConfig: {
-                            audioEncoding: 'MP3',
-                            speakingRate: 1.0,
-                            pitch: 0,
-                            volumeGainDb: 0.0
-                        }
-                    };
-                    
-                    const response = await fetch(TTS_API_ENDPOINT, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestBody)
-                    });
-                    
-                    if (!response.ok) {
-                        // Fallback to browser TTS if API fails
-                        console.warn('TTS API failed, using browser fallback');
-                        return null;
-                    }
-                    
-                    const data = await response.json();
-                    if (data.audioContent) {
-                        // Convert base64 to blob
-                        const audioData = atob(data.audioContent);
-                        const audioArray = new Uint8Array(audioData.length);
-                        for (let i = 0; i < audioData.length; i++) {
-                            audioArray[i] = audioData.charCodeAt(i);
-                        }
-                        const blob = new Blob([audioArray], { type: 'audio/mp3' });
-                        audioUrl = URL.createObjectURL(blob);
-                    } else {
-                        throw new Error('No audio content in response');
-                    }
                 }
                 
-                // Cache the audio URL                
-                audioCache.set(cacheKey, audioUrl);
-                return audioUrl;
+                if (audioUrl) {
+                    audioCache.set(cacheKey, audioUrl);
+                    return audioUrl;
+                }
+                return null;
             } catch (error) {
                 console.error('Error generating TTS audio:', error);
-                // Return null to trigger fallback
                 return null;
             }
         }

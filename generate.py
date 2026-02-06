@@ -262,35 +262,50 @@ def call_gemini(prompt):
             try:
                 return json.loads(text)
             except json.JSONDecodeError as json_err:
-                # If escape error, log the problematic area and fix
-                if "Invalid \\escape" in str(json_err) or "Expecting" in str(json_err):
+                # Log and attempt repairs for common Gemini JSON issues
+                err_str = str(json_err)
+                if "Invalid \\escape" in err_str or "Expecting" in err_str:
                     print(f"⚠️  JSON parse error: {json_err}")
-                    print(f"⚠️  Attempting to fix escape sequences...")
-                    
-                    # Save the raw response for debugging
                     debug_file = Path("debug_json_error.txt")
                     debug_file.write_text(text)
                     print(f"   📝 Raw JSON saved to {debug_file}")
-                    
-                    # Use eval as last resort (safer than replacing blindly)
+
+                    # 1) Fix missing comma between objects: "}\n  {" -> "},\n  {"
+                    fixed = re.sub(r'\}\s*\n\s*\{', '},\n{', text)
+                    if fixed != text:
+                        try:
+                            result = json.loads(fixed)
+                            print(f"   ✅ Parsed after adding missing commas between objects")
+                            return result
+                        except json.JSONDecodeError:
+                            pass
+
+                    # 2) Fix trailing commas before ] or }
+                    fixed = re.sub(r',\s*([\]}])', r'\1', text)
+                    if fixed != text:
+                        try:
+                            result = json.loads(fixed)
+                            print(f"   ✅ Parsed after removing trailing commas")
+                            return result
+                        except json.JSONDecodeError:
+                            pass
+
+                    # 3) ast.literal_eval (handles some malformed JSON)
                     try:
                         import ast
-                        # Replace true/false/null with Python equivalents for ast
                         py_text = text.replace('true', 'True').replace('false', 'False').replace('null', 'None')
                         result = ast.literal_eval(py_text)
-                        print(f"   ✅ Successfully parsed using ast.literal_eval")
+                        print(f"   ✅ Parsed using ast.literal_eval")
                         return result
-                    except:
+                    except Exception:
                         pass
-                    
-                    # Last resort: double all backslashes
+
+                    # 4) Fix escape sequences
                     try:
-                        fixed_text = text.replace('\\', '\\\\')
-                        result = json.loads(fixed_text)
-                        print(f"   ✅ Successfully parsed after escaping backslashes")
+                        result = json.loads(text.replace('\\', '\\\\'))
+                        print(f"   ✅ Parsed after escaping backslashes")
                         return result
-                    except Exception as fix_err:
-                        print(f"   ❌ Could not fix: {fix_err}")
+                    except Exception:
                         pass
                 raise
             
@@ -627,8 +642,10 @@ def main():
         sys.exit(1)
     
     module_id = args.module_id or f"module-{int(time.time())}"
-    
+    start_iso = datetime.now().isoformat()
+
     print_header()
+    print(f"⏱️  LOOP STARTED at {start_iso}", flush=True)
     print(f"📊 Total Questions: {len(problem_texts)}")
     for i, problem in enumerate(problem_texts, 1):
         preview = problem[:80] + "..." if len(problem) > 80 else problem
@@ -653,14 +670,14 @@ def main():
         sys.stdout.flush()
         
         # Generate module structure for this question
-        print(f"1️⃣  Calling Gemini API to generate question {q_idx} structure...")
+        print(f"1️⃣  Calling Gemini API to generate question {q_idx} structure...", flush=True)
         start_time = time.time()
         
         prompt = PLANNER_PROMPT_TEMPLATE.format(problem_text=problem_text)
         module_data = call_gemini(prompt)
         
         elapsed = time.time() - start_time
-        print(f"✅ Generated structure with {len(module_data['steps'])} steps ({elapsed:.1f}s)")
+        print(f"✅ Generated structure with {len(module_data['steps'])} steps ({elapsed:.1f}s)", flush=True)
         
         # Generate problem visualization
         print(f"\n2️⃣  Generating problem visualization for question {q_idx}...")
@@ -787,8 +804,8 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
         sys.stdout.flush()
 
     # Step 3: Create manifest with all questions
-    print("\n" + "="*70)
-    print("4️⃣  Creating manifest...")
+    print("\n" + "="*70, flush=True)
+    print("4️⃣  Creating manifest...", flush=True)
     manifest = {
         "id": module_id,
         "questions": all_questions,
@@ -798,27 +815,27 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
     
     manifest_path = module_path / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2))
-    print(f"✅ Manifest created: {manifest_path}")
+    print(f"✅ Manifest created: {manifest_path}", flush=True)
     
     # Step 4: Summary
     overall_elapsed = time.time() - overall_start_time
-    print("\n5️⃣  Module complete!")
-    print("="*70)
-    print(f"🎉 MODULE GENERATION COMPLETE!")
-    print(f"📁 Location: {module_path}")
-    print(f"📚 Total Questions: {len(all_questions)}")
-    for q in all_questions:
-        print(f"   Q{q['id']+1}: {len(q['steps'])} steps")
     total_audio = sum(sum(1 for s in q['steps'] if s['audio']) for q in all_questions)
     total_components = sum(sum(1 for s in q['steps'] if s['component']) for q in all_questions)
     total_visuals = sum(sum(1 for s in q['steps'] if s['visual']) for q in all_questions)
-    print(f"\n📊 Total Resources:")
-    print(f"   🔊 Audio files: {total_audio}")
-    print(f"   🎮 Interactive components: {total_components}")
-    print(f"   🖼️  Visual diagrams: {total_visuals}")
-    print(f"\n⏱️  Total time: {overall_elapsed:.1f}s ({overall_elapsed/60:.1f} minutes)")
-    print("\n✅ Load in browser: template.html?module=" + module_id)
-    print("="*70 + "\n")
+
+    print("\n" + "="*70, flush=True)
+    print("5️⃣  LOOP COMPLETE", flush=True)
+    print("="*70, flush=True)
+    print(f"🎉 MODULE GENERATION DONE — {module_id}", flush=True)
+    print(f"📁 Output: {module_path.absolute()}", flush=True)
+    print(f"📚 Questions: {len(all_questions)}", flush=True)
+    for q in all_questions:
+        print(f"   Q{q['id']+1}: {len(q['steps'])} steps", flush=True)
+    print(f"📊 Resources: {total_audio} audio, {total_components} components, {total_visuals} visuals", flush=True)
+    print(f"⏱️  Total time: {overall_elapsed:.1f}s ({overall_elapsed/60:.1f} min)", flush=True)
+    print(f"\n✅ View: http://localhost:8000/index.html?module={module_id}", flush=True)
+    print("="*70, flush=True)
+    print("Process exiting. Done.\n", flush=True)
     sys.stdout.flush()
 
     # Step 5: Run evaluation loop if requested (no skipping)

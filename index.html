@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="gemini-api-key" content="AIzaSyDA-rWxab0kt41jbIhJk0cv_7SYxdhbmUI">
+    <!-- Set by host from GEMINI_API_KEY (env) or at build time; leave empty in repo -->
+    <meta name="gemini-api-key" content="">
     <!-- Supabase configuration for TTS Edge Function -->
     <meta name="supabase-url" content="https://euxfugfzmpsemkjpcpuz.supabase.co">
     <meta name="supabase-anon-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1eGZ1Z2Z6bXBzZW1ranBjcHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMDkyMDYsImV4cCI6MjA4MzU4NTIwNn0.bsfC3T5WoUhGrS-6VuowULRHciY7BpzMCBQ3F4fZFRI">
@@ -154,9 +155,7 @@
                 <h3 id="resources-modal-title">Learning Resources</h3>
                 <button class="resources-modal-close" id="resources-modal-close">&times;</button>
             </div>
-            <div id="resources-modal-body">
-                <div class="resources-loading">Loading resources...</div>
-            </div>
+            <div id="resources-modal-body"></div>
         </div>
     </div>
 
