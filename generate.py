@@ -44,6 +44,9 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 GEMINI_TTS_MODEL = os.environ.get("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
 GEMINI_TTS_VOICE = os.environ.get("GEMINI_TTS_VOICE", "Kore")  # e.g. Kore, Puck, Zephyr
+# Gemini 2.5 TTS limit: 10 requests per minute
+TTS_REQUESTS_PER_MINUTE = 10
+_tts_last_request_time = [None]  # mutable so generate_audio can update
 
 # EXACT PROMPT FROM homework-app.js
 PLANNER_PROMPT_TEMPLATE = """You are an expert educational content creator that breaks down homework problems into intuitive, interactive learning steps. 
@@ -490,12 +493,23 @@ Return ONLY the SVG code, no explanations, no markdown."""
 
 def generate_audio(text, output_path):
     """Generate TTS audio using Gemini TTS only (Docker loop uses no other TTS backend).
-    Uses google-genai SDK; falls back to REST if SDK fails."""
+    Uses google-genai SDK; falls back to REST if SDK fails.
+    Rate-limited to TTS_REQUESTS_PER_MINUTE (default 10/min for Gemini 2.5 TTS)."""
     import base64
     import wave
     if not GEMINI_API_KEY or not GEMINI_API_KEY.strip():
         print("   ⚠️  TTS skipped: GEMINI_API_KEY is empty (set env var for Gemini TTS)")
         return False
+    # Enforce 10 requests per minute for Gemini 2.5 TTS
+    min_interval = 60.0 / TTS_REQUESTS_PER_MINUTE
+    last = _tts_last_request_time[0]
+    if last is not None:
+        elapsed = time.time() - last
+        if elapsed < min_interval:
+            wait = min_interval - elapsed
+            print(f"   ⏳ TTS rate limit: waiting {wait:.1f}s (max {TTS_REQUESTS_PER_MINUTE}/min)")
+            time.sleep(wait)
+    _tts_last_request_time[0] = time.time()
     try:
         # Prefer official Gemini TTS via google-genai SDK
         from google import genai
