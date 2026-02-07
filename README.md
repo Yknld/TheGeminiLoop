@@ -59,7 +59,7 @@ flowchart TB
         SCREEN --> VISION["Gemini Vision API"]
         VISION --> SCORE["Score 0–100 + issues"]
         SCORE --> PASS{{"Score ≥ 70?"}}
-        PASS -->|Yes| DONE["✅ Component passed"]
+        PASS -->|Yes| DONE["Component passed"]
         PASS -->|No| FIX["Generate fix prompt + screenshots"]
         FIX --> FIX_API["Gemini → Fixed HTML"]
         FIX_API --> WRITE["Overwrite component file"]
@@ -290,6 +290,8 @@ See [docs/RUNPOD.md](./docs/RUNPOD.md) for request format, env vars, and respons
 
 ## Docs
 
+- [Overview](./docs/OVERVIEW.md) — how the system works and repository layout.
+- [Feature pipelines](./docs/FEATURES.md) — one flowchart per feature (planning, SVG, HTML, TTS, manifest, evaluation, serve).
 - [Architecture and flow](./docs/ARCHITECTURE.md) — diagrams and pipeline details.
 - [Evaluation pipeline](./docs/EVALUATION.md) — how the evaluator and fix loop work.
 - [Integration (Supabase / RunPod)](./docs/INTEGRATION.md) — tying The Gemini Loop into your backend and deployment.
