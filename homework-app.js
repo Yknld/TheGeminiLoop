@@ -279,16 +279,21 @@
             if (questionData.problem.visualization) {
                 try {
                     const vizUrl = resolveAssetUrl(moduleId, questionData.problem.visualization);
-                    console.log(`   🖼️  Loading visualization from: ${vizUrl}`);
-                    const cacheBuster = vizUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
-                    const vizResponse = await fetch(`${vizUrl}${cacheBuster}`);
-                    console.log(`   📡 Fetch response status: ${vizResponse.status} ${vizResponse.statusText}`);
-                    if (vizResponse.ok) {
-                        const svg = await vizResponse.text();
-                        problemVisualization = `<div class="svg-container">${svg}</div>`;
-                        console.log(`   ✅ Successfully loaded visualization (${svg.length} chars) for "${questionTitle}"`);
+                    const isImage = /\.(png|jpg|jpeg|webp)$/i.test(questionData.problem.visualization || '');
+                    console.log(`   🖼️  Loading visualization from: ${vizUrl} (${isImage ? 'image' : 'svg'})`);
+                    if (isImage) {
+                        problemVisualization = `<div class="problem-viz-image-wrap"><img src="${vizUrl}" alt="Problem diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                        console.log(`   ✅ Using image visualization for "${questionTitle}"`);
                     } else {
-                        console.error(`   ❌ Failed to load visualization for "${questionTitle}": ${vizResponse.status} ${vizResponse.statusText}`);
+                        const cacheBuster = vizUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
+                        const vizResponse = await fetch(`${vizUrl}${cacheBuster}`);
+                        if (vizResponse.ok) {
+                            const svg = await vizResponse.text();
+                            problemVisualization = `<div class="svg-container">${svg}</div>`;
+                            console.log(`   ✅ Loaded SVG visualization (${svg.length} chars) for "${questionTitle}"`);
+                        } else {
+                            console.error(`   ❌ Failed to load visualization: ${vizResponse.status}`);
+                        }
                     }
                 } catch (e) {
                     console.error(`   ❌ Error loading visualization for "${questionTitle}":`, e);
@@ -331,19 +336,26 @@
                             }
                         }
                         
-                        // Load SVG visual
+                        // Load visual (image or SVG)
                         if (step.visual) {
-                            try {
+                            const isImage = /\.(png|jpg|jpeg|webp)$/i.test(step.visual || '');
+                            if (isImage) {
                                 const visualUrl = resolveAssetUrl(moduleId, step.visual);
-                                const cacheBuster = visualUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
-                                const visualResponse = await fetch(`${visualUrl}${cacheBuster}`);
-                                if (visualResponse.ok) {
-                                    const svg = await visualResponse.text();
-                                    stepData.visualization = `<div class="svg-container">${svg}</div>`;
-                                    console.log(`✅ Loaded SVG for step ${step.id}`);
+                                stepData.visualization = `<div class="problem-viz-image-wrap"><img src="${visualUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                                console.log(`✅ Using image for step ${step.id}`);
+                            } else {
+                                try {
+                                    const visualUrl = resolveAssetUrl(moduleId, step.visual);
+                                    const cacheBuster = visualUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
+                                    const visualResponse = await fetch(`${visualUrl}${cacheBuster}`);
+                                    if (visualResponse.ok) {
+                                        const svg = await visualResponse.text();
+                                        stepData.visualization = `<div class="svg-container">${svg}</div>`;
+                                        console.log(`✅ Loaded SVG for step ${step.id}`);
+                                    }
+                                } catch (e) {
+                                    console.error(`❌ Failed to load visual: ${step.visual}`, e);
                                 }
-                            } catch (e) {
-                                console.error(`❌ Failed to load visual: ${step.visual}`, e);
                             }
                         }
                         
@@ -918,7 +930,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                     else {
                         console.log('⚠️ No pre-built problem visualization, generating at runtime');
                         console.log('⚠️ Data object:', data);
-                        problemVisualizer.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Generating visualization...</p>';
+                        problemVisualizer.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Loading...</p>';
                         generateQuestionVisualization(data.problem);
                     }
                 }
@@ -961,7 +973,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
             // Clear problem visualizer completely
             const problemVisualizer = document.getElementById('problem-visualizer-content');
             if (problemVisualizer) {
-                problemVisualizer.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Generating visualization...</p>';
+                problemVisualizer.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Loading...</p>';
             }
             
             // Clear all step visualizations (remove all step cards)
@@ -1915,7 +1927,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
             attachResourcesHandlers();
             
             // Pre-fetch YouTube videos for all steps in the background
-            preFetchStepVideos(steps);
+            // preFetchStepVideos(steps); // Disabled to prevent YouTube API quota exhaustion
             
             // DEBUG: Watch for button removal
             console.log('🔍 Setting up button removal detector...');
@@ -2224,7 +2236,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                     body: JSON.stringify({
                         topic: topic,
                         contentContext: questionText,
-                        count: 5,
+                        count: 3,
                         preferredDurationMin: [3, 25]
                     })
                 });
@@ -3217,67 +3229,37 @@ CRITICAL REQUIREMENTS:
             }
 
             try {
-                const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent';
-                
-                // Create a prompt for generating a visualization of the overall question
-                const prompt = `You are creating ONLY a diagram illustration. Generate a detailed, accurate SVG diagram that visualizes this homework problem:
+                // Use Gemini image-generation model (Nano Banana / 2.5 Flash Image)
+                const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
+                const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_IMAGE_MODEL}:generateContent`;
+
+                const imagePrompt = `Create a single educational diagram image that visualizes this homework problem. Do not include any question text, instructions, answers, or solutions in the image.
 
 Title: ${problem.title || 'Homework Problem'}
 Description: ${problem.text || 'No description'}
 
-CRITICAL REQUIREMENTS - READ CAREFULLY:
-- Return ONLY the SVG code (no markdown, no explanations, no code blocks, no text outside SVG)
-- Use viewBox="0 0 500 500" or appropriate dimensions
-- Create a visual representation that helps students understand what the problem is asking
-- Include relevant diagrams, structures, labels, or visual elements mentioned in the problem
-- Use appropriate colors and styling to make it clear and educational
-- Make it scientifically/educationally accurate
-- If the problem mentions specific structures (like cell organelles, geometric shapes, physics diagrams), include them with proper detail
-- Add labels ONLY for variables or structures (e.g., "w", "l", "x", "r", "A", "B", "C" as letters pointing to structures with arrows)
-- DO NOT include ANY of the following in the image:
-  * Question text (e.g., "What is...", "Identify...", "Answer...", "Find...", "Solve...")
-  * Instructions (e.g., "Study the diagram", "Answer the questions")
-  * Titles or headers (e.g., "Area of a Circle", "Finding Dimensions", "Solving Equations")
-  * Answer blanks or lines
-  * Any educational worksheet text
-  * SOLUTIONS OR ANSWERS (e.g., "Final Dimensions: w = 8m, l = 19m", "Answer:", "Solution:", "Final Answer:", "x = 4", etc.)
-  * Solved numerical values (e.g., "8m", "19m", "4" as answers - only show variables like "w", "l", "x", "r" and expressions like "2w+3", "r=5" but NOT solved results)
-  * Text boxes with answers
-  * Any text that reveals the solution to the problem
-  * Problem setup text that includes solutions
-  * Formulas with solved values (e.g., "A = π(5)² = 25π" - DO NOT show the "= 25π" part, only show "A = πr²" with r labeled)
-  * Solution steps or calculations
-- The diagram should show the PROBLEM SETUP ONLY - variables, relationships, what's given - NOT the solution
-- For math problems: Show variables (w, l, x, r, etc.) and expressions (2w+3, r=5, etc.) but NOT the solved values
-- The diagram should be a PURE illustration - just the visual diagram with variable/structure labels
-- NO TEXT ELEMENTS except variable labels (w, l, x, y, r) or structure labels (A, B, C) with arrows
-- NO answers, NO solutions, NO final values, NO solved calculations
+Requirements for the image:
+- Show only the problem setup: diagrams, shapes, structures, or relationships mentioned in the problem.
+- Include labels only for variables or parts (e.g. w, l, x, r, A, B, C) with arrows where helpful.
+- Use clear, readable visuals suitable for a student. No saturated colors; keep it clean and educational.
+- If the problem involves geometry, physics, biology, or math, draw the relevant diagram with variable labels but no solved values or final answers.
+- Style: simple diagram or illustration, no decorative text, no titles, no "Answer" or "Solution" text.`;
 
-The SVG should contain ONLY the diagram illustration showing the problem setup, nothing else.`;
-
-                // LOG THE EXACT PROMPT BEING SENT
-                console.log('═══════════════════════════════════════════════════════════');
-                console.log('🖼️ [PROBLEM VISUALIZATION] EXACT PROMPT BEING SENT TO API:');
-                console.log('═══════════════════════════════════════════════════════════');
-                console.log(prompt);
-                console.log('═══════════════════════════════════════════════════════════');
-                console.log('📊 Prompt length:', prompt.length, 'characters');
+                console.log('🖼️ [PROBLEM VISUALIZATION] Generating image via Gemini image model:', GEMINI_IMAGE_MODEL);
                 console.log('📋 Problem title:', problem.title);
-                console.log('📝 Problem text:', problem.text);
-                console.log('═══════════════════════════════════════════════════════════');
+                console.log('📝 Problem text (length):', (problem.text || '').length);
 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
-                
-                console.log('Generating question visualization...');
-                
+                const timeoutId = setTimeout(() => controller.abort(), 120000);
+
                 const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: prompt }]
-                        }]
+                        contents: [{ parts: [{ text: imagePrompt }] }],
+                        generationConfig: {
+                            responseModalities: ['TEXT', 'IMAGE']
+                        }
                     }),
                     signal: controller.signal
                 });
@@ -3292,84 +3274,48 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
                 }
 
                 const data = await response.json();
-                console.log('Question visualization response status:', response.status);
-                console.log('Question visualization response data:', data);
-
-                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                    const svgText = data.candidates[0].content.parts[0].text;
-                    
-                    // LOG THE RAW RESPONSE
-                    console.log('═══════════════════════════════════════════════════════════');
-                    console.log('🖼️ [PROBLEM VISUALIZATION] RAW SVG CODE FROM API:');
-                    console.log('═══════════════════════════════════════════════════════════');
-                    console.log('📏 Raw SVG length:', svgText.length, 'characters');
-                    console.log('📄 First 500 characters:', svgText.substring(0, 500));
-                    console.log('📄 Last 500 characters:', svgText.substring(Math.max(0, svgText.length - 500)));
-                    console.log('═══════════════════════════════════════════════════════════');
-                    // Clean up the SVG text (remove markdown code blocks if present)
-                    let cleanSvg = svgText.trim();
-                    if (cleanSvg.startsWith('```')) {
-                        console.log('⚠️ SVG code starts with markdown code block, cleaning...');
-                        cleanSvg = cleanSvg.replace(/```svg\n?/i, '').replace(/```\n?$/, '');
-                    } else if (cleanSvg.startsWith('<svg')) {
-                        // Already clean
-                    } else {
-                        // Try to extract SVG from the text
-                        const svgMatch = cleanSvg.match(/<svg[\s\S]*?<\/svg>/i);
-                        if (svgMatch) {
-                            console.log('⚠️ SVG code wrapped in other text, extracting...');
-                            cleanSvg = svgMatch[0];
-                        }
-                    }
-                    
-                    // Check for solution text in the SVG
-                    const solutionPatterns = [
-                        /solution:/i,
-                        /answer:/i,
-                        /final.*answer/i,
-                        /final.*dimensions/i,
-                        /≈\s*\d+\.?\d*/,
-                        /=\s*\d+\.?\d*/,
-                        /formula:/i
-                    ];
-                    const foundSolutions = solutionPatterns.filter(pattern => pattern.test(cleanSvg));
-                    if (foundSolutions.length > 0) {
-                        console.log('ℹ️ SVG contains mathematical notation (will be evaluated by QA)');
-                    }
-                    
-                    // LOG FINAL PROCESSED SVG
-                    console.log('═══════════════════════════════════════════════════════════');
-                    console.log('🖼️ [PROBLEM VISUALIZATION] FINAL PROCESSED SVG:');
-                    console.log('═══════════════════════════════════════════════════════════');
-                    console.log('📏 Final SVG length:', cleanSvg.length, 'characters');
-                    console.log('📄 Full SVG code:', cleanSvg);
-                    console.log('═══════════════════════════════════════════════════════════');
-                    
-                    visualizerEl.innerHTML = cleanSvg;
-                    
-                    // Save to cache
-                    if (!questionStates[questionIndex]) {
-                        questionStates[questionIndex] = {};
-                    }
-                    questionStates[questionIndex].problemVisualization = cleanSvg;
-                    console.log(`✅ Problem visualization saved to cache for question ${questionIndex + 1}`);
-                    
-                    // Export component for evaluation pipeline
-                    exportComponent({
-                        id: `Q${questionIndex + 1}_SVG`,
-                        type: 'question_svg',
-                        questionId: questionIndex,
-                        stepId: null,
-                        html: cleanSvg,
-                        metadata: {
-                            title: problem.title || 'Question',
-                            text: problem.text || '',
-                            source: 'question_visualization'
-                        }
-                    });
-                } else {
-                    visualizerEl.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Unable to generate visualization.</p>';
+                const parts = data.candidates?.[0]?.content?.parts;
+                if (!parts || !parts.length) {
+                    visualizerEl.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No image in response.</p>';
+                    return;
                 }
+
+                let imageDataUrl = null;
+                let caption = '';
+                for (const part of parts) {
+                    const inline = part.inlineData || part.inline_data;
+                    if (inline && inline.data) {
+                        const mime = inline.mimeType || inline.mime_type || 'image/png';
+                        imageDataUrl = `data:${mime};base64,${inline.data}`;
+                        break;
+                    }
+                    if (part.text) caption += part.text;
+                }
+
+                if (!imageDataUrl) {
+                    visualizerEl.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No image generated. Try again.</p>';
+                    return;
+                }
+
+                const imgHtml = `<div class="problem-viz-image-wrap"><img src="${imageDataUrl}" alt="Problem diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                visualizerEl.innerHTML = imgHtml;
+
+                if (!questionStates[questionIndex]) questionStates[questionIndex] = {};
+                questionStates[questionIndex].problemVisualization = imgHtml;
+                console.log('✅ Problem visualization (image) saved to cache for question', questionIndex + 1);
+
+                exportComponent({
+                    id: `Q${questionIndex + 1}_SVG`,
+                    type: 'question_svg',
+                    questionId: questionIndex,
+                    stepId: null,
+                    html: imgHtml,
+                    metadata: {
+                        title: problem.title || 'Question',
+                        text: problem.text || '',
+                        source: 'question_visualization_image'
+                    }
+                });
             } catch (error) {
                 if (error.name === 'AbortError') {
                     console.error('Question visualization timed out');
@@ -4987,16 +4933,31 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
             // Store text in data attribute so it persists even if selectedText gets cleared
             askGeminiTooltip.setAttribute('data-selected-text', text);
             askGeminiTooltip.style.display = 'flex';
-            askGeminiTooltip.style.left = `${x}px`;
-            askGeminiTooltip.style.top = `${y - 50}px`;
             
-            // Ensure tooltip stays within viewport
-            const rect = askGeminiTooltip.getBoundingClientRect();
-            if (rect.left < 10) {
-                askGeminiTooltip.style.left = '10px';
-            } else if (rect.right > window.innerWidth - 10) {
-                askGeminiTooltip.style.left = `${window.innerWidth - rect.width - 10}px`;
+            // Set initial position to calculate size
+            askGeminiTooltip.style.left = '-1000px'; 
+            askGeminiTooltip.style.top = '-1000px';
+            
+            const tooltipRect = askGeminiTooltip.getBoundingClientRect();
+            const halfWidth = tooltipRect.width / 2;
+            
+            let finalX = x - halfWidth;
+            let finalY = y - tooltipRect.height - 12; // 12px above selection
+            
+            // Ensure tooltip stays within viewport horizontally
+            if (finalX < 10) {
+                finalX = 10;
+            } else if (finalX + tooltipRect.width > window.innerWidth - 10) {
+                finalX = window.innerWidth - tooltipRect.width - 10;
             }
+            
+            // Ensure tooltip stays within viewport vertically
+            if (finalY < 10) {
+                finalY = y + 20; // Show below selection if not enough space above
+            }
+            
+            askGeminiTooltip.style.left = `${finalX}px`;
+            askGeminiTooltip.style.top = `${finalY}px`;
         }
 
         function hideAskGeminiTooltip() {
@@ -5010,13 +4971,17 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
             const selection = window.getSelection();
             const text = selection.toString().trim();
 
-            if (text.length > 0) {
+            if (text.length > 0 && selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
-                const rect = range.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top + window.scrollY;
+                const clientRects = range.getClientRects();
+                if (clientRects.length > 0) {
+                    // Use the first rect to position at the top of the selection
+                    const firstRect = clientRects[0];
+                    const x = firstRect.left + firstRect.width / 2;
+                    const y = firstRect.top;
 
-                showAskGeminiTooltip(x, y, text);
+                    showAskGeminiTooltip(x, y, text);
+                }
             } else {
                 hideAskGeminiTooltip();
             }
@@ -5067,6 +5032,11 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
             
             // Open chatbot panel
             chatbotPanel.classList.add('open');
+            
+            // Connect if not already connected
+            if (!liveClient && GEMINI_API_KEY) {
+                await connectLiveChat();
+            }
             
             // Wait a tiny bit for panel to open
             await new Promise(resolve => setTimeout(resolve, 50));

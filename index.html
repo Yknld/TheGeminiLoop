@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Set by host from GEMINI_API_KEY (env) or at build time; leave empty in repo -->
-    <meta name="gemini-api-key" content="">
+    <meta name="gemini-api-key" content="AIzaSyAhjz3NTiuznQ3HqtAWwa396EfQOnRQT34">
     <!-- Supabase configuration for TTS Edge Function -->
     <meta name="supabase-url" content="https://euxfugfzmpsemkjpcpuz.supabase.co">
     <meta name="supabase-anon-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1eGZ1Z2Z6bXBzZW1ranBjcHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMDkyMDYsImV4cCI6MjA4MzU4NTIwNn0.bsfC3T5WoUhGrS-6VuowULRHciY7BpzMCBQ3F4fZFRI">
@@ -49,11 +49,6 @@
         <div class="loading-progress" id="loading-progress">Preparing questions...</div>
     </div>
 
-    <!-- Ask Gemini Tooltip -->
-    <div class="ask-gemini-tooltip" id="ask-gemini-tooltip" style="display: none;">
-        <span class="ask-gemini-tooltip-text">Ask Gemini</span>
-    </div>
-
     <div class="container">
         <!-- Question Navigation -->
         <div class="question-nav">
@@ -83,7 +78,7 @@
             </div>
             <div class="problem-visualizer" id="problem-visualizer">
                 <div class="problem-visualizer-content" id="problem-visualizer-content">
-                    <p style="color: var(--text-secondary); text-align: center;">Generating visualization...</p>
+                    <p style="color: var(--text-secondary); text-align: center;">Loading...</p>
                 </div>
             </div>
         </div>

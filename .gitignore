@@ -30,6 +30,9 @@ debug_json_error.txt
 .DS_Store
 Thumbs.db
 
+# Images-only regeneration script (local use)
+scripts/generate_module_images_only.py
+
 # Optional: uncomment to avoid committing generated modules (e.g. for CI)
 # modules/
 

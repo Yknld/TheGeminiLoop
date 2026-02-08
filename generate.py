@@ -41,7 +41,7 @@ if not GEMINI_API_KEY.strip():
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://euxfugfzmpsemkjpcpuz.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1eGZ1Z2Z6bXBzZW1ranBjcHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMDkyMDYsImV4cCI6MjA4MzU4NTIwNn0.bsfC3T5WoUhGrS-6VuowULRHciY7BpzMCBQ3F4fZFRI")
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent"
 GEMINI_TTS_MODEL = os.environ.get("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
 GEMINI_TTS_VOICE = os.environ.get("GEMINI_TTS_VOICE", "Kore")  # e.g. Kore, Puck, Zephyr
 # Gemini 2.5 TTS limit: 10 requests per minute
@@ -406,216 +406,265 @@ CRITICAL REQUIREMENTS:
     return None
 
 
-def generate_svg_diagram(image_description):
-    """Generate SVG diagram using Gemini"""
-    prompt = f"""Generate an SVG diagram based on this description:
+GEMINI_IMAGE_MODEL = "gemini-3-pro-image-preview"
+GEMINI_IMAGE_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_IMAGE_MODEL}:generateContent"
+
+
+def generate_image_diagram(image_description, output_path, max_retries=3):
+    """Generate a diagram image using Gemini image model; save as PNG. Returns output_path on success, None otherwise."""
+    import base64
+    prompt = f"""Create a single educational diagram image based on this description:
 
 {image_description}
 
-🎯 YOUR GOAL: Create a visual diagram that helps students UNDERSTAND the concept/structure, not just a generic shape!
-
-The description above tells you what to visualize. Your job is to:
-1. Show specific visual details that make the concept/structure recognizable and clear
-2. Use colors, textures, and styling to differentiate different parts/components
-3. Add clear labels (but NO questions, NO answers, NO solution values)
-4. Make it visually accurate to what the concept/structure actually looks like
-5. Help students go "Oh! That's what it looks like!"
-
-Examples:
-- If showing a mitochondrion: Show the double membrane, internal cristae folds, matrix, intermembrane space (not just an oval)
-- If showing a rectangle with dimensions: Show clear right angles, dimension lines with arrows, labeled sides
-- If showing a Venn diagram: Show overlapping circles with distinct regions, proper set labels
-- If showing a force diagram: Show vectors with proper direction, magnitude representation, labeled forces
-
-Create a diagram that teaches through visual accuracy and detail!
-
 Requirements:
-- Complete, valid SVG code
-- Clear, professional styling matching these colors:
-  * Primary: #2563eb
-  * Text: #0f172a
-  * Background: #f8fafc
-  * Border: #e2e8f0
-- Appropriate colors and labels
-- Readable at different sizes
-- Include viewBox for scaling
-- Self-contained (no external resources)
-- Professional educational diagram style
+- Clear, professional diagram that helps students understand the concept. No saturated colors; keep it clean and educational.
+- Show only the diagram: shapes, structures, labels (e.g. A, B, C or w, l, x). No question text, instructions, answers, or solutions.
+- Style: simple illustration or diagram suitable for learning."""
 
-🎨 LAYOUT REQUIREMENTS:
-- COMPACT SIZE: Use reasonable viewBox dimensions (400-600 width, 300-500 height)
-- FILL THE SPACE: Make diagrams use most of the available space meaningfully
-- NO excessive margins: Keep content centered with minimal padding
-- Efficient use of space: Don't leave large empty areas
-- Well-proportioned: Balance visual elements across the canvas
-
-Return ONLY the SVG code, no explanations, no markdown."""
-
-    # Retry logic for rate limits
-    max_retries = 3
     for attempt in range(max_retries):
         try:
             response = requests.post(
-                f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+                f"{GEMINI_IMAGE_API_URL}?key={GEMINI_API_KEY}",
                 headers={"Content-Type": "application/json"},
-                json={"contents": [{"parts": [{"text": prompt}]}]},
-                timeout=180  # Increased for complex visualizations
+                json={
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]},
+                },
+                timeout=180,
             )
             response.raise_for_status()
             data = response.json()
-            
-            svg = data["candidates"][0]["content"]["parts"][0]["text"]
-            
-            # Clean up markdown
-            svg = svg.replace("```svg", "").replace("```", "").strip()
-            
-            # Extract SVG tag if wrapped in other text
-            if not svg.startswith("<svg"):
-                import re
-                svg_match = re.search(r'<svg[\s\S]*</svg>', svg)
-                if svg_match:
-                    svg = svg_match.group(0)
-            
-            return svg
-            
+            parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+            for part in parts:
+                inline = part.get("inlineData") or part.get("inline_data")
+                if inline and inline.get("data"):
+                    raw = base64.b64decode(inline["data"])
+                    output_path = Path(output_path)
+                    output_path.parent.mkdir(parents=True, exist_ok=True)
+                    # Resize to max 600px to keep page responsive when decoding in browser
+                    try:
+                        import io
+                        from PIL import Image
+                        img = Image.open(io.BytesIO(raw))
+                        w, h = img.size
+                        max_side = 600
+                        if max(w, h) > max_side:
+                            if w >= h:
+                                new_w, new_h = max_side, max(1, int(h * max_side / w))
+                            else:
+                                new_w, new_h = max(1, int(w * max_side / h)), max_side
+                            img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                            buf = io.BytesIO()
+                            img.save(buf, format="PNG", optimize=True)
+                            raw = buf.getvalue()
+                    except Exception:
+                        pass
+                    output_path.write_bytes(raw)
+                    return str(output_path)
+            print("      ⚠️  No image data in API response")
+            return None
         except Exception as e:
             if "429" in str(e) or "Too Many Requests" in str(e):
                 if attempt < max_retries - 1:
-                    wait_time = 10 * (attempt + 1)  # 10, 20, 30 seconds
+                    wait_time = 10 * (attempt + 1)
                     print(f"      ⏳ Rate limit hit, waiting {wait_time}s before retry {attempt + 2}/{max_retries}...")
                     time.sleep(wait_time)
                     continue
-            print(f"      ⚠️  SVG generation failed after {attempt + 1} attempts: {e}")
+            print(f"      ⚠️  Image generation failed after {attempt + 1} attempts: {e}")
             return None
-    
     return None
 
 
-def generate_audio(text, output_path):
+def generate_audio(text, output_path, max_retries=3):
     """Generate TTS audio using Gemini TTS only (Docker loop uses no other TTS backend).
     Uses google-genai SDK; falls back to REST if SDK fails.
     Rate-limited to TTS_REQUESTS_PER_MINUTE (default 10/min for Gemini 2.5 TTS)."""
     import base64
     import wave
+    import time
+
     if not GEMINI_API_KEY or not GEMINI_API_KEY.strip():
         print("   ⚠️  TTS skipped: GEMINI_API_KEY is empty (set env var for Gemini TTS)")
         return False
-    # Enforce 10 requests per minute for Gemini 2.5 TTS
-    min_interval = 60.0 / TTS_REQUESTS_PER_MINUTE
-    last = _tts_last_request_time[0]
-    if last is not None:
-        elapsed = time.time() - last
-        if elapsed < min_interval:
-            wait = min_interval - elapsed
-            print(f"   ⏳ TTS rate limit: waiting {wait:.1f}s (max {TTS_REQUESTS_PER_MINUTE}/min)")
-            time.sleep(wait)
-    _tts_last_request_time[0] = time.time()
-    try:
-        # Prefer official Gemini TTS via google-genai SDK
-        from google import genai
-        from google.genai.types import GenerateContentConfig, SpeechConfig, VoiceConfig, PrebuiltVoiceConfig
-        client = genai.Client(api_key=GEMINI_API_KEY)
-        response = client.models.generate_content(
-            model=GEMINI_TTS_MODEL,
-            contents=text,
-            config=GenerateContentConfig(
-                response_modalities=["AUDIO"],
-                speech_config=SpeechConfig(
-                    voice_config=VoiceConfig(
-                        prebuilt_voice_config=PrebuiltVoiceConfig(voice_name=GEMINI_TTS_VOICE)
-                    )
+
+    for attempt in range(max_retries):
+        if attempt > 0:
+            # Exponential backoff for retries: 2s, 4s, 8s...
+            wait_time = 2**attempt
+            print(f"   🔄 TTS retry {attempt}/{max_retries} in {wait_time}s...")
+            time.sleep(wait_time)
+
+        # Enforce 10 requests per minute for Gemini 2.5 TTS
+        min_interval = 60.0 / TTS_REQUESTS_PER_MINUTE
+        last = _tts_last_request_time[0]
+        if last is not None:
+            elapsed = time.time() - last
+            if elapsed < min_interval:
+                wait = min_interval - elapsed
+                print(f"   ⏳ TTS rate limit: waiting {wait:.1f}s (max {TTS_REQUESTS_PER_MINUTE}/min)")
+                time.sleep(wait)
+        _tts_last_request_time[0] = time.time()
+
+        try:
+            # Prefer official Gemini TTS via google-genai SDK
+            from google import genai
+            from google.genai.types import (
+                GenerateContentConfig,
+                SpeechConfig,
+                VoiceConfig,
+                PrebuiltVoiceConfig,
+            )
+
+            client = genai.Client(api_key=GEMINI_API_KEY)
+            response = client.models.generate_content(
+                model=GEMINI_TTS_MODEL,
+                contents=text,
+                config=GenerateContentConfig(
+                    response_modalities=["AUDIO"],
+                    speech_config=SpeechConfig(
+                        voice_config=VoiceConfig(
+                            prebuilt_voice_config=PrebuiltVoiceConfig(
+                                voice_name=GEMINI_TTS_VOICE
+                            )
+                        )
+                    ),
                 ),
-            ),
-        )
-        candidates = getattr(response, "candidates", None) or []
-        if not candidates:
-            pf = getattr(response, "prompt_feedback", None) or {}
-            reason = getattr(pf, "block_reason", None) or "no candidates"
-            print(f"   ⚠️  TTS failed: no candidates (blockReason: {reason})")
-            return False
-        parts = getattr(candidates[0].content, "parts", None) or []
-        if not parts:
-            print("   ⚠️  TTS failed: candidate has no parts")
-            return False
-        inline = parts[0].inline_data
-        if not inline or not getattr(inline, "data", None):
-            print("   ⚠️  TTS failed: no inline_data.data (model may not support AUDIO)")
-            return False
-        # inline.data can be bytes or base64 str depending on SDK
-        raw = inline.data
-        pcm = raw if isinstance(raw, bytes) else base64.b64decode(raw)
-        wav_path = output_path.with_suffix(".wav") if output_path.suffix != ".wav" else output_path
-        with wave.open(str(wav_path), "wb") as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)  # 16-bit
-            wf.setframerate(24000)
-            wf.writeframes(pcm)
-        return True
-    except ImportError:
-        pass  # fall back to REST
-    except Exception as sdk_err:
-        print(f"   ⚠️  Gemini TTS SDK failed ({type(sdk_err).__name__}), trying REST...")
-    # Fallback: Gemini TTS via REST (same API, no other TTS)
-    try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_TTS_MODEL}:generateContent"
-        payload = {
-            "contents": [{"parts": [{"text": text}]}],
-            "generationConfig": {
-                "responseModalities": ["AUDIO"],
-                "speechConfig": {
-                    "voiceConfig": {
-                        "prebuiltVoiceConfig": {"voiceName": GEMINI_TTS_VOICE}
-                    }
+            )
+            candidates = getattr(response, "candidates", None) or []
+            if not candidates:
+                pf = getattr(response, "prompt_feedback", None) or {}
+                reason = getattr(pf, "block_reason", None) or "no candidates"
+                print(f"   ⚠️  TTS failed: no candidates (blockReason: {reason})")
+                if attempt < max_retries - 1:
+                    continue
+                return False
+
+            parts = getattr(candidates[0].content, "parts", None) or []
+            if not parts:
+                print("   ⚠️  TTS failed: candidate has no parts")
+                if attempt < max_retries - 1:
+                    continue
+                return False
+
+            inline = parts[0].inline_data
+            if not inline or not getattr(inline, "data", None):
+                print("   ⚠️  TTS failed: no inline_data.data (model may not support AUDIO)")
+                if attempt < max_retries - 1:
+                    continue
+                return False
+
+            # inline.data can be bytes or base64 str depending on SDK
+            raw = inline.data
+            pcm = raw if isinstance(raw, bytes) else base64.b64decode(raw)
+            wav_path = (
+                output_path.with_suffix(".wav")
+                if output_path.suffix != ".wav"
+                else output_path
+            )
+            with wave.open(str(wav_path), "wb") as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)  # 16-bit
+                wf.setframerate(24000)
+                wf.writeframes(pcm)
+            return True
+        except ImportError:
+            pass  # fall back to REST
+        except Exception as sdk_err:
+            print(f"   ⚠️  Gemini TTS SDK failed ({type(sdk_err).__name__}), trying REST...")
+
+        # Fallback: Gemini TTS via REST (same API, no other TTS)
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_TTS_MODEL}:generateContent"
+            payload = {
+                "contents": [{"parts": [{"text": text}]}],
+                "generationConfig": {
+                    "responseModalities": ["AUDIO"],
+                    "speechConfig": {
+                        "voiceConfig": {
+                            "prebuiltVoiceConfig": {"voiceName": GEMINI_TTS_VOICE}
+                        }
+                    },
                 },
-            },
-        }
-        response = requests.post(
-            f"{url}?key={GEMINI_API_KEY}",
-            headers={"Content-Type": "application/json"},
-            json=payload,
-            timeout=60,
-        )
-        if response.status_code != 200:
-            try:
-                err_body = response.json()
-                err_msg = err_body.get("error", {}).get("message", response.text[:200])
-            except Exception:
-                err_msg = response.text[:200] if response.text else str(response.status_code)
-            print(f"   ⚠️  TTS failed: HTTP {response.status_code} — {err_msg}")
+            }
+            response = requests.post(
+                f"{url}?key={GEMINI_API_KEY}",
+                headers={"Content-Type": "application/json"},
+                json=payload,
+                timeout=60,
+            )
+            if response.status_code != 200:
+                try:
+                    err_body = response.json()
+                    err_msg = err_body.get("error", {}).get("message", response.text[:200])
+                except Exception:
+                    err_msg = (
+                        response.text[:200] if response.text else str(response.status_code)
+                    )
+                print(f"   ⚠️  TTS failed: HTTP {response.status_code} — {err_msg}")
+                # Retry on 5xx or 429
+                if attempt < max_retries - 1 and (
+                    response.status_code >= 500 or response.status_code == 429
+                ):
+                    continue
+                return False
+
+            data = response.json()
+            candidates = data.get("candidates") or []
+            if not candidates:
+                pf = data.get("promptFeedback") or {}
+                reason = pf.get("blockReason", "unknown") if pf else "no candidates"
+                print(f"   ⚠️  TTS failed: no candidates (blockReason/promptFeedback: {reason})")
+                if attempt < max_retries - 1:
+                    continue
+                return False
+
+            parts = (candidates[0].get("content") or {}).get("parts") or []
+            if not parts:
+                print("   ⚠️  TTS failed: candidate has no parts")
+                if attempt < max_retries - 1:
+                    continue
+                return False
+
+            inline = parts[0].get("inlineData") or {}
+            b64 = inline.get("data")
+            if not b64:
+                print(
+                    "   ⚠️  TTS failed: no inlineData.data in response (model may not support AUDIO or wrong format)"
+                )
+                if attempt < max_retries - 1:
+                    continue
+                return False
+
+            pcm = base64.b64decode(b64)
+            wav_path = (
+                output_path.with_suffix(".wav")
+                if output_path.suffix != ".wav"
+                else output_path
+            )
+            with wave.open(str(wav_path), "wb") as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(24000)
+                wf.writeframes(pcm)
+            return True
+        except requests.exceptions.Timeout:
+            print("   ⚠️  TTS failed: request timed out (60s)")
+            if attempt < max_retries - 1:
+                continue
             return False
-        data = response.json()
-        candidates = data.get("candidates") or []
-        if not candidates:
-            pf = data.get("promptFeedback") or {}
-            reason = pf.get("blockReason", "unknown") if pf else "no candidates"
-            print(f"   ⚠️  TTS failed: no candidates (blockReason/promptFeedback: {reason})")
+        except requests.exceptions.RequestException as e:
+            print(f"   ⚠️  TTS failed: network error — {e}")
+            if attempt < max_retries - 1:
+                continue
             return False
-        parts = (candidates[0].get("content") or {}).get("parts") or []
-        if not parts:
-            print("   ⚠️  TTS failed: candidate has no parts")
+        except Exception as e:
+            print(f"   ⚠️  TTS failed: {type(e).__name__} — {e}")
+            if attempt < max_retries - 1:
+                continue
             return False
-        inline = parts[0].get("inlineData") or {}
-        b64 = inline.get("data")
-        if not b64:
-            print("   ⚠️  TTS failed: no inlineData.data in response (model may not support AUDIO or wrong format)")
-            return False
-        pcm = base64.b64decode(b64)
-        wav_path = output_path.with_suffix(".wav") if output_path.suffix != ".wav" else output_path
-        with wave.open(str(wav_path), "wb") as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(24000)
-            wf.writeframes(pcm)
-        return True
-    except requests.exceptions.Timeout:
-        print("   ⚠️  TTS failed: request timed out (60s)")
-        return False
-    except requests.exceptions.RequestException as e:
-        print(f"   ⚠️  TTS failed: network error — {e}")
-        return False
-    except Exception as e:
-        print(f"   ⚠️  TTS failed: {type(e).__name__} — {e}")
-        return False
+
+    return False
 
 
 def create_module_directories(module_path):
@@ -693,32 +742,16 @@ def main():
         elapsed = time.time() - start_time
         print(f"✅ Generated structure with {len(module_data['steps'])} steps ({elapsed:.1f}s)", flush=True)
         
-        # Generate problem visualization
+        # Generate problem visualization (image via Gemini image model)
         print(f"\n2️⃣  Generating problem visualization for question {q_idx}...")
         problem_viz_path = None
         try:
-            viz_prompt = f"""Generate a detailed, accurate SVG diagram that visualizes this homework problem:
+            viz_prompt = f"""Create a single educational diagram image that visualizes this homework problem. Show only the problem setup (diagrams, shapes, variables). No question text, instructions, answers, or solutions. Clear labels for variables/parts (e.g. w, l, x, A, B). Clean, educational style.
 
-{problem_text}
-
-CRITICAL REQUIREMENTS:
-- Create ONLY an SVG diagram (no text explanations)
-- Professional educational style matching these colors:
-  * Primary: #2563eb
-  * Text: #0f172a  
-  * Background: #f8fafc
-  * Border: #e2e8f0
-- Clear, labeled diagram that helps visualize the problem
-- Include viewBox for responsive scaling
-- Self-contained SVG (no external resources)
-- Return ONLY the SVG code
-
-Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 1/2"""
-            
-            svg_content = generate_svg_diagram(viz_prompt)
-            if svg_content:
-                problem_viz_path = module_path / f"problem-viz-q{q_idx}.svg"
-                problem_viz_path.write_text(svg_content)
+Problem: {problem_text}"""
+            out_path = module_path / f"problem-viz-q{q_idx}.png"
+            if generate_image_diagram(viz_prompt, out_path):
+                problem_viz_path = out_path
                 print(f"✅ Problem visualization saved: {problem_viz_path.name}\n")
             else:
                 print("⚠️  Problem visualization generation failed\n")
@@ -780,18 +813,16 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
                     print(f"   ✅ Component generated: {processed_step['component']} ({elapsed:.1f}s)")
             
             elif step["visualizationType"] == "image" and step.get("moduleImage"):
-                print("   🖼️  Generating SVG diagram...")
+                print("   🖼️  Generating image diagram...")
                 desc_preview = step["moduleImage"][:80] + "..." if len(step["moduleImage"]) > 80 else step["moduleImage"]
                 print(f"   📋 Description: \"{desc_preview}\"")
                 
-                svg_start = time.time()
-                svg = generate_svg_diagram(step["moduleImage"])
-                if svg:
-                    svg_path = module_path / "visuals" / f"q{q_idx}-step-{i}.svg"
-                    svg_path.write_text(svg)
-                    processed_step["visual"] = f"visuals/q{q_idx}-step-{i}.svg"
-                    elapsed = time.time() - svg_start
-                    print(f"   ✅ SVG generated: {processed_step['visual']} ({elapsed:.1f}s)")
+                img_start = time.time()
+                img_path = module_path / "visuals" / f"q{q_idx}-step-{i}.png"
+                if generate_image_diagram(step["moduleImage"], img_path):
+                    processed_step["visual"] = f"visuals/q{q_idx}-step-{i}.png"
+                    elapsed = time.time() - img_start
+                    print(f"   ✅ Image generated: {processed_step['visual']} ({elapsed:.1f}s)")
             
             processed_steps.append(processed_step)
         
@@ -803,7 +834,7 @@ Example: For "What is 3/4 + 1/2?", create fraction bar diagrams showing 3/4 and 
             "id": q_idx - 1,  # 0-indexed for JavaScript
             "problem": {
                 **module_data["problem"],
-                "visualization": f"problem-viz-q{q_idx}.svg" if problem_viz_path and problem_viz_path.exists() else None
+                "visualization": f"problem-viz-q{q_idx}.png" if problem_viz_path and problem_viz_path.exists() else None
             },
             "steps": processed_steps
         }

@@ -257,6 +257,22 @@ body {
     width: auto;
 }
 
+.problem-visualizer-content .problem-viz-image-wrap {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.problem-visualizer-content .problem-viz-image {
+    max-width: 100%;
+    max-height: 400px;
+    height: auto;
+    width: auto;
+    display: block;
+    border-radius: 8px;
+}
+
 /* Responsive: stack on mobile */
 @media (max-width: 768px) {
     .problem-section {
@@ -303,7 +319,6 @@ body {
     opacity: 0.6;
     background: var(--bg-secondary);
     cursor: not-allowed;
-    pointer-events: none;
     position: relative;
 }
 
@@ -341,9 +356,9 @@ body {
 }
 
 /* Blur locked step content to hide answers */
-.step-card.locked .step-content {
+.step-card.locked .step-input-section,
+.step-card.locked .step-right {
     filter: blur(8px);
-    user-select: none;
 }
 
 /* Add overlay message on locked steps */
@@ -557,6 +572,21 @@ body {
     min-height: 300px;
     max-height: 600px;
     border: none;
+    border-radius: 8px;
+}
+
+.step-visualization .problem-viz-image-wrap {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-visualization .problem-viz-image {
+    max-width: 100%;
+    max-height: 500px;
+    height: auto;
+    display: block;
     border-radius: 8px;
 }
 
@@ -924,6 +954,7 @@ body {
     padding: 16px;
     border-top: 1px solid var(--border);
     display: flex;
+    align-items: flex-end;
     gap: 8px;
 }
 
@@ -943,6 +974,8 @@ body {
 }
 
 .chatbot-send {
+    flex-shrink: 0;
+    align-self: flex-end;
     padding: 10px 20px;
     background: var(--primary);
     color: white;

@@ -65,7 +65,7 @@ class ModuleEvaluator:
     def __init__(self, headless=False):
         self.headless = headless
         self.mcp = None
-        self._genai_model = "models/gemini-2.5-flash"
+        self._genai_model = "models/gemini-3-flash-preview"
 
     def _call_gemini(self, content_list):
         """Call Gemini with list of parts (str and/or PIL Images). Returns response with .text."""
