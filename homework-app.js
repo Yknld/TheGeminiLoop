@@ -55,6 +55,54 @@
             return div.innerHTML;
         }
 
+        /** Detect if a string looks like PNG (or other binary) decoded as text - do not use as HTML. */
+        function looksLikeBinaryContent(str) {
+            if (!str || typeof str !== 'string' || str.length < 12) return false;
+            const start = str.slice(0, 120);
+            const trimmed = start.trimStart();
+            if (trimmed.startsWith('<') && start.includes('</')) return false;
+            if (/PNG|IHDR|IDAT/i.test(start)) return true;
+            if (str.includes('\uFFFD') && str.length > 200) return true;
+            return false;
+        }
+
+        /** Wait for MathJax to load (script is async), then resolve. */
+        function whenMathJaxReady() {
+            return new Promise((resolve) => {
+                if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                    resolve();
+                    return;
+                }
+                if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) {
+                    window.MathJax.startup.promise.then(resolve).catch(() => resolve());
+                    return;
+                }
+                let attempts = 0;
+                const maxAttempts = 100;
+                const check = () => {
+                    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                        resolve();
+                        return;
+                    }
+                    attempts++;
+                    if (attempts < maxAttempts) setTimeout(check, 50);
+                    else resolve();
+                };
+                setTimeout(check, 50);
+            });
+        }
+
+        /** Typeset math in the given element(s) once MathJax is ready. */
+        function typesetMath(els) {
+            const nodeList = Array.isArray(els) ? els : (els ? [els] : []);
+            if (nodeList.length === 0) return;
+            whenMathJaxReady().then(() => {
+                if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                    window.MathJax.typesetPromise(nodeList).catch(err => console.warn('MathJax typeset error:', err));
+                }
+            });
+        }
+
         // Initialize - set up questions but don't load them all at once
         async function init() {
             console.log('🟢 INIT FUNCTION CALLED');
@@ -279,7 +327,7 @@
             if (questionData.problem.visualization) {
                 try {
                     const vizUrl = resolveAssetUrl(moduleId, questionData.problem.visualization);
-                    const isImage = /\.(png|jpg|jpeg|webp)$/i.test(questionData.problem.visualization || '');
+                    const isImage = /\.(png|jpg|jpeg|webp)(\?|$)/i.test(questionData.problem.visualization || '');
                     console.log(`   🖼️  Loading visualization from: ${vizUrl} (${isImage ? 'image' : 'svg'})`);
                     if (isImage) {
                         problemVisualization = `<div class="problem-viz-image-wrap"><img src="${vizUrl}" alt="Problem diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
@@ -311,47 +359,82 @@
                     visualization: problemVisualization
                 },
                 steps: await Promise.all(stepsList.map(async (step) => {
-                    const stepData = {
+                        const stepData = {
                         explanation: step.explanation,
                         inputLabel: step.inputLabel,
                         inputPlaceholder: step.inputPlaceholder,
                         correctAnswer: step.correctAnswer,
                         audioExplanation: step.audioExplanation,
                         visualizationType: step.visualizationType,
-                            visualization: null  // Will be loaded below
+                            visualization: null,
+                        visualizationImageUrl: null
                         };
                         
-                        // Load interactive component HTML
+                        // Load interactive component HTML (or image if manifest points component at a PNG)
                         if (step.component) {
-                            try {
-                                const compUrl = resolveAssetUrl(moduleId, step.component);
-                                const cacheBuster = compUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
-                                const compResponse = await fetch(`${compUrl}${cacheBuster}`);
-                                if (compResponse.ok) {
-                                    stepData.visualization = await compResponse.text();
-                                    console.log(`✅ Loaded component for step ${step.id}`);
+                            const compUrl = resolveAssetUrl(moduleId, step.component);
+                            const componentIsImage = /\.(png|jpg|jpeg|webp)(\?|$)/i.test(step.component || '');
+                            if (componentIsImage) {
+                                stepData.visualizationImageUrl = compUrl;
+                                stepData.visualization = `<div class="problem-viz-image-wrap"><img src="${compUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                                console.log(`✅ Using component as image for step ${step.id}`);
+                            } else {
+                                try {
+                                    const cacheBuster = compUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
+                                    const compResponse = await fetch(`${compUrl}${cacheBuster}`);
+                                    if (compResponse.ok) {
+                                        const contentType = (compResponse.headers.get('content-type') || '').toLowerCase();
+                                        if (contentType.startsWith('image/')) {
+                                            stepData.visualizationImageUrl = compUrl;
+                                            stepData.visualization = `<div class="problem-viz-image-wrap"><img src="${compUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                                            console.log(`✅ Component URL returned image; using img for step ${step.id}`);
+                                        } else {
+                                            const text = await compResponse.text();
+                                            if (looksLikeBinaryContent(text)) {
+                                                stepData.visualizationImageUrl = compUrl;
+                                                stepData.visualization = `<div class="problem-viz-image-wrap"><img src="${compUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                                                console.log(`✅ Component response was binary (PNG); using img for step ${step.id}`);
+                                            } else {
+                                                stepData.visualization = text;
+                                                console.log(`✅ Loaded component for step ${step.id}`);
+                                            }
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error(`❌ Failed to load component: ${step.component}`, e);
                                 }
-                            } catch (e) {
-                                console.error(`❌ Failed to load component: ${step.component}`, e);
                             }
                         }
                         
                         // Load visual (image or SVG)
                         if (step.visual) {
-                            const isImage = /\.(png|jpg|jpeg|webp)$/i.test(step.visual || '');
-                            if (isImage) {
-                                const visualUrl = resolveAssetUrl(moduleId, step.visual);
+                            const visualUrl = resolveAssetUrl(moduleId, step.visual);
+                            const isImageByExt = /\.(png|jpg|jpeg|webp)(\?|$)/i.test(step.visual || '');
+                            if (isImageByExt) {
+                                stepData.visualizationImageUrl = visualUrl;
                                 stepData.visualization = `<div class="problem-viz-image-wrap"><img src="${visualUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
                                 console.log(`✅ Using image for step ${step.id}`);
                             } else {
                                 try {
-                                    const visualUrl = resolveAssetUrl(moduleId, step.visual);
                                     const cacheBuster = visualUrl.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
                                     const visualResponse = await fetch(`${visualUrl}${cacheBuster}`);
                                     if (visualResponse.ok) {
-                                        const svg = await visualResponse.text();
-                                        stepData.visualization = `<div class="svg-container">${svg}</div>`;
-                                        console.log(`✅ Loaded SVG for step ${step.id}`);
+                                        const contentType = (visualResponse.headers.get('content-type') || '').toLowerCase();
+                                        if (contentType.startsWith('image/')) {
+                                            stepData.visualizationImageUrl = visualUrl;
+                                            stepData.visualization = `<div class="problem-viz-image-wrap"><img src="${visualUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                                            console.log(`✅ Visual URL returned image; using img for step ${step.id}`);
+                                        } else {
+                                            const svg = await visualResponse.text();
+                                            if (looksLikeBinaryContent(svg)) {
+                                                stepData.visualizationImageUrl = visualUrl;
+                                                stepData.visualization = `<div class="problem-viz-image-wrap"><img src="${visualUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                                                console.log(`✅ Visual response was binary (PNG); using img for step ${step.id}`);
+                                            } else {
+                                                stepData.visualization = `<div class="svg-container">${svg}</div>`;
+                                                console.log(`✅ Loaded SVG for step ${step.id}`);
+                                            }
+                                        }
                                     }
                                 } catch (e) {
                                     console.error(`❌ Failed to load visual: ${step.visual}`, e);
@@ -874,24 +957,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                 const problemTextEl = document.getElementById('problem-text');
                 const problemText = data.problem.text || "Problem description will appear here.";
                 problemTextEl.innerHTML = ensureHtml(problemText);
-                
-                // Trigger MathJax to render the math (with small delay to ensure ready)
-                setTimeout(() => {
-                    if (window.MathJax && window.MathJax.typesetPromise) {
-                        window.MathJax.typesetPromise([problemTextEl]).catch(err => {
-                            console.warn('MathJax typeset error:', err);
-                        });
-                    } else if (window.MathJax && window.MathJax.startup) {
-                        // MathJax still loading, wait for it
-                        window.MathJax.startup.promise.then(() => {
-                            if (window.MathJax.typesetPromise) {
-                                window.MathJax.typesetPromise([problemTextEl]).catch(err => {
-                                    console.warn('MathJax typeset error:', err);
-                                });
-                            }
-                        });
-                    }
-                }, 100);
+                typesetMath([problemTextEl]);
                 
                 // Handle problem image
                 const problemImage = document.getElementById('problem-image');
@@ -1577,31 +1643,7 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                 stepExplanation.id = `step-explanation-${index}`;
                 // Process markdown bold formatting (reuse explanationText from above)
                 stepExplanation.innerHTML = processMarkdownBold(explanationText || 'No explanation provided.');
-                // Trigger MathJax to render math notation
-                const renderMath = () => {
-                    if (window.MathJax && window.MathJax.typesetPromise) {
-                        window.MathJax.typesetPromise([stepExplanation]).catch((err) => {
-                            console.log('MathJax rendering error:', err);
-                        });
-                    } else if (window.MathJax && window.MathJax.startup) {
-                        // MathJax is still loading, wait for it
-                        window.MathJax.startup.promise.then(() => {
-                            if (window.MathJax.typesetPromise) {
-                                window.MathJax.typesetPromise([stepExplanation]).catch((err) => {
-                                    console.log('MathJax rendering error:', err);
-                                });
-                            }
-                        });
-                    }
-                };
-                // Try immediately, or wait for MathJax to load
-                if (document.readyState === 'complete') {
-                    renderMath();
-                } else {
-                    window.addEventListener('load', renderMath);
-                    // Also try after a short delay
-                    setTimeout(renderMath, 500);
-                }
+                typesetMath([stepExplanation]);
 
                 // Create input section
                 const isStepCompleted = savedState && savedState.completedSteps && savedState.completedSteps[index];
@@ -1669,17 +1711,8 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                     }
                 }
                 
-                // Trigger MathJax to render math in the label
-                setTimeout(() => {
-                    if (window.MathJax && window.MathJax.typesetPromise) {
-                        const label = stepInputSection.querySelector('.step-input-label');
-                        if (label) {
-                            window.MathJax.typesetPromise([label]).catch((err) => {
-                                console.log('MathJax rendering error in label:', err);
-                            });
-                        }
-                    }
-                }, 200 + (index * 50));
+                const label = stepInputSection.querySelector('.step-input-label');
+                if (label) typesetMath([label]);
 
                 // Create visualization container wrapper
                 const vizWrapper = document.createElement('div');
@@ -1762,14 +1795,20 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                 // Generate/load visualization for ALL steps AFTER element is in DOM
                 // (vizType declared at top of forEach loop)
                 
-                // Handle IMAGE-type visualizations (SVGs)
+                // Handle IMAGE-type visualizations (SVG or image HTML)
                 if (vizType === 'image' && step.visualization) {
                     console.log(`🔍 Step ${index}: vizType=image, hasViz=${!!step.visualization}`);
                     setTimeout(() => {
                         const vizEl = document.getElementById(`step-visualization-${index}`);
                         if (vizEl) {
-                            console.log(`✅ [renderSteps] Loading PRE-GENERATED SVG for step ${index}`);
-                            vizEl.innerHTML = step.visualization;
+                            let html = step.visualization;
+                            if (looksLikeBinaryContent(html) && step.visualizationImageUrl) {
+                                html = `<div class="problem-viz-image-wrap"><img src="${step.visualizationImageUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                            } else if (looksLikeBinaryContent(html)) {
+                                html = '<p class="text-secondary">Image could not be loaded.</p>';
+                            }
+                            console.log(`✅ [renderSteps] Loading PRE-GENERATED viz for step ${index}`);
+                            vizEl.innerHTML = html;
                         }
                     }, 100 + (index * 50));
                 }
@@ -1785,67 +1824,70 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                             const vizEl = document.getElementById(`step-visualization-${index}`);
                             console.log(`🎯 vizEl for step ${index}:`, !!vizEl);
                             if (vizEl) {
-                                console.log(`✅ [renderSteps] Loading PRE-GENERATED component for step ${index} in IFRAME`);
-                                
-                                // Use iframe approach (same as modal) to avoid variable conflicts
-                                vizEl.innerHTML = '';
-                                
-                                const iframe = document.createElement('iframe');
-                                iframe.style.width = '100%';
-                                iframe.style.height = '600px'; // Initial height
-                                iframe.style.border = 'none';
-                                iframe.style.borderRadius = '8px';
-                                iframe.sandbox = 'allow-scripts allow-same-origin allow-forms';
-                                iframe.title = 'Step ' + (index + 1) + ' interactive';
-
-                                vizEl.appendChild(iframe);
-
-                                // Use srcdoc so scripts run reliably (same idea as mobile WebView html+baseUrl)
-                                const html = ensureHtml(step.visualization);
-                                iframe.srcdoc = html;
-
-                                // Auto-adjust iframe height to content after load
-                                iframe.addEventListener('load', () => {
-                                    try {
-                                        const contentHeight = iframe.contentDocument.body.scrollHeight;
-                                        iframe.style.height = Math.max(contentHeight + 40, 600) + 'px';
-                                    } catch (e) {
-                                        console.warn('Could not auto-adjust iframe height:', e);
-                                    }
-                                });
-                                
-                                // Also try immediate adjustment
-                                setTimeout(() => {
-                                    try {
-                                        const contentHeight = iframe.contentDocument.body.scrollHeight;
-                                        iframe.style.height = Math.max(contentHeight + 40, 600) + 'px';
-                                    } catch (e) {
-                                        console.warn('Could not auto-adjust iframe height:', e);
-                                    }
-                                }, 500);
-                                
-                                console.log(`✅ Step ${index} loaded in isolated iframe`);
-                                
-                                // Save to cache
-                                if (!questionStates[currentQuestionIndex]) {
-                                    questionStates[currentQuestionIndex] = {};
+                                let html = step.visualization;
+                                if (looksLikeBinaryContent(html) && step.visualizationImageUrl) {
+                                    html = `<div class="problem-viz-image-wrap"><img src="${step.visualizationImageUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`;
+                                } else if (looksLikeBinaryContent(html)) {
+                                    html = '<p class="text-secondary">Image could not be loaded.</p>';
                                 }
-                                if (!questionStates[currentQuestionIndex].visualizations) {
-                                    questionStates[currentQuestionIndex].visualizations = {};
+                                if (looksLikeBinaryContent(step.visualization)) {
+                                    console.log(`✅ [renderSteps] Step ${index} had binary viz; using img tag`);
+                                    vizEl.innerHTML = html;
+                                    if (!questionStates[currentQuestionIndex]) questionStates[currentQuestionIndex] = {};
+                                    if (!questionStates[currentQuestionIndex].visualizations) questionStates[currentQuestionIndex].visualizations = {};
+                                    questionStates[currentQuestionIndex].visualizations[index] = html;
+                                } else {
+                                    console.log(`✅ [renderSteps] Loading PRE-GENERATED component for step ${index} in IFRAME`);
+                                    vizEl.innerHTML = '';
+                                    const iframe = document.createElement('iframe');
+                                    iframe.style.width = '100%';
+                                    iframe.style.height = '600px';
+                                    iframe.style.border = 'none';
+                                    iframe.style.borderRadius = '8px';
+                                    iframe.sandbox = 'allow-scripts allow-same-origin allow-forms';
+                                    iframe.title = 'Step ' + (index + 1) + ' interactive';
+                                    vizEl.appendChild(iframe);
+                                    iframe.srcdoc = ensureHtml(html);
+                                    iframe.addEventListener('load', () => {
+                                        try {
+                                            const contentHeight = iframe.contentDocument.body.scrollHeight;
+                                            iframe.style.height = Math.max(contentHeight + 40, 600) + 'px';
+                                        } catch (e) {
+                                            console.warn('Could not auto-adjust iframe height:', e);
+                                        }
+                                    });
+                                    setTimeout(() => {
+                                        try {
+                                            const contentHeight = iframe.contentDocument.body.scrollHeight;
+                                            iframe.style.height = Math.max(contentHeight + 40, 600) + 'px';
+                                        } catch (e) {
+                                            console.warn('Could not auto-adjust iframe height:', e);
+                                        }
+                                    }, 500);
+                                    console.log(`✅ Step ${index} loaded in isolated iframe`);
+                                    if (!questionStates[currentQuestionIndex]) questionStates[currentQuestionIndex] = {};
+                                    if (!questionStates[currentQuestionIndex].visualizations) questionStates[currentQuestionIndex].visualizations = {};
+                                    questionStates[currentQuestionIndex].visualizations[index] = step.visualization;
                                 }
-                                questionStates[currentQuestionIndex].visualizations[index] = step.visualization;
                             }
                         }, 100 + (index * 50)); // Stagger slightly
                     }
                     // PRIORITY 2: Check if cached
                     else if (questionStates[currentQuestionIndex]?.visualizations?.[index]) {
                         const cachedViz = questionStates[currentQuestionIndex].visualizations[index];
+                        if (looksLikeBinaryContent(cachedViz)) {
+                            questionStates[currentQuestionIndex].visualizations[index] = null;
+                        }
                         setTimeout(() => {
                             const vizEl = document.getElementById(`step-visualization-${index}`);
                             if (vizEl && (vizEl.innerHTML.includes('Generating') || vizEl.innerHTML.includes('Loading'))) {
+                                if (looksLikeBinaryContent(cachedViz)) {
+                                    vizEl.innerHTML = step.visualizationImageUrl
+                                        ? `<div class="problem-viz-image-wrap"><img src="${step.visualizationImageUrl}" alt="Diagram" class="problem-viz-image" loading="lazy" decoding="async" /></div>`
+                                        : '<p class="text-secondary">Image could not be loaded.</p>';
+                                    return;
+                                }
                                 console.log(`✅ Loading cached interactive module for step ${index}`);
-                                
-                                // Same extraction for cached content (EXACT SAME AS module-viewer.html)
                                 const tempDiv = document.createElement('div');
                                 tempDiv.innerHTML = cachedViz;
                                 const bodyContent = tempDiv.querySelector('body');
@@ -1916,6 +1958,10 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                     stepsList.appendChild(errorCard);
                 }
             });
+
+            // Typeset all math in problem + steps (MathJax script loads async; this runs when ready)
+            const problemSection = document.getElementById('problem-section');
+            if (problemSection && stepsList) typesetMath([problemSection, stepsList]);
 
             // Initialize step state tracking
             initializeStepStates(steps.length);
