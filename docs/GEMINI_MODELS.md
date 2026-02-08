@@ -1,10 +1,10 @@
 # Gemini model usage (excluding Chatterbox TTS and AssemblyAI)
 
-All Gemini-only model references across GeminiLoop and smrtr. Chatterbox and Assembly are separate services and not listed.
+All Gemini-only model references across TheGeminiLoop and smrtr. Chatterbox and Assembly are separate services and not listed.
 
 ---
 
-## GeminiLoop
+## TheGeminiLoop
 
 ### generate.py
 | Model | Use |
@@ -63,7 +63,7 @@ All Gemini-only model references across GeminiLoop and smrtr. Chatterbox and Ass
 | `shared/transcriber.ts` | `gemini-3-flash-preview` | Audio transcription |
 
 ### solver/homework-app.js (smrtr copy)
-| Same pattern as GeminiLoop homework-app.js | `gemini-3-pro-preview`, `gemini-3-flash-preview`, `gemini-3-pro-image-preview`, `gemini-2.5-flash-preview-tts` |
+| Same pattern as TheGeminiLoop homework-app.js | `gemini-3-pro-preview`, `gemini-3-flash-preview`, `gemini-3-pro-image-preview`, `gemini-2.5-flash-preview-tts` |
 
 ---
 

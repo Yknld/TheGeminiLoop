@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run GeminiLoop for a single question (no evaluation). Logs stream until complete.
+# Run TheGeminiLoop for a single question (no evaluation). Logs stream until complete.
 # Requires GEMINI_API_KEY in environment or in .env
 
 set -e

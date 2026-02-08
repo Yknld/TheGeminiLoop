@@ -45,7 +45,7 @@ else:
 # Prefer qa_browseruse_mcp in same repo (RunPod / local); fallback for match-me layout
 _repo = Path(__file__).resolve().parent
 sys.path.insert(0, str(_repo))
-sys.path.insert(0, str(_repo.parent / "match-me" / "GeminiLoop"))
+sys.path.insert(0, str(_repo.parent / "match-me" / "TheGeminiLoop"))
 
 from google import genai
 from google.genai.types import Content, Part, Blob

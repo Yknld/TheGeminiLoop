@@ -84,7 +84,7 @@ def main():
     print()
     if module_extracted:
         print(f"Done. Module: {base / 'modules' / module_id}")
-        print(f"  View: cd GeminiLoop && python3 serve.py && open http://localhost:8000/index.html?module={module_id}")
+        print(f"  View: cd TheGeminiLoop && python3 serve.py && open http://localhost:8000/index.html?module={module_id}")
     else:
         print(f"Done (no module zip). module_id: {module_id}")
         print("  Evaluation results and artifacts (if any) were extracted. Module was not included (too large).")

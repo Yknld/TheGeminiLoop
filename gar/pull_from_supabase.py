@@ -11,7 +11,7 @@ Usage:
   python pull_from_supabase.py --user 2202c52b-a017-4f1a-8330-24c9eb5224c4 --lesson 0fed25d6-899d-49c5-89b8-238658cec1be --module module-d9a45632-8268-49a8-b3bd-2b56ff358963-u1
 
   # Output directory (default: repo root, so files go to modules/<module_id>/):
-  python pull_from_supabase.py "<prefix>" --out /path/to/GeminiLoop
+  python pull_from_supabase.py "<prefix>" --out /path/to/TheGeminiLoop
 
 Requires SUPABASE_URL and SUPABASE_SERVICE_KEY in the environment.
 """
