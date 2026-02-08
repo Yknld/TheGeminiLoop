@@ -2804,12 +2804,8 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                 }
             }
             
-            // Re-render steps to unlock next one
-            setTimeout(() => {
-                renderSteps(homeworkData.steps);
-                // Re-attach event listeners after re-render
-                attachStepEventListeners();
-            }, 500);
+            // Re-render steps logic removed to prevent overwriting revealed answer state
+            // Next step unlocking is handled by unlockNextStep below
             
             // Unlock next step (legacy support)
             unlockNextStep(stepIndex);
