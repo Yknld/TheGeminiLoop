@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350" width="500" height="350">
+  <defs>
+    <!-- Background filter for glow effect -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="blur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+
+    <!-- Arrowhead marker -->
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#007BFF" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#f8fafc"/>
+
+  <!-- Heads Coin (Left) - Selected -->
+  <!-- Glowing blue border -->
+  <circle cx="150" cy="120" r="65" stroke="#007BFF" stroke-width="8" fill="none" filter="url(#glow)"/>
+  <!-- Coin body -->
+  <circle cx="150" cy="120" r="55" fill="#d1d5db" stroke="#e2e8f0" stroke-width="2"/>
+  <!-- Heads design (stylized profile) -->
+  <path d="M130 130 C135 110 145 100 155 100 C165 100 175 110 170 130 C165 145 150 155 135 145 Z" fill="#9ca3af"/>
+  <circle cx="150" cy="115" r="25" fill="none" stroke="#9ca3af" stroke-width="2"/>
+  <!-- Heads Label -->
+  <text x="150" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#0f172a" font-weight="bold">Heads</text>
+
+  <!-- Tails Coin (Right) - Unselected -->
+  <!-- Coin body -->
+  <circle cx="350" cy="120" r="50" fill="#d1d5db" stroke="#e2e8f0" stroke-width="2"/>
+  <!-- Tails design (stylized number '1') -->
+  <text x="350" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="#9ca3af">1</text>
+  <!-- Tails Label -->
+  <text x="350" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#0f172a" font-weight="bold">Tails</text>
+
+  <!-- Curved arrow pointing to Heads coin -->
+  <path d="M 250 280 C 250 200 180 150 150 120"
+        fill="none" stroke="#007BFF" stroke-width="3"
+        marker-end="url(#arrowhead)"/>
+</svg>

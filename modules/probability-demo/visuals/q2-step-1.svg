@@ -1,0 +1,57 @@
+<svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Gradient: light blue to white -->
+    <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e0f7fa" /> <!-- Light blue -->
+      <stop offset="100%" style="stop-color:#ffffff" /> <!-- White -->
+    </linearGradient>
+
+    <!-- Coin Glow Filter: faint light yellow glow around the Heads side -->
+    <filter id="coinGlow">
+      <!-- Create a blurred alpha channel of the source graphic (the ellipse face) -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur"/>
+      <!-- Flood the blurred alpha with the glow color (light yellow) -->
+      <feFlood flood-color="#ffffcc" flood-opacity="0.8" result="flood"/>
+      <!-- Composite the flood color with the blurred alpha to create the glow shape -->
+      <feComposite in="flood" in2="blur" operator="in" result="glow"/>
+      <!-- Merge the glow under the original graphic to create a halo effect -->
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background Rectangle -->
+  <rect x="0" y="0" width="100%" height="100%" fill="url(#backgroundGradient)" />
+
+  <!-- Coin Illustration -->
+  <!-- Coin's thickness/edge, slightly tilted to show it's in mid-air and has depth -->
+  <path d="M 120 150 A 50 20 0 1 0 220 150 L 220 190 A 50 20 0 1 1 120 190 Z" 
+        fill="#a0a0a0" stroke="#808080" stroke-width="1"/>
+  
+  <!-- Top (Heads) face of the coin - an ellipse, clearly visible and glowing -->
+  <ellipse cx="170" cy="150" rx="50" ry="20" 
+           fill="#cccccc" stroke="#a0a0a0" stroke-width="1" filter="url(#coinGlow)"/>
+  
+  <!-- 'H' for Heads on the visible coin face -->
+  <text x="170" y="160" 
+        font-family="Arial, sans-serif" font-size="40" font-weight="bold" 
+        text-anchor="middle" fill="#0f172a">H</text>
+
+  <!-- Fraction: 1/2 -->
+  <text x="350" y="150" 
+        font-family="Arial, sans-serif" font-size="60" font-weight="bold" 
+        text-anchor="middle" fill="#0f172a">1</text>
+  <line x1="320" y1="170" x2="380" y2="170" 
+        stroke="#0f172a" stroke-width="4"/>
+  <text x="350" y="225" 
+        font-family="Arial, sans-serif" font-size="60" font-weight="bold" 
+        text-anchor="middle" fill="#0f172a">2</text>
+
+  <!-- Probability Text: 50% probability -->
+  <text x="350" y="280" 
+        font-family="Arial, sans-serif" font-size="30" 
+        text-anchor="middle" fill="#0f172a">50% probability</text>
+
+</svg>

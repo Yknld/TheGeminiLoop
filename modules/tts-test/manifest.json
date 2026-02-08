@@ -1,0 +1,88 @@
+{
+  "id": "tts-test",
+  "questions": [
+    {
+      "id": 0,
+      "problem": {
+        "title": "Solving a One-Step Linear Equation",
+        "text": "Solve for $x$: $2x + 5 = 13$",
+        "image": null,
+        "visualization": "problem-viz-q1.svg"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "The equation $2x + 5 = 13$ can be thought of as a balanced scale, where the expression on the left side, $2x + 5$, has the same 'weight' as the number on the right side, $13$. Our goal is to find the value of $x$ that makes this true.",
+          "inputLabel": "To solve for $x$, our goal is to isolate $x$ on one side of the equation. What does 'isolate $x$' mean in simpler terms?",
+          "inputPlaceholder": "Type your answer here...",
+          "correctAnswer": "get x by itself|get x alone|find the value of x|make x stand alone|x equals a number|determine x|solve for x|find x",
+          "audioExplanation": "This visualization helps you understand that an equation is like a perfectly balanced scale. What you do to one side, you must do to the other to keep it balanced. The interactive module shows a balance scale where the left side has '2x + 5' and the right side has '13'. This helps you visualize the concept of equality and the goal of solving for $x$ by seeing it as finding what $x$ must be to keep the scale level.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Visualize a classic two-pan balance scale. On the left pan, represent the expression '2x + 5'. This should be shown as two distinct blocks, each labeled 'x', and five smaller unit blocks, each labeled '1'. On the right pan, represent the number '13' as thirteen individual unit blocks, each labeled '1'. The scale should be depicted as perfectly balanced. Below the scale, display the algebraic equation '$2x + 5 = 13$' clearly. There should be no interactive elements in this initial step, as its purpose is solely to establish the visual analogy of an equation as a balanced system, illustrating what the given problem conceptually looks like.",
+          "moduleImage": null,
+          "audio": "audio/q1-step-0.wav",
+          "component": "components/q1-step-0.html",
+          "visual": null
+        },
+        {
+          "id": 1,
+          "explanation": "To start isolating $x$, we need to remove the constant term, $+5$, from the left side of the equation. To maintain balance, whatever operation we perform on one side, we must also perform on the other side. Think about the balance scale: if you remove weight from one side, you must remove the same weight from the other side to keep it level.",
+          "inputLabel": "What mathematical operation should you perform to remove the $'+5'$ from the left side of the equation $2x + 5 = 13$?",
+          "inputPlaceholder": "e.g., 'subtract 5'",
+          "correctAnswer": "subtract 5|minus 5|subtracting 5|minus five|take away 5|subtract|add -5|-5|subtract five",
+          "audioExplanation": "This step shows you how to begin isolating $x$ by removing constants from the equation. You must keep the balance scale perfectly balanced at all times to maintain equality. The visualization displays the balance scale with '2x + 5' on the left and '13' on the right. Below it, you'll see the equation '$2x + 5 = 13$'. You can interactively 'remove' 5 units from both sides, helping you understand that to undo an addition, you subtract, and that this action must be applied equally to both sides to maintain equilibrium.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Start with the balance scale showing '2x + 5' (two 'x' blocks and five '1' blocks) on the left pan and '13' (thirteen '1' blocks) on the right pan, perfectly balanced, as established in the previous step. Display the equation '$2x + 5 = 13$' below. Introduce a clear, clickable 'Subtract 5' button. When this button is clicked, animate 5 '1' unit blocks disappearing from the left pan and, simultaneously, 5 '1' unit blocks disappearing from the right pan. The scale should visually dip slightly then re-balance to indicate the change. Update the equation displayed below the scale in two phases: first to '$2x + 5 - 5 = 13 - 5$', then immediately to the simplified form '$2x = 8$'. The primary purpose of this module is to visually demonstrate the concept of performing the same operation on both sides of an equation to maintain equality and begin isolating the variable.",
+          "moduleImage": null,
+          "audio": "audio/q1-step-1.wav",
+          "component": "components/q1-step-1.html",
+          "visual": null
+        },
+        {
+          "id": 2,
+          "explanation": "After subtracting $5$ from both sides of the equation, the left side simplifies from $2x + 5 - 5$ to just $2x$. The right side simplifies from $13 - 5$ to $8$. This leaves us with a simpler equation, $2x = 8$.",
+          "inputLabel": "What does the equation become after subtracting $5$ from both sides and simplifying?",
+          "inputPlaceholder": "e.g., '2x = 8'",
+          "correctAnswer": "2x = 8|2x=8|2x = 8|2x=8|2x=8|2x = 8",
+          "audioExplanation": "This visualization helps you immediately see the direct result of the subtraction operation you just performed on both sides. You can observe the balance scale with the reduced number of unit blocks on both sides, which visually confirms the simplified equation. The interactive module displays the balance scale with two 'x' blocks on the left and eight '1' blocks on the right. This visual representation solidifies your understanding of how an equation transforms while remaining balanced, leading directly to the next step of isolating $x$ further.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Continue from the previous step. The balance scale should now clearly show two 'x' blocks on the left pan and eight '1' unit blocks on the right pan, depicted as perfectly balanced. The equation displayed directly below the scale should be '$2x = 8$'. There are no new interactive elements for this specific step, as its purpose is to visually reinforce the simplified state of the equation and the balance after the subtraction operation, setting the stage for the final step of isolation.",
+          "moduleImage": null,
+          "audio": "audio/q1-step-2.wav",
+          "component": "components/q1-step-2.html",
+          "visual": null
+        },
+        {
+          "id": 3,
+          "explanation": "Now we have $2x = 8$. This means 'two times $x$ equals eight'. To find the value of a single $x$, we need to undo the multiplication by $2$. Remember, to maintain the balance of the equation, whatever operation you perform on one side, you must also perform on the other.",
+          "inputLabel": "What mathematical operation should you perform to isolate $x$ from $2x$?",
+          "inputPlaceholder": "e.g., 'divide by 2'",
+          "correctAnswer": "divide by 2|division by 2|divide 2|dividing by 2|divide both sides by 2|/2|divide 2 by x|divide by two",
+          "audioExplanation": "This step guides you in performing the final operation needed to solve for $x$. Just as before, any action taken on one side of the equation must be mirrored on the other to keep the equation balanced. The visualization shows the balance scale with '2x' on the left and '8' on the right. Below, you see '$2x = 8$'. You can interactively 'divide' the items on both sides by 2, which helps you understand that to undo multiplication, you must divide, and this operation, too, must be applied equally to both sides to maintain equality.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Continue from the previous state where the balance scale shows two 'x' blocks on the left pan and eight '1' unit blocks on the right pan, with the equation '$2x = 8$' below. Introduce a clear, clickable 'Divide by 2' button. When this button is clicked, animate the '2x' on the left pan visually separating into two individual 'x' blocks. Simultaneously, animate the '8' on the right pan splitting into two equal groups of four '1' unit blocks each. Then, visually remove one 'x' block and one corresponding group of four '1' unit blocks from the scale (representing taking half of each side). Show the scale momentarily dip then re-balance. Update the equation displayed below the scale in two phases: first to '$2x/2 = 8/2$', then immediately to the final simplified form '$x = 4$'. The purpose is to vividly visualize division as splitting a quantity into equal parts and maintaining the equation's balance.",
+          "moduleImage": null,
+          "audio": "audio/q1-step-3.wav",
+          "component": "components/q1-step-3.html",
+          "visual": null
+        },
+        {
+          "id": 4,
+          "explanation": "After dividing both sides by $2$, the left side becomes $x$ (since $2x \\div 2 = x$), and the right side becomes $4$ (since $8 \\div 2 = 4$). We have now successfully isolated $x$ on one side of the equation, meaning we have found its value.",
+          "inputLabel": "What is the final value of $x$?",
+          "inputPlaceholder": "e.g., '4'",
+          "correctAnswer": "4|x=4|x = 4|=4|four",
+          "audioExplanation": "This final visualization confirms the solution you've found by showing the scale perfectly balanced with the value of $x$ clearly identified. You can now clearly see one 'x' block balanced by four '1' unit blocks. The interactive module displays the balance scale in its final state, with a single 'x' block on the left pan and four '1' unit blocks on the right pan, perfectly balanced. This definitive visual shows you the specific number that $x$ represents, solidifying your understanding of the solution to the equation.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Continue from the previous step. The balance scale should now clearly show a single 'x' block on the left pan and four '1' unit blocks on the right pan, depicted as perfectly balanced. The final equation '$x = 4$' should be prominently displayed directly below the scale. This ultimate state of the module visually represents the solution to the equation, with no further interactions needed. The module clearly and simply demonstrates that one 'x' block is equivalent to four '1' unit blocks, confirming the final answer.",
+          "moduleImage": null,
+          "audio": "audio/q1-step-4.wav",
+          "component": "components/q1-step-4.html",
+          "visual": null
+        }
+      ]
+    }
+  ],
+  "generated": "2026-02-05T23:24:58.316944",
+  "version": "2.0"
+}

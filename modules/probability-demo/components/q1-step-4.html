@@ -1,0 +1,261 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            max-height: 480px; /* Ensures a compact height for the module */
+        }
+
+        .coin-visualization {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px; /* Space between coin and controls */
+            min-height: 150px; /* Ensures coin always has space */
+        }
+
+        .coin {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .coin-face {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #FFD700, #DAA520); /* Gold color */
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: inset 0 0 12px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.1);
+            border: 2px solid #CCA400;
+        }
+
+        .center-of-mass {
+            width: 18px;
+            height: 18px;
+            background-color: rgba(0,0,0,0.6); /* Dark dot representing mass */
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Initial center position */
+            transition: transform 0.1s ease-out; /* Smooth transition for visual shift */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .coin .label {
+            position: absolute;
+            font-weight: bold;
+            font-size: 1.4em;
+            color: rgba(0,0,0,0.3); /* Subtle labels for Heads/Tails */
+            user-select: none;
+            pointer-events: none;
+            z-index: 1; /* Ensure label is above the center of mass dot */
+        }
+        .coin .label.left { left: 18px; } /* Position 'H' label */
+        .coin .label.right { right: 18px; } /* Position 'T' label */
+
+        .controls-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px; /* Spacing between control groups */
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .slider-group {
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb; /* Primary button/slider color */
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border: 2px solid #fff;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border: 2px solid #fff;
+        }
+
+        .probability-display {
+            display: flex;
+            justify-content: space-around;
+            width: 90%;
+            max-width: 400px;
+            font-size: 0.95em;
+            color: #555;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .probability-display p {
+            margin: 0;
+            padding: 0;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+        .probability-display span {
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        #flipButton {
+            background-color: #2563eb;
+            color: white;
+            padding: 10px 22px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
+
+        #flipButton:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        #flipButton:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .experimental-result {
+            font-size: 0.9em;
+            color: #16a34a; /* Secondary success color */
+            font-weight: 600;
+            margin-top: 5px;
+            margin-bottom: 0;
+        }
+        .experimental-result span {
+            color: #16a34a;
+        }
+    </style>
+    <div class="coin-visualization">
+        <div class="coin">
+            <div class="coin-face">
+                <span class="label left">H</span>
+                <div class="center-of-mass" id="centerOfMass"></div>
+                <span class="label right">T</span>
+            </div>
+        </div>
+    </div>
+    <div class="controls-panel">
+        <div class="slider-group">
+            <label for="biasSlider" class="slider-label">Coin Bias: <span id="biasValueDisplay">0.00</span></label>
+            <input type="range" id="biasSlider" min="-1" max="1" step="0.01" value="0">
+        </div>
+        <div class="probability-display">
+            <p>Probability of Heads: <span id="probHeads">0.50</span></p>
+            <p>Probability of Tails: <span id="probTails">0.50</span></p>
+        </div>
+        <button id="flipButton">Flip 100 Times</button>
+        <p class="experimental-result">Experimental P(Heads) (100 flips): <span id="experimentalPHeads">--</span></p>
+    </div>
+    <script>
+        (function() {
+            const biasSlider = document.getElementById('biasSlider');
+            const biasValueDisplay = document.getElementById('biasValueDisplay');
+            const probHeadsSpan = document.getElementById('probHeads');
+            const probTailsSpan = document.getElementById('probTails');
+            const centerOfMass = document.getElementById('centerOfMass');
+            const flipButton = document.getElementById('flipButton');
+            const experimentalPHeadsSpan = document.getElementById('experimentalPHeads');
+
+            const updateVisualization = () => {
+                const bias = parseFloat(biasSlider.value);
+                biasValueDisplay.textContent = bias.toFixed(2);
+
+                // Calculate theoretical probabilities based on bias
+                // Bias -1 means 100% Heads, 0 means 50/50, 1 means 100% Tails
+                const pHeads = (1 - bias) / 2;
+                const pTails = (1 + bias) / 2;
+                
+                probHeadsSpan.textContent = pHeads.toFixed(2);
+                probTailsSpan.textContent = pTails.toFixed(2);
+
+                // Visually shift the center of mass dot
+                // Map bias from -1 to 1 to a pixel shift (e.g., -30px to 30px from center)
+                const maxShiftPx = 30; 
+                const shiftPx = bias * maxShiftPx;
+                centerOfMass.style.transform = `translate(calc(-50% + ${shiftPx}px), -50%)`;
+            };
+
+            const simulateFlips = () => {
+                const bias = parseFloat(biasSlider.value);
+                const pHeads = (1 - bias) / 2; // Probability of heads for the current bias
+                let headsCount = 0;
+                const numFlips = 100;
+
+                for (let i = 0; i < numFlips; i++) {
+                    if (Math.random() < pHeads) {
+                        headsCount++;
+                    }
+                }
+
+                const experimentalPHeads = headsCount / numFlips;
+                experimentalPHeadsSpan.textContent = experimentalPHeads.toFixed(2);
+            };
+
+            // Attach event listeners for real-time interaction
+            biasSlider.oninput = updateVisualization;
+            flipButton.onclick = simulateFlips;
+
+            // Initialize the visualization when the script loads
+            updateVisualization();
+        })();
+    </script>
+</div>

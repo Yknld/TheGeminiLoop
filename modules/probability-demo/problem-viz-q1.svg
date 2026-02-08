@@ -1,0 +1,54 @@
+<svg viewBox="0 0 580 380">
+  <rect x="0" y="0" width="580" height="380" fill="#f8fafc"/>
+
+  <!-- Global styles for text elements -->
+  <style>
+    .label {
+      font-family: 'Inter', sans-serif; /* Common web font, with generic fallback */
+      font-size: 24px;
+      fill: #0f172a;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+    .outcome-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 28px;
+      font-weight: bold;
+      fill: #0f172a;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+  </style>
+
+  <!-- Definition for arrowhead marker -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb" />
+    </marker>
+  </defs>
+
+  <!-- Sample Space Label -->
+  <text x="290" y="70" class="label">Sample Space</text>
+  
+  <!-- Conceptual container for Sample Space -->
+  <rect x="110" y="100" width="360" height="200" rx="15" ry="15" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+
+  <!-- Outcome 1: Heads (Favorable Outcome) -->
+  <g>
+    <!-- Light blue fill for the favorable outcome, with primary blue border -->
+    <circle cx="200" cy="200" r="70" fill="#e0edfc" stroke="#2563eb" stroke-width="2"/>
+    <text x="200" y="200" class="outcome-text">Heads</text>
+  </g>
+
+  <!-- Outcome 2: Tails -->
+  <g>
+    <!-- Background color fill, with border color border -->
+    <circle cx="380" cy="200" r="70" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+    <text x="380" y="200" class="outcome-text">Tails</text>
+  </g>
+
+  <!-- "Favorable Outcome" label and arrow pointing to "Heads" -->
+  <text x="200" y="330" class="label" fill="#2563eb">Favorable Outcome</text>
+  <line x1="200" y1="310" x2="200" y2="275" stroke="#2563eb" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+</svg>

@@ -1,0 +1,292 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Arial', sans-serif;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            max-width: 100%;
+            box-sizing: border-box;
+            gap: 15px; /* Spacing between chart and controls */
+            height: 400px; /* Keep height reasonable for compactness */
+        }
+
+        .chart-area {
+            flex-grow: 1; /* Allow chart to take available space */
+            background-color: #f5f5f5; /* Light grey background */
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden; /* For responsiveness */
+        }
+
+        #pmfSvg {
+            display: block; /* Remove extra space below SVG */
+            background-color: #f5f5f5; /* Ensure SVG background is light grey */
+        }
+
+        .controls-area {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 5px 0 0; /* Tight spacing, controls at bottom */
+        }
+
+        .controls-area label {
+            font-size: 0.95em;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4285F4; /* Vibrant blue */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4285F4;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* SVG axis labels */
+        .axis-label {
+            font-size: 14px;
+            fill: #333;
+            font-weight: 600;
+        }
+    </style>
+
+    <div id="binomialChart" class="chart-area">
+        <svg id="pmfSvg" width="100%" height="100%" viewBox="0 0 600 300" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <div class="controls-area">
+        <label for="numFlipsSlider">Number of Flips (N): <span id="numFlipsValue">10</span></label>
+        <input type="range" id="numFlipsSlider" min="1" max="100" value="10" step="1">
+    </div>
+
+    <script>
+        (function() {
+            const numFlipsSlider = document.getElementById('numFlipsSlider');
+            const numFlipsValue = document.getElementById('numFlipsValue');
+            const pmfSvg = document.getElementById('pmfSvg');
+
+            const P_HEADS = 0.5; // Fixed probability of heads
+
+            // SVG dimensions and margins
+            const SVG_WIDTH = 600;
+            const SVG_HEIGHT = 300;
+            const MARGIN = { top: 20, right: 20, bottom: 40, left: 50 };
+            const CHART_WIDTH = SVG_WIDTH - MARGIN.left - MARGIN.right;
+            const CHART_HEIGHT = SVG_HEIGHT - MARGIN.top - MARGIN.bottom;
+
+            pmfSvg.setAttribute('viewBox', `0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`);
+
+            // Binomial PMF calculation
+            function combinations(n, k) {
+                if (k < 0 || k > n) {
+                    return 0;
+                }
+                if (k === 0 || k === n) {
+                    return 1;
+                }
+                if (k > n / 2) {
+                    k = n - k;
+                }
+                let res = 1;
+                for (let i = 1; i <= k; i++) {
+                    res = res * (n - i + 1) / i;
+                }
+                return res;
+            }
+
+            function calculatePMF(k, n, p) {
+                const C_nk = combinations(n, k);
+                return C_nk * Math.pow(p, k) * Math.pow(1 - p, n - k);
+            }
+
+            function updateChart() {
+                const N = parseInt(numFlipsSlider.value);
+                numFlipsValue.textContent = N;
+
+                pmfSvg.innerHTML = ''; // Clear previous elements
+
+                const probabilities = [];
+                let maxProb = 0;
+                for (let k = 0; k <= N; k++) {
+                    const prob = calculatePMF(k, N, P_HEADS);
+                    probabilities.push({ k, prob });
+                    if (prob > maxProb) {
+                        maxProb = prob;
+                    }
+                }
+
+                // Add some padding to maxProb for y-axis
+                maxProb *= 1.1;
+                if (maxProb === 0) maxProb = 1; // Prevent division by zero if N=0 or other issues
+
+                // Create group for chart elements, offset by margin
+                const chartGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                chartGroup.setAttribute('transform', `translate(${MARGIN.left}, ${MARGIN.top})`);
+                pmfSvg.appendChild(chartGroup);
+
+                // Draw Bars
+                const slotWidth = CHART_WIDTH / (N + 1);
+                const barWidth = slotWidth * 0.8;
+                const barPadding = slotWidth * 0.1;
+
+                for (const data of probabilities) {
+                    const barHeight = (data.prob / maxProb) * CHART_HEIGHT;
+                    const x = data.k * slotWidth + barPadding;
+                    const y = CHART_HEIGHT - barHeight;
+
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x);
+                    rect.setAttribute('y', y);
+                    rect.setAttribute('width', barWidth);
+                    rect.setAttribute('height', barHeight);
+                    rect.setAttribute('fill', '#4285F4'); // Vibrant blue
+                    chartGroup.appendChild(rect);
+                }
+
+                // Draw Axes
+                // X-axis line
+                const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                xAxis.setAttribute('x1', 0);
+                xAxis.setAttribute('y1', CHART_HEIGHT);
+                xAxis.setAttribute('x2', CHART_WIDTH);
+                xAxis.setAttribute('y2', CHART_HEIGHT);
+                xAxis.setAttribute('stroke', '#333');
+                xAxis.setAttribute('stroke-width', 1);
+                chartGroup.appendChild(xAxis);
+
+                // Y-axis line
+                const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                yAxis.setAttribute('x1', 0);
+                yAxis.setAttribute('y1', 0);
+                yAxis.setAttribute('x2', 0);
+                yAxis.setAttribute('y2', CHART_HEIGHT);
+                yAxis.setAttribute('stroke', '#333');
+                yAxis.setAttribute('stroke-width', 1);
+                chartGroup.appendChild(yAxis);
+
+                // X-axis label
+                const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                xLabel.setAttribute('x', CHART_WIDTH / 2);
+                xLabel.setAttribute('y', CHART_HEIGHT + MARGIN.bottom - 5);
+                xLabel.setAttribute('text-anchor', 'middle');
+                xLabel.classList.add('axis-label');
+                xLabel.textContent = 'Number of Heads (k)';
+                chartGroup.appendChild(xLabel);
+
+                // Y-axis label
+                const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                yLabel.setAttribute('x', -CHART_HEIGHT / 2);
+                yLabel.setAttribute('y', -MARGIN.left + 15);
+                yLabel.setAttribute('text-anchor', 'middle');
+                yLabel.setAttribute('transform', 'rotate(-90)');
+                yLabel.classList.add('axis-label');
+                yLabel.textContent = 'Probability P(X=k)';
+                chartGroup.appendChild(yLabel);
+
+                // X-axis ticks (some k values)
+                let tickInterval = 1;
+                if (N > 20) tickInterval = 5;
+                if (N > 50) tickInterval = 10;
+
+                for (let k = 0; k <= N; k++) {
+                    if (k % tickInterval === 0 || k === 0 || k === N) {
+                        const xTickPos = k * slotWidth + slotWidth / 2; // Center tick in slot
+                        // Tick line
+                        const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        tickLine.setAttribute('x1', xTickPos);
+                        tickLine.setAttribute('y1', CHART_HEIGHT);
+                        tickLine.setAttribute('x2', xTickPos);
+                        tickLine.setAttribute('y2', CHART_HEIGHT + 5);
+                        tickLine.setAttribute('stroke', '#333');
+                        chartGroup.appendChild(tickLine);
+
+                        // Tick label
+                        const tickText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        tickText.setAttribute('x', xTickPos);
+                        tickText.setAttribute('y', CHART_HEIGHT + 20);
+                        tickText.setAttribute('text-anchor', 'middle');
+                        tickText.setAttribute('font-size', '10px');
+                        tickText.textContent = k;
+                        chartGroup.appendChild(tickText);
+                    }
+                }
+                
+                // Y-axis ticks (max prob)
+                const numYTicks = 4;
+                for (let i = 0; i <= numYTicks; i++) {
+                    const probTick = (i / numYTicks) * maxProb;
+                    const yTickPos = CHART_HEIGHT - (probTick / maxProb) * CHART_HEIGHT;
+
+                    // Tick line
+                    const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    tickLine.setAttribute('x1', 0);
+                    tickLine.setAttribute('y1', yTickPos);
+                    tickLine.setAttribute('x2', -5);
+                    tickLine.setAttribute('y2', yTickPos);
+                    tickLine.setAttribute('stroke', '#333');
+                    chartGroup.appendChild(tickLine);
+
+                    // Tick label
+                    const tickText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    tickText.setAttribute('x', -10);
+                    tickText.setAttribute('y', yTickPos + 4);
+                    tickText.setAttribute('text-anchor', 'end');
+                    tickText.setAttribute('font-size', '10px');
+                    tickText.textContent = probTick.toFixed(3);
+                    chartGroup.appendChild(tickText);
+                }
+
+                // Highlight the mean (N*p = N/2)
+                const mean_k = N * P_HEADS;
+                const meanLineX = (mean_k * slotWidth) + slotWidth / 2;
+                
+                const meanLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                meanLine.setAttribute('x1', meanLineX);
+                meanLine.setAttribute('y1', 0);
+                meanLine.setAttribute('x2', meanLineX);
+                meanLine.setAttribute('y2', CHART_HEIGHT);
+                meanLine.setAttribute('stroke', '#EA4335'); // Red
+                meanLine.setAttribute('stroke-width', 2);
+                meanLine.setAttribute('stroke-dasharray', '5,5'); // Dashed line
+                chartGroup.appendChild(meanLine);
+            }
+
+            // Initial draw
+            updateChart();
+
+            // Event listener
+            numFlipsSlider.addEventListener('input', updateChart);
+        })();
+    </script>
+</div>

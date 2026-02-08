@@ -1,0 +1,60 @@
+{
+  "id": "gemini3-test",
+  "questions": [
+    {
+      "id": 0,
+      "problem": {
+        "title": "Theoretical Probability of a Coin Flip",
+        "text": "What is the theoretical probability of landing on heads when flipping a fair coin? Explain using sample space.",
+        "image": null,
+        "visualization": "problem-viz-q1.png"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "To find the probability, we first need to define the **sample space**. The sample space ($S$) is the set of all possible outcomes of an experiment. When you flip a coin, what are all the possible results you could get?",
+          "inputLabel": "List the outcomes in the sample space using 'H' for Heads and 'T' for Tails.",
+          "inputPlaceholder": "e.g., H, T",
+          "correctAnswer": "H, T|H,T|{H, T}|{H,T}|Heads, Tails|heads, tails|H and T|T, H|T,H|H and T|H or T",
+          "audioExplanation": "By looking at both sides of the coin, you can identify every possible result that could happen during a flip. Seeing the distinct sides helps you realize that there are no other options besides these two. This visualization shows a 3D coin that you can rotate to see both the 'Heads' and 'Tails' faces, representing the complete set of possibilities known as the sample space.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Create a 3D-style coin model that the user can drag to rotate 360 degrees. One side should be clearly labeled 'Heads' (with a profile icon) and the other side 'Tails' (with a different icon). As the user rotates the coin, the labels 'Heads' and 'Tails' should light up in a list titled 'Sample Space' whenever that side is visible. This helps the user visualize that the sample space is limited to these two specific outcomes.",
+          "moduleImage": null,
+          "audio": "audio/q1-step-0.wav",
+          "component": "components/q1-step-0.html",
+          "visual": null
+        },
+        {
+          "id": 1,
+          "explanation": "Next, we identify the **favorable outcomes**. These are the specific outcomes from the sample space that we are interested in. In this problem, we want to know the probability of landing on 'Heads'.",
+          "inputLabel": "How many outcomes in the sample space $\\{H, T\\}$ are 'Heads'?",
+          "inputPlaceholder": "Enter a number",
+          "correctAnswer": "1|=1|one|1 outcome",
+          "audioExplanation": "Now you are narrowing your focus to just the outcome you want to measure. By highlighting only the 'Heads' side within the group, you can clearly see it represents exactly one part of the total set. This diagram shows the two outcomes side-by-side, but uses a bright border and a label to isolate 'Heads' as the single favorable event.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A diagram showing two distinct circular icons side-by-side. The left icon is labeled 'H' (Heads) and is enclosed in a bright, glowing gold circle (#ffd700). The right icon is labeled 'T' (Tails) and is rendered in a faded, semi-transparent grey. A large arrow points specifically to the 'H' icon with the label 'Favorable Outcome' written in a bold, dark font. No other text or answers are present.",
+          "audio": "audio/q1-step-1.wav",
+          "component": null,
+          "visual": "visuals/q1-step-1.png"
+        },
+        {
+          "id": 2,
+          "explanation": "The **theoretical probability** of an event $E$ is calculated using the formula:\n\n$$P(E) = \\frac{\\text{Number of Favorable Outcomes}}{\\text{Total Number of Outcomes in Sample Space}}$$\n\nUsing the values we found, substitute them into the fraction.",
+          "inputLabel": "What is the probability of landing on heads? (Enter as a fraction or decimal)",
+          "inputPlaceholder": "e.g., 1/2",
+          "correctAnswer": "1/2|0.5|50%|0.50|1 / 2|1:2|=1/2|=0.5",
+          "audioExplanation": "This interactive tool helps you see probability as a ratio of the part to the whole. By dragging the 'favorable' outcome into the top of the fraction and the entire 'sample space' into the bottom, you create a visual representation of the likelihood. The visualization features a fraction bar where you can see the number of heads (1) being compared to the total number of sides (2) to calculate the final value.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Create a 'Probability Fraction Builder'. On the left, show a 'Favorable Outcome' box containing 1 'Heads' icon. Below it, show a 'Total Outcomes' box containing both 1 'Heads' and 1 'Tails' icon. In the center, show a large empty fraction. The user should be able to drag the icon from the 'Favorable' box to the numerator and the icons from the 'Total' box to the denominator. As they do, the numbers 1 and 2 should appear in the fraction, and a 'Result' display should update to show '0.5' and '50%'. This visualizes how the ratio is constructed from the physical outcomes.",
+          "moduleImage": null,
+          "audio": "audio/q1-step-2.wav",
+          "component": "components/q1-step-2.html",
+          "visual": null
+        }
+      ]
+    }
+  ],
+  "generated": "2026-02-08T03:34:52.876862",
+  "version": "2.0"
+}

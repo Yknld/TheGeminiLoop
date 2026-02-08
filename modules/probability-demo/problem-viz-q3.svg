@@ -1,0 +1,97 @@
+<svg viewBox="0 0 750 400" xmlns="http://www.w3.org/2000/svg">
+  <desc>
+    Diagram visualizing the Central Limit Theorem. It shows how the binomial distribution of coin flip outcomes (number of heads) approaches a Normal Distribution (bell curve) as the number of flips (n) increases. Four charts illustrate this progression: n=2, n=5, n=15, and finally, a smooth normal curve representing n approaching infinity.
+  </desc>
+  <rect x="0" y="0" width="750" height="400" fill="#f8fafc" />
+
+  <text x="10" y="180" class="global-y-label" transform="rotate(-90 10 180)">Probability</text>
+
+  <!-- Shared text styles (muted palette, no saturated accents) -->
+  <style>
+    .chart-title { font-family: system-ui, sans-serif; font-size: 15px; font-weight: 600; fill: #334155; text-anchor: middle; }
+    .axis-label { font-family: system-ui, sans-serif; font-size: 11px; fill: #475569; text-anchor: middle; }
+    .axis-tick-label { font-family: system-ui, sans-serif; font-size: 10px; fill: #64748b; text-anchor: middle; }
+    .axis-line { stroke: #cbd5e1; stroke-width: 1; }
+    .bar { fill: #64748b; }
+    .normal-curve { fill: none; stroke: #64748b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .global-y-label { font-family: system-ui, sans-serif; font-size: 13px; fill: #475569; text-anchor: middle; }
+  </style>
+
+  <!-- Chart 1: n=2 -->
+  <g transform="translate(60, 60)">
+    <text x="70" y="0" class="chart-title">n=2</text>
+    <line x1="10" y1="220" x2="130" y2="220" class="axis-line" />
+    <line x1="10" y1="20" x2="10" y2="220" class="axis-line" />
+    <text x="70" y="238" class="axis-label">Heads</text>
+
+    <!-- Bars for n=2. Rounded tops for cleaner look. -->
+    <rect x="10" y="130" width="38" height="90" class="bar" rx="3" ry="0"/> <!-- k=0 -->
+    <rect x="50" y="40" width="38" height="180" class="bar" rx="3" ry="0"/> <!-- k=1 -->
+    <rect x="90" y="130" width="38" height="90" class="bar" rx="3" ry="0"/> <!-- k=2 -->
+
+    <text x="30" y="230" class="axis-tick-label" text-anchor="middle">0</text>
+    <text x="70" y="230" class="axis-tick-label" text-anchor="middle">1</text>
+    <text x="110" y="230" class="axis-tick-label" text-anchor="middle">2</text>
+  </g>
+
+  <!-- Chart 2: n=5 -->
+  <g transform="translate(235, 60)">
+    <text x="70" y="0" class="chart-title">n=5</text>
+    <line x1="10" y1="220" x2="130" y2="220" class="axis-line" />
+    <line x1="10" y1="20" x2="10" y2="220" class="axis-line" />
+    <text x="70" y="238" class="axis-label">Heads</text>
+
+    <!-- n=5 bars with slight rounding -->
+    <rect x="10" y="202" width="18" height="18" class="bar" rx="2"/> <!-- k=0 -->
+    <rect x="30" y="130" width="18" height="90" class="bar" rx="2"/> <!-- k=1 -->
+    <rect x="50" y="40" width="18" height="180" class="bar" rx="2"/> <!-- k=2 -->
+    <rect x="70" y="40" width="18" height="180" class="bar" rx="2"/> <!-- k=3 -->
+    <rect x="90" y="130" width="18" height="90" class="bar" rx="2"/> <!-- k=4 -->
+    <rect x="110" y="202" width="18" height="18" class="bar" rx="2"/> <!-- k=5 -->
+
+    <text x="20" y="230" class="axis-tick-label" text-anchor="middle">0</text>
+    <text x="70" y="230" class="axis-tick-label" text-anchor="middle">2.5</text>
+    <text x="120" y="230" class="axis-tick-label" text-anchor="middle">5</text>
+  </g>
+
+  <!-- Chart 3: n=15 -->
+  <g transform="translate(410, 60)">
+    <text x="70" y="0" class="chart-title">n=15</text>
+    <line x1="10" y1="220" x2="130" y2="220" class="axis-line" />
+    <line x1="10" y1="20" x2="10" y2="220" class="axis-line" />
+    <text x="70" y="238" class="axis-label">Heads</text>
+    <!-- For n=15, 16 bars. Bar width 7.5. Max height 180 (for k=7,8) -->
+    <!-- Scaled heights (relative to C(15,7)=6435) for visualization, min height 2 for visibility -->
+    <rect x="10.0" y="218" width="7.5" height="2" class="bar" /> <!-- k=0 (C(15,0)=1) -->
+    <rect x="17.5" y="218" width="7.5" height="2" class="bar" /> <!-- k=1 (C(15,1)=15) -->
+    <rect x="25.0" y="220-2.937" width="7.5" height="2.937" class="bar" /> <!-- k=2 (C(15,2)=105) -->
+    <rect x="32.5" y="220-12.72" width="7.5" height="12.72" class="bar" /> <!-- k=3 (C(15,3)=455) -->
+    <rect x="40.0" y="220-38.15" width="7.5" height="38.15" class="bar" /> <!-- k=4 (C(15,4)=1365) -->
+    <rect x="47.5" y="220-83.94" width="7.5" height="83.94" class="bar" /> <!-- k=5 (C(15,5)=3003) -->
+    <rect x="55.0" y="220-139.9" width="7.5" height="139.9" class="bar" /> <!-- k=6 (C(15,6)=5005) -->
+    <rect x="62.5" y="220-180" width="7.5" height="180" class="bar" /> <!-- k=7 (C(15,7)=6435) -->
+    <rect x="70.0" y="220-180" width="7.5" height="180" class="bar" /> <!-- k=8 (C(15,8)=6435) -->
+    <rect x="77.5" y="220-139.9" width="7.5" height="139.9" class="bar" /> <!-- k=9 (C(15,9)=5005) -->
+    <rect x="85.0" y="220-83.94" width="7.5" height="83.94" class="bar" /> <!-- k=10 (C(15,10)=3003) -->
+    <rect x="92.5" y="220-38.15" width="7.5" height="38.15" class="bar" /> <!-- k=11 (C(15,11)=1365) -->
+    <rect x="100.0" y="220-12.72" width="7.5" height="12.72" class="bar" /> <!-- k=12 (C(15,12)=455) -->
+    <rect x="107.5" y="220-2.937" width="7.5" height="2.937" class="bar" /> <!-- k=13 (C(15,13)=105) -->
+    <rect x="115.0" y="218" width="7.5" height="2" class="bar" /> <!-- k=14 (C(15,14)=15) -->
+    <rect x="122.5" y="218" width="7.5" height="2" class="bar" /> <!-- k=15 (C(15,15)=1) -->
+
+    <text x="20" y="230" class="axis-tick-label" text-anchor="middle">0</text>
+    <text x="70" y="230" class="axis-tick-label" text-anchor="middle">7.5</text>
+    <text x="120" y="230" class="axis-tick-label" text-anchor="middle">15</text>
+  </g>
+
+  <!-- Chart 4: n → infinity (Normal Distribution) -->
+  <g transform="translate(585, 60)">
+    <text x="70" y="0" class="chart-title">n → ∞</text>
+    <line x1="10" y1="220" x2="130" y2="220" class="axis-line" />
+    <line x1="10" y1="20" x2="10" y2="220" class="axis-line" />
+    <text x="70" y="238" class="axis-label">Heads (X)</text>
+    <path d="M5 220 C25 100 45 40 70 40 C95 40 115 100 135 220" class="normal-curve" />
+    <text x="70" y="230" class="axis-tick-label" text-anchor="middle">μ</text>
+  </g>
+
+</svg>

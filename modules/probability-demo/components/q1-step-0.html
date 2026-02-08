@@ -1,0 +1,247 @@
+<div class="module-container" style="
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f8ff; /* Light blue background */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    color: #333;
+    min-height: 380px; /* Ensure compact but not too squished */
+">
+    <style>
+        .module-container .formula {
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #2563eb;
+        }
+
+        .module-container .sliders-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .module-container .slider-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .module-container .slider-wrapper label {
+            font-weight: 500;
+            color: #2563eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .module-container input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            background: #d1d5db;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        .module-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .module-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .module-container .outcomes-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            align-content: flex-start; /* Aligns items to the start of the cross axis */
+            border: 1px solid #c0d8f0;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #fff;
+            min-height: 100px; /* Provide visual space for outcomes */
+            flex-grow: 1; /* Allow it to take available space */
+        }
+
+        .module-container .outcome-item {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e0e0e0; /* Default (unfavorable) color */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: background-color 0.3s ease;
+        }
+
+        .module-container .outcome-item.favorable {
+            background-color: #16a34a; /* Favorable color */
+        }
+
+        .module-container .results {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background-color: #e9f5ff; /* Lighter blue for results */
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .module-container .result-item {
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2563eb;
+            min-width: 80px; /* Ensure even spacing */
+        }
+        .module-container .result-item span {
+             display: block;
+             font-size: 0.8em;
+             font-weight: normal;
+             color: #666;
+             margin-bottom: 5px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .module-container .results {
+                flex-direction: column;
+                align-items: center;
+            }
+            .module-container .result-item {
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+
+    <div class="formula">
+        P(Event) = Favorable Outcomes &divide; Total Outcomes
+    </div>
+
+    <div id="outcomesVisualization" class="outcomes-display">
+        <!-- Outcome circles will be rendered here -->
+    </div>
+
+    <div class="sliders-group">
+        <div class="slider-wrapper">
+            <label for="favorableOutcomesSlider">Number of Favorable Outcomes: <span id="favorableValue">0</span></label>
+            <input type="range" id="favorableOutcomesSlider" min="0" max="10" value="0">
+        </div>
+        <div class="slider-wrapper">
+            <label for="totalOutcomesSlider">Total Number of Possible Outcomes: <span id="totalValue">1</span></label>
+            <input type="range" id="totalOutcomesSlider" min="1" max="10" value="1">
+        </div>
+    </div>
+
+    <div class="results">
+        <div class="result-item">
+            <span>Fraction</span>
+            <span id="probabilityFraction">0/1</span>
+        </div>
+        <div class="result-item">
+            <span>Decimal</span>
+            <span id="probabilityDecimal">0.00</span>
+        </div>
+        <div class="result-item">
+            <span>Percentage</span>
+            <span id="probabilityPercentage">0%</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const favorableOutcomesSlider = document.getElementById('favorableOutcomesSlider');
+            const totalOutcomesSlider = document.getElementById('totalOutcomesSlider');
+            const favorableValueSpan = document.getElementById('favorableValue');
+            const totalValueSpan = document.getElementById('totalValue');
+            const outcomesVisualization = document.getElementById('outcomesVisualization');
+            const probabilityFractionSpan = document.getElementById('probabilityFraction');
+            const probabilityDecimalSpan = document.getElementById('probabilityDecimal');
+            const probabilityPercentageSpan = document.getElementById('probabilityPercentage');
+
+            // Function to calculate Greatest Common Divisor (GCD) for fraction simplification
+            function gcd(a, b) {
+                if (b === 0) return a;
+                return gcd(b, a % b);
+            }
+
+            function updateVisualization() {
+                let favorable = parseInt(favorableOutcomesSlider.value);
+                let total = parseInt(totalOutcomesSlider.value);
+
+                // Ensure total outcomes is always greater than or equal to favorable outcomes
+                if (favorable > total) {
+                    total = favorable;
+                    totalOutcomesSlider.value = total; // Update slider position to reflect change
+                }
+
+                favorableValueSpan.textContent = favorable;
+                totalValueSpan.textContent = total;
+
+                // --- Render Visual Outcomes (circles) ---
+                outcomesVisualization.innerHTML = ''; // Clear previous circles
+                for (let i = 0; i < total; i++) {
+                    const outcomeItem = document.createElement('div');
+                    outcomeItem.classList.add('outcome-item');
+                    if (i < favorable) {
+                        outcomeItem.classList.add('favorable'); // Mark as favorable
+                    }
+                    outcomesVisualization.appendChild(outcomeItem);
+                }
+
+                // --- Calculate and Display Probability ---
+                const probability = total === 0 ? 0 : favorable / total; // Avoid division by zero, though total starts at 1
+
+                // Simplified Fraction
+                if (favorable === 0) {
+                    probabilityFractionSpan.textContent = '0/1';
+                } else if (favorable === total) {
+                    probabilityFractionSpan.textContent = '1/1';
+                } else {
+                    const commonDivisor = gcd(favorable, total);
+                    probabilityFractionSpan.textContent = `${favorable / commonDivisor}/${total / commonDivisor}`;
+                }
+
+                // Decimal (to two places)
+                probabilityDecimalSpan.textContent = probability.toFixed(2);
+
+                // Percentage
+                probabilityPercentageSpan.textContent = `${(probability * 100).toFixed(0)}%`;
+            }
+
+            // Attach event listeners for real-time updates
+            favorableOutcomesSlider.addEventListener('input', updateVisualization);
+            totalOutcomesSlider.addEventListener('input', updateVisualization);
+
+            // Set initial values and trigger first visualization update
+            // As per example: Favorable is 1, Total is 2
+            favorableOutcomesSlider.value = 1;
+            totalOutcomesSlider.value = 2;
+            updateVisualization();
+        })();
+    </script>
+</div>

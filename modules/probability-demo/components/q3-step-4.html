@@ -1,0 +1,271 @@
+<div class="module-container" style="font-family: 'Arial', sans-serif; display: flex; flex-direction: column; gap: 15px; padding: 20px; border-radius: 12px; background-color: #f7f7f7; max-width: 100%; box-sizing: border-box; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <style>
+        .module-container label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .module-container input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+        .module-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .module-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .module-container .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .module-container .chart-labels {
+            font-size: 11px;
+            fill: #555;
+        }
+    </style>
+
+    <div style="position: relative; width: 100%; height: 350px; border-radius: 8px; overflow: hidden;">
+        <svg id="binomialNormalChart" viewBox="0 0 600 350" preserveAspectRatio="xMidYMid meet" style="background-color: #f0f0f0; width: 100%; height: 100%;">
+            <!-- Axis lines -->
+            <line class="axis-line" x1="50" y1="300" x2="550" y2="300" stroke="#888" stroke-width="1"></line>
+            <line class="axis-line" x1="50" y1="300" x2="50" y2="50" stroke="#888" stroke-width="1"></line>
+
+            <!-- Bars container -->
+            <g class="bars-group"></g>
+
+            <!-- Normal curve -->
+            <path class="normal-curve" fill="none" stroke="#34A853" stroke-width="2" stroke-linecap="round"></path>
+
+            <!-- X-axis ticks and labels -->
+            <g class="x-axis-ticks"></g>
+            <text class="x-axis-label" x="300" y="325" text-anchor="middle" fill="#333" font-size="13">Number of Heads (k)</text>
+
+            <!-- Y-axis ticks and labels -->
+            <g class="y-axis-ticks"></g>
+            <text class="y-axis-label" x="25" y="175" text-anchor="middle" transform="rotate(-90 25 175)" fill="#333" font-size="13">Probability / Probability Density</text>
+        </svg>
+    </div>
+
+    <div class="controls" style="display: flex; flex-direction: column; gap: 12px; padding: 0 10px;">
+        <div class="control-group">
+            <label for="numFlipsN">Number of Flips (N): <span id="numFlipsNValue">20</span></label>
+            <input type="range" id="numFlipsN" min="1" max="200" value="20" step="1">
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const svg = document.getElementById('binomialNormalChart');
+            const numFlipsNInput = document.getElementById('numFlipsN');
+            const numFlipsNValue = document.getElementById('numFlipsNValue');
+            const barsGroup = svg.querySelector('.bars-group');
+            const normalCurvePath = svg.querySelector('.normal-curve');
+            const xAxisTicksGroup = svg.querySelector('.x-axis-ticks');
+            const yAxisTicksGroup = svg.querySelector('.y-axis-ticks');
+
+            const p_fixed = 0.5; // Probability of Heads (p) is fixed at 0.5
+            const SVG_WIDTH = 600;
+            const SVG_HEIGHT = 350;
+            const MARGIN = { top: 50, right: 50, bottom: 50, left: 50 };
+            const CHART_WIDTH = SVG_WIDTH - MARGIN.left - MARGIN.right;
+            const CHART_HEIGHT = SVG_HEIGHT - MARGIN.top - MARGIN.bottom;
+
+            // Factorial function (optimized with cache)
+            const factorialCache = [1];
+            function factorial(n) {
+                if (n < 0) return NaN;
+                if (n < factorialCache.length) return factorialCache[n];
+                for (let i = factorialCache.length; i <= n; i++) {
+                    factorialCache[i] = factorialCache[i - 1] * i;
+                }
+                return factorialCache[n];
+            }
+
+            // Binomial Coefficient C(n, k)
+            function combinations(n, k) {
+                if (k < 0 || k > n) return 0;
+                if (k === 0 || k === n) return 1;
+                if (k > n / 2) k = n - k; // Optimization
+                
+                // Using log gamma function for larger numbers to avoid overflow
+                // This is generally more robust for larger N than direct factorial,
+                // but direct factorial is fine for N up to 200.
+                let res = 1;
+                for (let i = 1; i <= k; i++) {
+                    res = res * (n - i + 1) / i;
+                }
+                return res;
+            }
+
+            // Binomial PMF
+            function binomialPMF(k, n, p) {
+                return combinations(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+            }
+
+            // Normal PDF
+            function normalPDF(x, mu, sigma) {
+                if (sigma <= 1e-9) { // Handle cases where sigma is essentially zero
+                    // For very small sigma, the distribution approximates a Dirac delta.
+                    // Return a very high value at mu, and 0 elsewhere, scaled to prevent
+                    // infinite rendering issues but still show a sharp peak.
+                    const tolerance = 0.5; // Visual tolerance for "at mu"
+                    return Math.abs(x - mu) < tolerance ? 10 : 0; // A large, but finite value
+                }
+                const exponent = -Math.pow(x - mu, 2) / (2 * Math.pow(sigma, 2));
+                const coefficient = 1 / (sigma * Math.sqrt(2 * Math.PI));
+                return coefficient * Math.exp(exponent);
+            }
+
+            function updateChart() {
+                const N = parseInt(numFlipsNInput.value);
+                numFlipsNValue.textContent = N;
+
+                const mu = N * p_fixed;
+                const sigma = Math.sqrt(N * p_fixed * (1 - p_fixed));
+
+                // --- 1. Calculate Binomial PMF data ---
+                const binomialData = [];
+                let maxProb = 0;
+                for (let k = 0; k <= N; k++) {
+                    const prob = binomialPMF(k, N, p_fixed);
+                    binomialData.push({ k: k, prob: prob });
+                    if (prob > maxProb) maxProb = prob;
+                }
+
+                // --- 2. Calculate Normal PDF data ---
+                const normalData = [];
+                // Plot normal curve over a range slightly wider than [0, N] to capture tails
+                // Use a range of mu +/- 4*sigma, clamped to reasonable bounds.
+                const minX_normal = Math.max(-1, mu - 4 * sigma); // Allow slight negative to show curve shape if N is very small
+                const maxX_normal = Math.min(N + 1, mu + 4 * sigma);
+                const numNormalPoints = Math.max(200, N * 2); // Ensure enough points for smoothness
+
+                for (let i = 0; i <= numNormalPoints; i++) {
+                    const x = minX_normal + (maxX_normal - minX_normal) * (i / numNormalPoints);
+                    const density = normalPDF(x, mu, sigma);
+                    normalData.push({ x: x, density: density });
+                    if (density > maxProb) maxProb = density;
+                }
+                
+                // Add a little buffer to the max probability for better visualization
+                maxProb *= 1.1;
+
+                // --- 3. Setup Scales ---
+                // X scale maps k (0 to N) to SVG x coordinates
+                const xScale = (value) => MARGIN.left + (value / N) * CHART_WIDTH;
+                // Y scale maps probability (0 to maxProb) to SVG y coordinates (inverted)
+                const yScale = (value) => MARGIN.top + CHART_HEIGHT - (value / maxProb) * CHART_HEIGHT;
+                
+                // Bar width calculation for unit width in k-space
+                // Ensure bars are visible even for large N
+                const barWidth = Math.max(1, CHART_WIDTH / (N + 1)) * 0.9; // 90% of a unit width
+
+                // --- 4. Draw Binomial Bars ---
+                barsGroup.innerHTML = ''; // Clear previous bars
+                binomialData.forEach(d => {
+                    const barHeight = (d.prob / maxProb) * CHART_HEIGHT;
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', xScale(d.k) + (CHART_WIDTH / (N + 1) - barWidth) / 2); // Center bar
+                    rect.setAttribute('y', yScale(d.prob));
+                    rect.setAttribute('width', barWidth);
+                    rect.setAttribute('height', barHeight);
+                    rect.setAttribute('fill', '#4285F4'); // Blue
+                    barsGroup.appendChild(rect);
+                });
+
+                // --- 5. Draw Normal Curve ---
+                let pathD = normalData.map((d, i) => {
+                    const sx = xScale(d.x);
+                    const sy = yScale(d.density);
+                    return `${i === 0 ? 'M' : 'L'}${sx},${sy}`;
+                }).join(' ');
+                normalCurvePath.setAttribute('d', pathD);
+
+                // --- 6. Draw Axes and Ticks ---
+                xAxisTicksGroup.innerHTML = '';
+                yAxisTicksGroup.innerHTML = '';
+
+                // X-axis ticks
+                let xTickStep;
+                if (N <= 10) xTickStep = 1;
+                else if (N <= 25) xTickStep = 5;
+                else if (N <= 50) xTickStep = 10;
+                else xTickStep = 20;
+
+                for (let i = 0; i <= N; i += xTickStep) {
+                    const tx = xScale(i);
+                    // Tick line
+                    const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    tickLine.setAttribute('x1', tx);
+                    tickLine.setAttribute('y1', SVG_HEIGHT - MARGIN.bottom);
+                    tickLine.setAttribute('x2', tx);
+                    tickLine.setAttribute('y2', SVG_HEIGHT - MARGIN.bottom + 5);
+                    tickLine.setAttribute('stroke', '#888');
+                    xAxisTicksGroup.appendChild(tickLine);
+
+                    // Tick label
+                    const tickLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    tickLabel.setAttribute('x', tx);
+                    tickLabel.setAttribute('y', SVG_HEIGHT - MARGIN.bottom + 20);
+                    tickLabel.setAttribute('text-anchor', 'middle');
+                    tickLabel.setAttribute('fill', '#555');
+                    tickLabel.setAttribute('font-size', '11');
+                    tickLabel.textContent = i;
+                    xAxisTicksGroup.appendChild(tickLabel);
+                }
+
+                // Y-axis ticks
+                const yTickCount = 5; // Number of major Y-axis ticks
+                for (let i = 0; i <= yTickCount; i++) {
+                    const probValue = (i / yTickCount) * maxProb;
+                    const ty = yScale(probValue);
+                    // Tick line
+                    const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    tickLine.setAttribute('x1', MARGIN.left);
+                    tickLine.setAttribute('y1', ty);
+                    tickLine.setAttribute('x2', MARGIN.left - 5);
+                    tickLine.setAttribute('y2', ty);
+                    tickLine.setAttribute('stroke', '#888');
+                    yAxisTicksGroup.appendChild(tickLine);
+
+                    // Tick label
+                    const tickLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    tickLabel.setAttribute('x', MARGIN.left - 10);
+                    tickLabel.setAttribute('y', ty + 4);
+                    tickLabel.setAttribute('text-anchor', 'end');
+                    tickLabel.setAttribute('fill', '#555');
+                    tickLabel.setAttribute('font-size', '11');
+                    tickLabel.textContent = probValue.toFixed(probValue < 0.001 ? 4 : (probValue < 0.01 ? 3 : 2));
+                    yAxisTicksGroup.appendChild(tickLabel);
+                }
+            }
+
+            // Initial chart render
+            updateChart();
+
+            // Event Listener
+            numFlipsNInput.addEventListener('input', updateChart);
+        })();
+    </script>
+</div>

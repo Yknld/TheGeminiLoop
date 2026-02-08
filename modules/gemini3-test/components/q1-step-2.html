@@ -1,0 +1,241 @@
+<div class="module-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-width: 100%; border: 1px solid #e2e8f0; color: #1e293b; user-select: none;">
+    <style>
+        .builder-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 20px;
+            align-items: center;
+        }
+        .source-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .source-box {
+            background: #ffffff;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 80px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-content: flex-start;
+        }
+        .box-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .coin-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            touch-action: none;
+        }
+        .coin-icon:active { cursor: grabbing; transform: scale(1.05); }
+        .heads { background: #2563eb; color: white; border: 2px solid #1e40af; }
+        .tails { background: #f59e0b; color: white; border: 2px solid #b45309; }
+        
+        .fraction-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .fraction-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .drop-zone {
+            width: 120px;
+            min-height: 60px;
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .drop-zone.active-hover { border-color: #2563eb; background: #eff6ff; }
+        .fraction-bar {
+            width: 140px;
+            height: 4px;
+            background: #1e293b;
+            border-radius: 2px;
+        }
+        .val-indicator {
+            position: absolute;
+            right: -50px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #2563eb;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .val-indicator.show { opacity: 1; }
+
+        .result-panel {
+            margin-top: 15px;
+            text-align: center;
+            padding: 12px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s;
+        }
+        .result-panel.show { visibility: visible; transform: translateY(0); }
+        .result-text { font-weight: 700; color: #16a34a; font-size: 1.1rem; }
+
+        @media (max-width: 480px) {
+            .builder-layout { grid-template-columns: 1fr; }
+            .fraction-bar { width: 100px; }
+            .drop-zone { width: 100px; }
+        }
+    </style>
+
+    <div class="builder-layout">
+        <div class="source-col">
+            <div>
+                <div class="box-label">Favorable Outcomes</div>
+                <div class="source-box" id="fav-box" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="coin-icon heads" id="fav-h" draggable="true" ondragstart="drag(event)">H</div>
+                </div>
+            </div>
+            <div>
+                <div class="box-label">Total Outcomes</div>
+                <div class="source-box" id="total-box" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="coin-icon heads" id="tot-h" draggable="true" ondragstart="drag(event)">H</div>
+                    <div class="coin-icon tails" id="tot-t" draggable="true" ondragstart="drag(event)">T</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fraction-area">
+            <div class="fraction-display">
+                <div id="num-zone" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <span id="num-val" class="val-indicator">1</span>
+                </div>
+                <div class="fraction-bar"></div>
+                <div id="den-zone" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <span id="den-val" class="val-indicator">2</span>
+                </div>
+            </div>
+            
+            <div id="result-panel" class="result-panel">
+                <div class="result-text">
+                    Probability = 1 ÷ 2 = <span id="decimal-res">0.5</span> (<span id="percent-res">50</span>%)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const numZone = document.getElementById('num-zone');
+            const denZone = document.getElementById('den-zone');
+            const numVal = document.getElementById('num-val');
+            const denVal = document.getElementById('den-val');
+            const resultPanel = document.getElementById('result-panel');
+            const favBox = document.getElementById('fav-box');
+            const totBox = document.getElementById('total-box');
+
+            window.allowDrop = function(ev) {
+                ev.preventDefault();
+                ev.currentTarget.classList.add('active-hover');
+            };
+
+            // Remove hover effect when leaving drop area
+            document.querySelectorAll('.drop-zone, .source-box').forEach(el => {
+                el.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('active-hover'));
+            });
+
+            window.drag = function(ev) {
+                ev.dataTransfer.setData("text", ev.target.id);
+            };
+
+            window.drop = function(ev) {
+                ev.preventDefault();
+                ev.currentTarget.classList.remove('active-hover');
+                const data = ev.dataTransfer.getData("text");
+                const draggedEl = document.getElementById(data);
+                const target = ev.currentTarget;
+
+                // Validation Logic
+                if (target.id === 'num-zone') {
+                    if (data !== 'fav-h') return; // Only favorable heads in numerator
+                    if (target.children.length > 1) return; // Only 1 in numerator
+                }
+                
+                if (target.id === 'den-zone') {
+                    if (data !== 'tot-h' && data !== 'tot-t') return; // Only total icons in denominator
+                    if (target.children.length > 2) return; // Max 2 in denominator
+                }
+
+                target.appendChild(draggedEl);
+                updateState();
+            };
+
+            function updateState() {
+                const nIcons = numZone.querySelectorAll('.coin-icon').length;
+                const dIcons = denZone.querySelectorAll('.coin-icon').length;
+
+                // Show numbers if icons are present
+                if (nIcons === 1) numVal.classList.add('show');
+                else numVal.classList.remove('show');
+
+                if (dIcons === 2) denVal.classList.add('show');
+                else denVal.classList.remove('show');
+
+                // Final Result Check
+                if (nIcons === 1 && dIcons === 2) {
+                    resultPanel.classList.add('show');
+                } else {
+                    resultPanel.classList.remove('show');
+                }
+            }
+
+            // Mobile compatibility: Add click-to-move as a fallback/alternative
+            document.querySelectorAll('.coin-icon').forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const id = icon.id;
+                    const parent = icon.parentElement;
+
+                    if (parent.classList.contains('source-box')) {
+                        if (id === 'fav-h' && numZone.querySelectorAll('.coin-icon').length === 0) {
+                            numZone.appendChild(icon);
+                        } else if ((id === 'tot-h' || id === 'tot-t') && denZone.querySelectorAll('.coin-icon').length < 2) {
+                            denZone.appendChild(icon);
+                        }
+                    } else {
+                        // Return to source
+                        if (id === 'fav-h') favBox.appendChild(icon);
+                        else totBox.appendChild(icon);
+                    }
+                    updateState();
+                });
+            });
+        })();
+    </script>
+</div>

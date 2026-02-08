@@ -1,0 +1,164 @@
+<div class="module-container" style="font-family: 'Arial', sans-serif; padding: 15px; border-radius: 8px; background-color: #f0f4f8; max-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 12px; overflow: hidden;">
+    <style>
+        /* Base styles for the balance scale visualization */
+        .balance-scale {
+            position: relative;
+            width: 100%;
+            max-width: 450px; /* Limits the overall width of the scale for aesthetic reasons */
+            height: 220px; /* Compact height for the visualization */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; /* Aligns the base and pivot at the bottom */
+            margin-bottom: 5px;
+        }
+
+        /* Styling for the base of the scale */
+        .base {
+            width: 120px;
+            height: 20px;
+            background-color: #78716c; /* Dark grey */
+            border-radius: 0 0 10px 10px;
+            position: absolute;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        /* Styling for the central pivot supporting the beam */
+        .pivot {
+            width: 10px;
+            height: 90px; /* Height of the pivot stand */
+            background-color: #a8a29e; /* Medium grey */
+            position: absolute;
+            bottom: 20px; /* Rests on top of the base */
+            border-radius: 5px 5px 0 0;
+            z-index: 2;
+        }
+
+        /* Styling for the main beam of the balance scale */
+        .beam {
+            width: 80%; /* Width relative to its parent .balance-scale */
+            max-width: 320px; /* Maximum width for the beam */
+            height: 10px;
+            background-color: #78716c; /* Dark grey */
+            position: absolute;
+            top: 55px; /* Vertical position of the beam relative to .balance-scale */
+            left: 50%;
+            transform: translateX(-50%) rotate(0deg); /* Centers the beam and keeps it perfectly horizontal */
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Soft shadow for depth */
+            z-index: 3;
+        }
+
+        /* Pseudo-elements for the visual "strings" connecting the beam to the pans */
+        .beam::before, .beam::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 30px; /* Length of the string */
+            background-color: #a8a29e; /* Medium grey */
+            top: 10px; /* Starts just below the beam */
+            z-index: 2; /* Ensures strings are behind pans but in front of pivot */
+        }
+        .beam::before {
+            left: 15%; /* Position of the left string relative to the beam */
+            transform: translateX(-50%); /* Centers the string visually */
+        }
+        .beam::after {
+            right: 15%; /* Position of the right string relative to the beam */
+            transform: translateX(50%); /* Centers the string visually */
+        }
+
+        /* Styling for the pans where blocks are placed */
+        .pan {
+            position: absolute; /* Positioned relative to .balance-scale */
+            background-color: #d1d5db; /* Light grey */
+            border-radius: 8px;
+            padding: 4px; /* Padding inside the pan */
+            box-sizing: border-box;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); /* Inner shadow for depth */
+            display: flex;
+            flex-wrap: wrap; /* Allows blocks to wrap to next line if needed */
+            justify-content: center; /* Centers blocks horizontally */
+            align-items: flex-start; /* Aligns blocks to the top of the pan */
+            gap: 4px; /* Space between blocks */
+            width: 90px; /* Width of each pan */
+            min-height: 35px; /* Minimum height for pans */
+            top: 95px; /* Vertical position (beam top + beam height + string height) */
+            z-index: 4; /* Pans appear on top of strings */
+        }
+
+        /* Positioning for the left pan, centered under its anchor point */
+        .pan.left-pan {
+            left: calc(50% - 112px); /* Calculates the horizontal position relative to .balance-scale center */
+            transform: translateX(-50%); /* Centers the pan around the calculated left position */
+        }
+
+        /* Positioning for the right pan, centered under its anchor point */
+        .pan.right-pan {
+            left: calc(50% + 112px); /* Calculates the horizontal position relative to .balance-scale center */
+            transform: translateX(-50%); /* Centers the pan around the calculated right position */
+        }
+
+        /* Common styling for all blocks (x and unit blocks) */
+        .block {
+            width: 28px; /* Size of the square blocks */
+            height: 28px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* Soft shadow for blocks */
+            flex-shrink: 0; /* Prevents blocks from shrinking */
+            font-size: 0.8em; /* Slightly smaller text for numbers/variables */
+        }
+
+        /* Specific styling for 'x' blocks */
+        .x-block {
+            background-color: #2563eb; /* Blue */
+        }
+
+        /* Specific styling for '1' unit blocks */
+        .unit-block {
+            background-color: #16a34a; /* Green */
+        }
+
+        /* Styling for the equation displayed below the scale */
+        .equation-display {
+            margin-top: 10px;
+            font-size: 1.6em; /* Large font size for clarity */
+            font-weight: bold;
+            color: #333; /* Dark grey text */
+            text-align: center;
+        }
+    </style>
+
+    <div class="balance-scale">
+        <div class="base"></div>
+        <div class="pivot"></div>
+        <div class="beam"></div> <!-- The beam is an empty div, with anchors as pseudo-elements -->
+
+        <!-- Left pan containing two 'x' blocks -->
+        <div class="pan left-pan">
+            <div class="block x-block">x</div>
+            <div class="block x-block">x</div>
+        </div>
+
+        <!-- Right pan containing eight '1' unit blocks -->
+        <div class="pan right-pan">
+            <div class="block unit-block">1</div>
+            <div class="block unit-block">1</div>
+            <div class="block unit-block">1</div>
+            <div class="block unit-block">1</div>
+            <div class="block unit-block">1</div>
+            <div class="block unit-block">1</div>
+            <div class="block unit-block">1</div>
+            <div class="block unit-block">1</div>
+        </div>
+    </div>
+
+    <!-- Equation display below the balance scale -->
+    <div class="equation-display">2x = 8</div>
+</div>

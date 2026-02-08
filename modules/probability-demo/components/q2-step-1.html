@@ -1,0 +1,183 @@
+<div class="module-container" style="
+    font-family: Arial, sans-serif;
+    background-color: #f0f4f8; /* Light background */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    overflow: hidden; /* For animation containment */
+    min-height: 350px;
+">
+    <style>
+        .coin-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            min-height: 160px; /* Ensure space for coin and result */
+            justify-content: center;
+        }
+        .coin {
+            width: 80px;
+            height: 80px;
+            background-color: #ffda6a; /* Gold-like color */
+            border-radius: 50%;
+            border: 4px solid #ccaa44;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out; /* For initial state */
+        }
+        .coin.flipping {
+            animation: coinFlip 1.5s ease-in-out forwards;
+        }
+
+        .coin-result {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2563eb;
+            min-height: 1.5em; /* Reserve space */
+            text-align: center;
+        }
+
+        .stats-display {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            padding: 10px;
+            background-color: #e2e8f0;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            max-width: 300px; /* Constrain width for better readability */
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1em;
+            color: #333;
+        }
+        .stat-label {
+            font-weight: normal;
+        }
+        .stat-value {
+            font-weight: bold;
+            color: #16a34a;
+        }
+
+        .flip-button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .flip-button:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+        }
+        .flip-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .flip-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        @keyframes coinFlip {
+            0% {
+                transform: perspective(400px) rotateY(0deg) translateY(0px) scale(1);
+            }
+            25% {
+                transform: perspective(400px) rotateY(180deg) translateY(-20px) scale(1.1);
+            }
+            50% {
+                transform: perspective(400px) rotateY(360deg) translateY(-30px) scale(1.2);
+            }
+            75% {
+                transform: perspective(400px) rotateY(540deg) translateY(-20px) scale(1.1);
+            }
+            100% {
+                transform: perspective(400px) rotateY(720deg) translateY(0px) scale(1); /* Rotates twice */
+            }
+        }
+    </style>
+
+    <div class="coin-display">
+        <div id="coin" class="coin"></div>
+        <div id="coinResult" class="coin-result">Click 'Flip Coin'</div>
+    </div>
+
+    <div class="stats-display">
+        <div class="stat-item"><span class="stat-label">Total Flips:</span> <span id="totalFlips" class="stat-value">0</span></div>
+        <div class="stat-item"><span class="stat-label">Heads Count:</span> <span id="headsCount" class="stat-value">0</span></div>
+        <div class="stat-item"><span class="stat-label">Observed Average (Heads):</span> <span id="observedAverage" class="stat-value">0.00</span></div>
+    </div>
+
+    <button id="flipButton" class="flip-button">Flip Coin</button>
+
+    <script>
+        (function() {
+            const coinElement = document.getElementById('coin');
+            const coinResultElement = document.getElementById('coinResult');
+            const totalFlipsElement = document.getElementById('totalFlips');
+            const headsCountElement = document.getElementById('headsCount');
+            const observedAverageElement = document.getElementById('observedAverage');
+            const flipButton = document.getElementById('flipButton');
+
+            let totalFlips = 0;
+            let headsCount = 0;
+
+            function updateStats() {
+                totalFlipsElement.textContent = totalFlips;
+                headsCountElement.textContent = headsCount;
+                const average = totalFlips === 0 ? 0 : (headsCount / totalFlips);
+                observedAverageElement.textContent = average.toFixed(2);
+            }
+
+            function flipCoin() {
+                if (flipButton.disabled) return;
+
+                flipButton.disabled = true;
+                coinResultElement.textContent = ''; // Clear previous result
+                coinElement.classList.add('flipping');
+
+                // Randomly determine outcome (Heads or Tails)
+                const isHeads = Math.random() < 0.5; // 50/50 chance
+
+                setTimeout(() => {
+                    coinElement.classList.remove('flipping');
+                    totalFlips++;
+
+                    if (isHeads) {
+                        headsCount++;
+                        coinResultElement.textContent = 'Heads';
+                        coinResultElement.style.color = '#16a34a'; // Green for Heads
+                    } else {
+                        coinResultElement.textContent = 'Tails';
+                        coinResultElement.style.color = '#ef4444'; // Red for Tails
+                    }
+                    updateStats();
+                    flipButton.disabled = false;
+                }, 1500); // Match animation duration
+            }
+
+            // Initial display
+            updateStats();
+            flipButton.addEventListener('click', flipCoin);
+        })();
+    </script>
+</div>

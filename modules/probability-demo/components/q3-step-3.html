@@ -1,0 +1,326 @@
+<div class="module-container" style="font-family: 'Arial', sans-serif; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; max-width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background-color: #fff; display: flex; flex-direction: column; gap: 15px;">
+    <style>
+        /* CRITICAL: All styles are inline within the component div, no external stylesheets */
+        .module-container {
+            /* Basic container styles already applied via inline style attribute */
+        }
+        .module-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 350px; /* Fixed height for visualization area */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .module-canvas {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fdfdfd;
+            flex-grow: 1; /* Allows canvas to take available width within its wrapper */
+        }
+        .module-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .module-control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+        .module-control-group label {
+            font-weight: bold;
+            color: #333;
+            min-width: 120px; /* For alignment */
+        }
+        .module-slider {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .module-slider:hover {
+            opacity: 1;
+        }
+        .module-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb; /* Primary blue */
+            cursor: grab;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .module-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb; /* Primary blue */
+            cursor: grab;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .module-button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .module-button-primary {
+            background-color: #2563eb; /* Primary blue */
+            color: white;
+        }
+        .module-button-primary:hover {
+            background-color: #1d4ed8;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .module-button-secondary {
+            background-color: #e0e7ff; /* Lighter blue */
+            color: #2563eb; /* Primary blue */
+        }
+        .module-button-secondary:hover {
+            background-color: #c7d2fe;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .module-info-text {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 5px;
+            text-align: center;
+        }
+        .module-value-display {
+            font-weight: bold;
+            color: #2563eb; /* Primary blue */
+            min-width: 40px;
+            text-align: right;
+        }
+    </style>
+
+    <div class="module-canvas-wrapper">
+        <canvas class="module-canvas"></canvas>
+    </div>
+
+    <p class="module-info-text">Each run consists of 1000 coin flips.</p>
+
+    <div class="module-controls">
+        <div class="module-control-group">
+            <label for="module-runs-slider">Number of Simulation Runs:</label>
+            <input type="range" id="module-runs-slider" class="module-slider" min="10" max="10000" value="1000">
+            <span id="module-runs-value" class="module-value-display">1000</span>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="module-run-simulation-button" class="module-button module-button-primary">Run Simulation</button>
+            <button id="module-reset-button" class="module-button module-button-secondary">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const canvas = document.querySelector('.module-canvas');
+            const ctx = canvas.getContext('2d');
+            const runsSlider = document.getElementById('module-runs-slider');
+            const runsValueSpan = document.getElementById('module-runs-value');
+            const runSimulationButton = document.getElementById('module-run-simulation-button');
+            const resetButton = document.getElementById('module-reset-button');
+
+            // Constants for the problem
+            const N_FLIPS = 1000; // Number of flips per run
+            const P_HEADS = 0.5; // Probability of heads
+            const MU = N_FLIPS * P_HEADS; // Mean of the theoretical normal distribution
+            const SIGMA = Math.sqrt(N_FLIPS * P_HEADS * (1 - P_HEADS)); // Standard deviation
+
+            let currentNumRuns = parseInt(runsSlider.value);
+            let histogramData = new Array(N_FLIPS + 1).fill(0); // Frequencies for 0 to 1000 heads
+
+            // Canvas dimensions and padding for drawing area
+            const padding = { top: 20, right: 30, bottom: 40, left: 50 };
+            let drawableWidth, drawableHeight;
+
+            // Function to update canvas internal dimensions to match display size
+            function updateCanvasDimensions() {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+
+                drawableWidth = canvas.width - padding.left - padding.right;
+                drawableHeight = canvas.height - padding.top - padding.bottom;
+            }
+
+            // Normal Probability Density Function
+            function normalPDF(x, mu, sigma) {
+                return (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-((x - mu)**2) / (2 * sigma**2));
+            }
+
+            function clearCanvas() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            function drawAxes(maxFrequency) {
+                ctx.save();
+                ctx.translate(padding.left, padding.top); // Shift origin to top-left of drawable area
+
+                // Y-axis
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, drawableHeight);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // X-axis
+                ctx.beginPath();
+                ctx.moveTo(0, drawableHeight);
+                ctx.lineTo(drawableWidth, drawableHeight);
+                ctx.stroke();
+
+                // X-axis labels (Number of Heads)
+                ctx.fillStyle = '#333';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                for (let i = 0; i <= N_FLIPS; i += 100) {
+                    const x = (i / N_FLIPS) * drawableWidth;
+                    ctx.fillText(i, x, drawableHeight + 15);
+                    ctx.beginPath();
+                    ctx.moveTo(x, drawableHeight);
+                    ctx.lineTo(x, drawableHeight + 5);
+                    ctx.stroke();
+                }
+                ctx.fillText('Number of Heads', drawableWidth / 2, drawableHeight + 30);
+
+                // Y-axis labels (Frequency)
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                const numYLabels = 5;
+                const effectiveMaxFreq = maxFrequency > 0 ? maxFrequency : 100; // Fallback if maxFrequency is 0
+                for (let i = 0; i <= numYLabels; i++) {
+                    const value = (i / numYLabels) * effectiveMaxFreq;
+                    const y = drawableHeight - (i / numYLabels) * drawableHeight;
+                    ctx.fillText(Math.round(value), -5, y);
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(-5, y);
+                    ctx.stroke();
+                }
+                // Y-axis title
+                ctx.save();
+                ctx.translate(-padding.left + 10, drawableHeight / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.fillText('Frequency', 0, 0);
+                ctx.restore();
+
+                ctx.restore();
+            }
+
+            function drawHistogramAndNormalCurve() {
+                clearCanvas();
+                updateCanvasDimensions(); // Update canvas size attributes
+
+                const maxFrequency = Math.max(...histogramData);
+                drawAxes(maxFrequency); // Pass max frequency for Y-axis scaling
+
+                ctx.save();
+                ctx.translate(padding.left, padding.top); // Shift origin to top-left of drawable area
+
+                // Histogram Bar width (for 0 to N_FLIPS inclusive, N_FLIPS + 1 bins)
+                const barWidth = drawableWidth / (N_FLIPS + 1);
+
+                // Draw Histogram Bars
+                ctx.fillStyle = '#2563eb'; // Blue for bars
+                for (let i = 0; i <= N_FLIPS; i++) {
+                    if (histogramData[i] > 0) {
+                        const barHeight = (histogramData[i] / maxFrequency) * drawableHeight;
+                        const x = i * barWidth;
+                        const y = drawableHeight - barHeight;
+                        ctx.fillRect(x, y, barWidth, barHeight);
+                    }
+                }
+
+                // Draw Theoretical Normal Distribution Overlay
+                ctx.strokeStyle = '#dc2626'; // Bright red for normal curve
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                // Scale PDF values to match histogram frequencies:
+                // Expected frequency for a bin = PDF(x) * total_runs * bin_width
+                // Since our histogram bins are for integer number of heads, bin_width = 1.
+                // Then, scale this expected frequency to the canvas height using the maxFrequency from the histogram.
+
+                for (let i = 0; i <= N_FLIPS; i++) {
+                    const x_heads = i; // Number of heads
+                    const x_canvas = x_heads * barWidth; // X position on canvas
+
+                    const expectedFrequency = normalPDF(x_heads, MU, SIGMA) * currentNumRuns;
+                    const y_canvas = drawableHeight - (expectedFrequency / maxFrequency) * drawableHeight;
+
+                    if (i === 0) {
+                        ctx.moveTo(x_canvas, y_canvas);
+                    } else {
+                        ctx.lineTo(x_canvas, y_canvas);
+                    }
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function simulateCoinFlips() {
+                histogramData.fill(0); // Reset frequencies for new simulation
+                for (let r = 0; r < currentNumRuns; r++) {
+                    let heads = 0;
+                    for (let f = 0; f < N_FLIPS; f++) {
+                        if (Math.random() < P_HEADS) {
+                            heads++;
+                        }
+                    }
+                    histogramData[heads]++;
+                }
+                drawHistogramAndNormalCurve();
+            }
+
+            function initialize() {
+                runsValueSpan.textContent = currentNumRuns; // Set initial slider value display
+                simulateCoinFlips(); // Run simulation on load with default value
+            }
+
+            // Event Listeners
+            runsSlider.oninput = function() {
+                currentNumRuns = parseInt(this.value);
+                runsValueSpan.textContent = this.value;
+                // Histogram does not update in real-time with slider, only on button click
+                // This is by design as simulation can be intensive for many runs
+            };
+
+            runSimulationButton.onclick = function() {
+                simulateCoinFlips();
+            };
+
+            resetButton.onclick = function() {
+                runsSlider.value = 1000;
+                currentNumRuns = 1000;
+                runsValueSpan.textContent = 1000;
+                simulateCoinFlips(); // Run simulation with default 1000 runs
+            };
+
+            // Initial setup
+            initialize();
+
+            // Handle window resize to redraw everything
+            window.addEventListener('resize', drawHistogramAndNormalCurve);
+        })();
+    </script>
+</div>

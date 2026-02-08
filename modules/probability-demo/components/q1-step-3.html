@@ -1,0 +1,315 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9fafb;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .module-header {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .formula-display {
+            background-color: #e0f2fe;
+            border-left: 5px solid #2563eb;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            text-align: center;
+            margin-bottom: 15px;
+            overflow-x: auto; /* For long formulas on small screens */
+            white-space: nowrap; /* Prevent wrapping in formula */
+        }
+
+        .formula-display strong {
+            color: #16a34a;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .input-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-item label {
+            font-size: 0.95em;
+            margin-bottom: 4px;
+            color: #4a5568;
+        }
+
+        .input-item input[type="number"] {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 1em;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out;
+        }
+
+        .input-item input[type="number"]:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .calculate-button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            align-self: center; /* Center the button */
+            width: fit-content;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+
+        .calculate-button:hover {
+            background-color: #1e40af;
+            transform: translateY(-1px);
+        }
+
+        .result-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #e6ffed;
+            border-left: 5px solid #16a34a;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 1em;
+        }
+
+        .result-section .substituted-formula {
+            font-size: 1.05em;
+            font-weight: bold;
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 5px;
+            white-space: nowrap; /* Prevent wrapping in formula */
+            overflow-x: auto;
+        }
+
+        .result-section .results-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping for small screens */
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .result-section .results-list li {
+            background-color: #ffffff;
+            border: 1px solid #b3e6c6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #16a34a;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            min-width: 90px; /* Ensure consistent width for result boxes */
+            text-align: center;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 0.9em;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        /* Visuals */
+        .probability-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            position: relative;
+            width: 100px; /* Fixed size for the circle */
+            height: 100px;
+            border-radius: 50%;
+            background-color: #e2e8f0; /* Default background for total outcomes (unfavorable part) */
+            overflow: hidden; /* Crucial for pie chart effect */
+            align-self: center;
+            border: 2px solid #cbd5e0;
+        }
+
+        .probability-slice {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            /* conic-gradient creates the pie slice effect */
+            background: conic-gradient(#16a34a var(--angle), transparent var(--angle));
+            transform: rotate(-90deg); /* Start from top */
+            transform-origin: center;
+            transition: background 0.5s ease-out; /* Smooth transition for the slice */
+        }
+        
+        .visual-label {
+            position: absolute;
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #4a5568;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 0 0 3px rgba(255,255,255,0.7);
+        }
+
+    </style>
+    <div class="module-header">
+        Probability Calculation
+    </div>
+
+    <div class="formula-display">
+        P(Heads) = <span style="font-weight: bold;">Favorable Outcomes</span> / <span style="font-weight: bold;">Total Outcomes</span>
+    </div>
+
+    <div class="input-group">
+        <div class="input-item">
+            <label for="favorable-outcomes">Number of Favorable Outcomes</label>
+            <input type="number" id="favorable-outcomes" value="1" placeholder="1" min="0">
+        </div>
+        <div class="input-item">
+            <label for="total-outcomes">Total Number of Possible Outcomes</label>
+            <input type="number" id="total-outcomes" value="2" placeholder="2" min="1">
+        </div>
+    </div>
+
+    <div class="probability-visual">
+        <div class="probability-slice" style="--angle: 0deg;"></div> <!-- Initial state, updated by JS -->
+        <div class="visual-label">0%</div>
+    </div>
+
+    <div id="error-message" class="error-message" style="display: none;"></div>
+
+    <div id="results-container" class="result-section" style="display: none;">
+        <div class="substituted-formula" id="substituted-formula"></div>
+        <ul class="results-list">
+            <li>Fraction: <span id="result-fraction"></span></li>
+            <li>Decimal: <span id="result-decimal"></span></li>
+            <li>Percentage: <span id="result-percentage"></span></li>
+        </ul>
+    </div>
+
+    <script>
+        (function() {
+            const favorableInput = document.getElementById('favorable-outcomes');
+            const totalInput = document.getElementById('total-outcomes');
+            const errorMessageDiv = document.getElementById('error-message');
+            const resultsContainer = document.getElementById('results-container');
+            const substitutedFormulaDiv = document.getElementById('substituted-formula');
+            const resultFractionSpan = document.getElementById('result-fraction');
+            const resultDecimalSpan = document.getElementById('result-decimal');
+            const resultPercentageSpan = document.getElementById('result-percentage');
+            const probabilitySlice = document.querySelector('.probability-slice');
+            const visualLabel = document.querySelector('.visual-label');
+
+            function gcd(a, b) {
+                return b === 0 ? a : gcd(b, a % b);
+            }
+
+            function getSimplifiedFraction(numerator, denominator) {
+                if (denominator === 0) return "Undefined";
+                if (numerator === 0) return "0/1";
+                if (numerator === denominator) return "1/1";
+                const common = gcd(numerator, denominator);
+                return `${numerator / common}/${denominator / common}`;
+            }
+
+            function updateProbability() {
+                let favorable = parseInt(favorableInput.value);
+                let total = parseInt(totalInput.value);
+
+                // Clear previous error
+                errorMessageDiv.style.display = 'none';
+                resultsContainer.style.display = 'none';
+                
+                // Set default values if inputs are empty or invalid
+                if (isNaN(favorable) || favorable === null || favorable === undefined || favorable < 0) {
+                    favorable = 0;
+                    favorableInput.value = 0; // Update input field to reflect the corrected value
+                }
+                if (isNaN(total) || total === null || total === undefined || total < 1) {
+                    total = 1;
+                    totalInput.value = 1; // Update input field to reflect the corrected value
+                }
+                
+                // Validation against logic
+                if (total === 0) {
+                    errorMessageDiv.textContent = 'Total outcomes must be greater than 0.';
+                    errorMessageDiv.style.display = 'block';
+                    // Reset visual and results
+                    probabilitySlice.style.setProperty('--angle', '0deg');
+                    visualLabel.textContent = '0%';
+                    return;
+                }
+                if (favorable > total) {
+                    errorMessageDiv.textContent = 'Favorable outcomes cannot exceed total outcomes.';
+                    errorMessageDiv.style.display = 'block';
+                    // Reset visual and results to reflect the invalid state or a default
+                    probabilitySlice.style.setProperty('--angle', '0deg'); // Or a partial representation
+                    visualLabel.textContent = '0%';
+                    return;
+                }
+
+                // Calculate probability
+                const probability = favorable / total;
+
+                // Update substituted formula
+                substitutedFormulaDiv.innerHTML = `P(Heads) = <span style="font-weight: bold; color: #16a34a;">${favorable}</span> / <span style="font-weight: bold; color: #16a34a;">${total}</span>`;
+
+                // Update results
+                resultFractionSpan.textContent = getSimplifiedFraction(favorable, total);
+                resultDecimalSpan.textContent = probability.toFixed(2);
+                resultPercentageSpan.textContent = `${(probability * 100).toFixed(0)}%`;
+                
+                resultsContainer.style.display = 'flex'; // Show results
+
+                // Update visual
+                const angle = probability * 360; // Convert probability to degrees for conic-gradient
+                probabilitySlice.style.setProperty('--angle', `${angle}deg`);
+                visualLabel.textContent = `${(probability * 100).toFixed(0)}%`;
+            }
+
+            // Initial calculation on load
+            updateProbability();
+
+            // Attach event listeners for dynamic updates
+            favorableInput.addEventListener('input', updateProbability);
+            totalInput.addEventListener('input', updateProbability);
+        })();
+    </script>
+</div>

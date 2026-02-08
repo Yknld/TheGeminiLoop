@@ -1,0 +1,205 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f0f4f8; /* Light background */
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            margin: auto; /* Center the module */
+            box-sizing: border-box;
+            height: auto; /* Let content define height */
+            gap: 20px; /* Spacing between scale and equation */
+            min-height: 350px; /* Ensure reasonable height */
+            justify-content: center;
+        }
+
+        .balance-scale {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 600px; /* Max width for the scale itself */
+            position: relative;
+            height: 250px; /* Overall height of the scale visualization */
+            justify-content: flex-end; /* Push pivot to bottom */
+        }
+
+        .pivot {
+            width: 10px;
+            height: 80px; /* Height of the stand */
+            background-color: #6b7280;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: absolute; /* Position relative to balance-scale */
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1; 
+        }
+
+        .beam-pivot-joint {
+            width: 18px;
+            height: 18px;
+            background-color: #4b5563;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 70px; /* Sits on top of the pivot stand */
+            z-index: 2;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .beam-assembly {
+            width: 90%; /* Beam width relative to balance-scale max-width */
+            max-width: 480px; /* Absolute max width for beam */
+            position: absolute;
+            bottom: 64px; /* Aligns pivot point (6px from top) with beam-pivot-joint */
+            left: 50%; 
+            transform: translateX(-50%) rotate(0deg); /* Initial balance, rotate around its own center */
+            transform-origin: center 6px; /* Center horizontally, 6px from top (half of beam height) */
+            transition: transform 0.3s ease-out; /* Smooth tilt */
+            z-index: 0;
+            height: 170px; /* Space for beam and hanging pans */
+        }
+        
+        .beam {
+            width: 100%;
+            height: 12px;
+            background-color: #6b7280;
+            border-radius: 6px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        /* Pan and Support Structure */
+        .pan-section {
+            position: absolute;
+            top: 12px; /* Hangs from bottom of beam */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 180px; /* Max width of the pan */
+            min-height: 100px;
+        }
+
+        .left-pan-section {
+            left: -15px; /* Adjust to align with beam end, taking pan width into account */
+        }
+
+        .right-pan-section {
+            right: -15px; /* Adjust to align with beam end */
+        }
+
+        .pan-support {
+            width: 5px;
+            height: 30px;
+            background-color: #9ca3af;
+            position: relative;
+            z-index: 0;
+            margin-bottom: -5px; /* Overlap with pan top border for visual continuity */
+        }
+
+        .pan {
+            width: 100%;
+            min-height: 60px;
+            background-color: #e2e8f0; /* Light gray pan */
+            border: 2px solid #94a3b8;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+            gap: 6px; /* Gap between blocks */
+        }
+        
+        .block {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 6px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            user-select: none;
+        }
+
+        .x-block {
+            background-color: #2563eb; /* Blue for x */
+            width: 40px;
+            height: 40px;
+            font-size: 1.1em;
+        }
+
+        .unit-block {
+            background-color: #16a34a; /* Green for 1 */
+            width: 28px;
+            height: 28px;
+            font-size: 0.9em;
+        }
+
+        .equation-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+
+    </style>
+    <div class="balance-scale">
+        <div class="pivot"></div>
+        <div class="beam-pivot-joint"></div>
+        <div class="beam-assembly">
+            <div class="beam"></div>
+            <div class="pan-section left-pan-section">
+                <div class="pan-support"></div>
+                <div class="pan">
+                    <div class="block x-block">x</div>
+                    <div class="block x-block">x</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                </div>
+            </div>
+            <div class="pan-section right-pan-section">
+                <div class="pan-support"></div>
+                <div class="pan">
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                    <div class="block unit-block">1</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="equation-display">
+        2x + 5 = 13
+    </div>
+</div>
+<script>
+    (function() {
+        // This initial visualization step is purely static to establish the concept.
+        // No interactive elements, sliders, or dynamic updates are required at this stage.
+    })();
+</script>

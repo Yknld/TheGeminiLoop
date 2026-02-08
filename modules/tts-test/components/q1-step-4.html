@@ -1,0 +1,181 @@
+<div class="module-container">
+  <style>
+    /* General styles for the container */
+    .module-container {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8; /* Light background */
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px; /* Space between scale and equation */
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 350px; /* Ensure reasonable height */
+      justify-content: center;
+    }
+
+    /* Scale area styles */
+    .scale-wrapper {
+      position: relative;
+      width: 100%; /* Take full width of parent */
+      max-width: 450px; /* Maximum size for the scale visual */
+      height: clamp(150px, 40vw, 200px); /* Responsive height for the scale structure */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start; /* Align beam to top of wrapper */
+      
+      /* Define variables for responsive sizing */
+      --beam-length: clamp(250px, 70vw, 380px); /* Responsive length of the beam */
+      --pan-dimension: clamp(60px, 18vw, 70px); /* Responsive width/height for pans */
+      --pan-padding: 5px;
+      --block-margin: 2px;
+      --beam-thickness: 8px;
+      --pivot-height: 40px;
+      --base-width: clamp(100px, 30vw, 150px);
+      --base-height: 15px;
+    }
+
+    .scale-beam {
+      position: absolute;
+      top: 30px; /* Position of the beam from the top of scale-wrapper */
+      width: var(--beam-length); /* Use variable */
+      height: var(--beam-thickness);
+      background-color: #78716c;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    .scale-pivot {
+      position: absolute;
+      top: calc(30px + var(--beam-thickness)); /* Just below the beam */
+      width: 0;
+      height: 0;
+      border-left: calc(var(--pivot-height) / 2) solid transparent;
+      border-right: calc(var(--pivot-height) / 2) solid transparent;
+      border-bottom: var(--pivot-height) solid #94a3b8;
+      z-index: 1;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .scale-base {
+      position: absolute;
+      top: calc(30px + var(--beam-thickness) + var(--pivot-height) - 10px); /* Below the pivot, slightly overlaps */
+      width: var(--base-width);
+      height: var(--base-height);
+      background-color: #94a3b8;
+      border-radius: 8px;
+      z-index: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .scale-pan {
+      width: var(--pan-dimension);
+      height: var(--pan-dimension); /* Square pans for simplicity */
+      background-color: #cbd5e1;
+      border: 2px solid #94a3b8;
+      border-radius: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      padding: var(--pan-padding);
+      box-sizing: border-box;
+      position: absolute;
+      top: calc(30px + var(--beam-thickness) + 8px); /* Hangs below the beam, with 8px chain gap */
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .pan-chain {
+      position: absolute;
+      width: 2px;
+      height: 8px; /* Length of the chain link */
+      background-color: #78716c;
+      z-index: 3;
+      top: calc(30px + var(--beam-thickness)); /* Just below the beam */
+    }
+
+    .left-pan {
+      left: calc(50% - (var(--beam-length) / 2) - (var(--pan-dimension) / 2));
+    }
+    .right-pan {
+      left: calc(50% + (var(--beam-length) / 2) - (var(--pan-dimension) / 2));
+    }
+
+    .left-pan-chain {
+        left: calc(50% - (var(--beam-length) / 2) - 1px);
+    }
+    .right-pan-chain {
+        left: calc(50% + (var(--beam-length) / 2) - 1px);
+    }
+
+    .block {
+      --block-size: clamp(20px, 5vw, 28px); /* Responsive block size */
+      width: var(--block-size);
+      height: var(--block-size);
+      border-radius: 6px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      color: white;
+      font-size: clamp(0.9em, 2vw, 1.1em); /* Responsive font size */
+      margin: var(--block-margin);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .block-x {
+      background-color: #2563eb; /* Blue for 'x' */
+    }
+
+    .block-1 {
+      background-color: #16a34a; /* Green for '1' */
+    }
+
+    .equation-display {
+      font-size: clamp(1.5em, 5vw, 2.2em); /* Responsive font size for equation */
+      font-weight: 700;
+      color: #333;
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+
+  <div class="scale-wrapper">
+    <div class="scale-beam"></div>
+    <div class="scale-pivot"></div>
+    <div class="scale-base"></div>
+
+    <!-- Pan chains -->
+    <div class="pan-chain left-pan-chain"></div>
+    <div class="pan-chain right-pan-chain"></div>
+
+    <div class="scale-pan left-pan">
+      <div class="block block-x">x</div>
+    </div>
+    <div class="scale-pan right-pan">
+      <div class="block block-1">1</div>
+      <div class="block block-1">1</div>
+      <div class="block block-1">1</div>
+      <div class="block block-1">1</div>
+    </div>
+  </div>
+
+  <div class="equation-display">
+    x = 4
+  </div>
+</div>

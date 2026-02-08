@@ -1,0 +1,396 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc; /* Light background */
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 100%;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            color: #333;
+            box-sizing: border-box;
+            height: 480px; /* Compact height */
+        }
+
+        .graph-container {
+            flex-grow: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .graph-svg {
+            width: 100%;
+            height: 100%;
+            min-height: 250px; /* Ensure a minimum height for the SVG */
+            max-height: 350px; /* Prevent it from getting too tall */
+        }
+
+        .graph-svg text {
+            font-size: 12px;
+            fill: #555;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE10+/Edge */
+            user-select: none; /* Standard */
+        }
+
+        .graph-svg line.axis {
+            stroke: #ccc;
+            stroke-width: 1;
+        }
+
+        .graph-svg line.fifty-percent {
+            stroke: #ef4444; /* Red color for theoretical probability */
+            stroke-dasharray: 4 2;
+            stroke-width: 1.5;
+        }
+
+        .graph-svg path.simulation-path {
+            fill: none;
+            stroke: #2563eb; /* Blue for simulation path */
+            stroke-width: 2;
+        }
+
+        .graph-svg circle.final-point {
+            fill: #16a34a; /* Green for final highlight */
+            stroke: #fff;
+            stroke-width: 2;
+        }
+
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .control-group input[type="range"] {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e0e7ff;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-group .value-display {
+            font-weight: 600;
+            color: #2563eb;
+            min-width: 40px;
+            text-align: right;
+            font-variant-numeric: tabular-nums; /* Align numbers */
+        }
+
+        button {
+            padding: 10px 18px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            align-self: flex-end; /* Align button to the right */
+        }
+
+        button:hover {
+            background-color: #1e40af;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+
+        button:disabled {
+            background-color: #9cb3e1;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+    </style>
+
+    <div class="graph-container">
+        <svg class="graph-svg" viewBox="0 0 500 350" preserveAspectRatio="xMidYMid meet">
+            <!-- Axes, labels, and 50% line will be drawn by JS -->
+            <g class="graph-elements"></g>
+            <g class="plot-elements"></g>
+        </svg>
+    </div>
+
+    <div class="controls-container">
+        <div class="control-group">
+            <label for="flips-slider">Total Number of Flips:</label>
+            <input type="range" id="flips-slider" min="1" max="1000" value="200">
+            <span id="flips-value" class="value-display">200</span>
+        </div>
+        <button id="run-simulation-btn">Run Simulation</button>
+    </div>
+
+    <script>
+        (function() {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.querySelector('.graph-svg');
+            const graphElementsGroup = svg.querySelector('.graph-elements');
+            const plotElementsGroup = svg.querySelector('.plot-elements');
+            const flipsSlider = document.getElementById('flips-slider');
+            const flipsValueSpan = document.getElementById('flips-value');
+            const runSimulationBtn = document.getElementById('run-simulation-btn');
+
+            // SVG dimensions (viewBox units)
+            const SVG_WIDTH = 500;
+            const SVG_HEIGHT = 350;
+            const PADDING = { top: 30, right: 30, bottom: 50, left: 60 };
+
+            // Graph dimensions
+            const plotWidth = SVG_WIDTH - PADDING.left - PADDING.right;
+            const plotHeight = SVG_HEIGHT - PADDING.top - PADDING.bottom;
+
+            // X-axis: Number of Flips (0 to 1000)
+            const maxX = 1000;
+            // Y-axis: Percentage of Heads (0% to 100%)
+            const maxY = 100;
+
+            // Scaling functions
+            const xScale = (value) => PADDING.left + (value / maxX) * plotWidth;
+            const yScale = (value) => PADDING.top + plotHeight - (value / maxY) * plotHeight;
+
+            let animationTimeoutId = null;
+
+            function drawAxes() {
+                graphElementsGroup.innerHTML = ''; // Clear previous axes if redrawing
+
+                // X-axis line
+                const xAxis = document.createElementNS(svgNS, 'line');
+                xAxis.setAttribute('x1', PADDING.left);
+                xAxis.setAttribute('y1', PADDING.top + plotHeight);
+                xAxis.setAttribute('x2', PADDING.left + plotWidth);
+                xAxis.setAttribute('y2', PADDING.top + plotHeight);
+                xAxis.setAttribute('stroke', '#555');
+                xAxis.setAttribute('stroke-width', '1.5');
+                graphElementsGroup.appendChild(xAxis);
+
+                // Y-axis line
+                const yAxis = document.createElementNS(svgNS, 'line');
+                yAxis.setAttribute('x1', PADDING.left);
+                yAxis.setAttribute('y1', PADDING.top);
+                yAxis.setAttribute('x2', PADDING.left);
+                yAxis.setAttribute('y2', PADDING.top + plotHeight);
+                yAxis.setAttribute('stroke', '#555');
+                yAxis.setAttribute('stroke-width', '1.5');
+                graphElementsGroup.appendChild(yAxis);
+
+                // X-axis label
+                const xLabel = document.createElementNS(svgNS, 'text');
+                xLabel.setAttribute('x', PADDING.left + plotWidth / 2);
+                xLabel.setAttribute('y', SVG_HEIGHT - 10);
+                xLabel.setAttribute('text-anchor', 'middle');
+                xLabel.textContent = 'Number of Flips';
+                graphElementsGroup.appendChild(xLabel);
+
+                // Y-axis label
+                const yLabel = document.createElementNS(svgNS, 'text');
+                yLabel.setAttribute('x', PADDING.left - 40);
+                yLabel.setAttribute('y', PADDING.top + plotHeight / 2);
+                yLabel.setAttribute('text-anchor', 'middle');
+                yLabel.setAttribute('transform', `rotate(-90 ${PADDING.left - 40} ${PADDING.top + plotHeight / 2})`);
+                yLabel.textContent = 'Percentage of Heads (%)';
+                graphElementsGroup.appendChild(yLabel);
+
+                // X-axis ticks
+                for (let i = 0; i <= maxX; i += 200) {
+                    const x = xScale(i);
+                    const tick = document.createElementNS(svgNS, 'line');
+                    tick.setAttribute('x1', x);
+                    tick.setAttribute('y1', PADDING.top + plotHeight);
+                    tick.setAttribute('x2', x);
+                    tick.setAttribute('y2', PADDING.top + plotHeight + 5);
+                    tick.setAttribute('class', 'axis');
+                    graphElementsGroup.appendChild(tick);
+
+                    const label = document.createElementNS(svgNS, 'text');
+                    label.setAttribute('x', x);
+                    label.setAttribute('y', PADDING.top + plotHeight + 20);
+                    label.setAttribute('text-anchor', 'middle');
+                    label.textContent = i;
+                    graphElementsGroup.appendChild(label);
+                }
+
+                // Y-axis ticks
+                for (let i = 0; i <= maxY; i += 25) {
+                    const y = yScale(i);
+                    const tick = document.createElementNS(svgNS, 'line');
+                    tick.setAttribute('x1', PADDING.left);
+                    tick.setAttribute('y1', y);
+                    tick.setAttribute('x2', PADDING.left - 5);
+                    tick.setAttribute('y2', y);
+                    tick.setAttribute('class', 'axis');
+                    graphElementsGroup.appendChild(tick);
+
+                    const label = document.createElementNS(svgNS, 'text');
+                    label.setAttribute('x', PADDING.left - 20);
+                    label.setAttribute('y', y + 4); // Adjust for text baseline
+                    label.setAttribute('text-anchor', 'end');
+                    label.textContent = `${i}%`;
+                    graphElementsGroup.appendChild(label);
+                }
+
+                // 50% theoretical probability line
+                const fiftyPercentLine = document.createElementNS(svgNS, 'line');
+                fiftyPercentLine.setAttribute('x1', PADDING.left);
+                fiftyPercentLine.setAttribute('y1', yScale(50));
+                fiftyPercentLine.setAttribute('x2', PADDING.left + plotWidth);
+                fiftyPercentLine.setAttribute('y2', yScale(50));
+                fiftyPercentLine.setAttribute('class', 'fifty-percent');
+                graphElementsGroup.appendChild(fiftyPercentLine);
+
+                const fiftyPercentLabel = document.createElementNS(svgNS, 'text');
+                fiftyPercentLabel.setAttribute('x', PADDING.left + plotWidth + 5);
+                fiftyPercentLabel.setAttribute('y', yScale(50) + 4);
+                fiftyPercentLabel.setAttribute('text-anchor', 'start');
+                fiftyPercentLabel.setAttribute('fill', '#ef4444');
+                fiftyPercentLabel.textContent = '50%';
+                graphElementsGroup.appendChild(fiftyPercentLabel);
+            }
+
+            function clearPlot() {
+                plotElementsGroup.innerHTML = '';
+                if (animationTimeoutId) {
+                    clearTimeout(animationTimeoutId);
+                    animationTimeoutId = null;
+                }
+            }
+
+            function runSimulation() {
+                const totalFlips = parseInt(flipsSlider.value, 10);
+                if (isNaN(totalFlips) || totalFlips < 1) return;
+
+                clearPlot();
+                runSimulationBtn.disabled = true;
+                flipsSlider.disabled = true;
+
+                const results = []; // 0 for tails, 1 for heads
+                for (let i = 0; i < totalFlips; i++) {
+                    results.push(Math.random() < 0.5 ? 0 : 1);
+                }
+
+                const cumulativePercentages = [];
+                let headsCount = 0;
+                for (let i = 0; i < totalFlips; i++) {
+                    headsCount += results[i];
+                    cumulativePercentages.push((headsCount / (i + 1)) * 100);
+                }
+
+                animatePlot(cumulativePercentages, totalFlips);
+            }
+
+            function animatePlot(percentages, totalFlips) {
+                const path = document.createElementNS(svgNS, 'path');
+                path.setAttribute('class', 'simulation-path');
+                plotElementsGroup.appendChild(path);
+
+                let dPath = `M ${xScale(1)} ${yScale(percentages[0])}`; // Start from the first point (flip 1)
+                path.setAttribute('d', dPath);
+
+                let currentFlip = 1; // Already plotted the first flip
+
+                // Dynamically adjust animation speed based on totalFlips to keep overall animation time reasonable
+                // For 1000 flips, 5ms per flip means 5 seconds. For 1 flip, 5ms.
+                const baseAnimationSpeed = 5; 
+                let animationInterval = baseAnimationSpeed;
+                
+                // If many flips, speed up drawing slightly
+                if (totalFlips > 500) {
+                     animationInterval = 2; 
+                } else if (totalFlips > 200) {
+                     animationInterval = 3;
+                }
+                
+                const stepAnimation = () => {
+                    if (currentFlip < totalFlips) {
+                        const x = xScale(currentFlip + 1);
+                        const y = yScale(percentages[currentFlip]);
+                        dPath += ` L ${x} ${y}`;
+                        path.setAttribute('d', dPath);
+                        currentFlip++;
+                        animationTimeoutId = setTimeout(stepAnimation, animationInterval);
+                    } else {
+                        // Animation finished
+                        const finalX = xScale(totalFlips);
+                        const finalY = yScale(percentages[totalFlips - 1]);
+
+                        const finalPoint = document.createElementNS(svgNS, 'circle');
+                        finalPoint.setAttribute('cx', finalX);
+                        finalPoint.setAttribute('cy', finalY);
+                        finalPoint.setAttribute('r', '5');
+                        finalPoint.setAttribute('class', 'final-point');
+                        plotElementsGroup.appendChild(finalPoint);
+
+                        runSimulationBtn.disabled = false;
+                        flipsSlider.disabled = false;
+                        animationTimeoutId = null;
+                    }
+                };
+                animationTimeoutId = setTimeout(stepAnimation, animationInterval);
+            }
+
+            // Initial setup
+            drawAxes();
+            flipsValueSpan.textContent = flipsSlider.value;
+            runSimulation(); // Run initial simulation on load
+
+            // Event listeners
+            flipsSlider.oninput = () => {
+                flipsValueSpan.textContent = flipsSlider.value;
+            };
+
+            runSimulationBtn.onclick = runSimulation;
+
+        })();
+    </script>
+</div>

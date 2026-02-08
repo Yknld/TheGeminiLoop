@@ -1,0 +1,176 @@
+<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="600" height="400" fill="#f8fafc" />
+
+  <style>
+    .chart-title {
+      font-family: sans-serif;
+      font-size: 14px;
+      font-weight: bold;
+      fill: #0f172a;
+      text-anchor: middle;
+    }
+    .axis-label {
+      font-family: sans-serif;
+      font-size: 10px;
+      fill: #0f172a;
+      text-anchor: middle;
+    }
+    .axis-line {
+      stroke: #e2e8f0;
+      stroke-width: 1;
+    }
+    .histogram-bar {
+      fill: #2563eb;
+      opacity: 0.6;
+    }
+    .normal-curve {
+      fill: none;
+      stroke-width: 2;
+    }
+  </style>
+
+  <g id="histograms">
+    <!-- Common constants for layout -->
+    <script>
+      const CHART_HEIGHT = 200;
+      const CHART_WIDTH = 170;
+      const Y_AXIS_BASE_Y = 330; // SVG_HEIGHT - PADDING_Y - 50 = 400 - 20 - 50 = 330
+      const Y_AXIS_TOP_Y = Y_AXIS_BASE_Y - CHART_HEIGHT; // 130
+      const TITLE_Y = 50;
+      const X_AXIS_LABEL_Y = Y_AXIS_BASE_Y + 15;
+      const CHART_LEFT_MARGIN = 20;
+      const GAP_BETWEEN_CHARTS = 15;
+
+      // Function for combinations C(n, k)
+      function combinations(n, k) {
+          if (k < 0 || k > n) return 0;
+          if (k === 0 || k === n) return 1;
+          if (k > n / 2) k = n - k;
+          let res = 1;
+          for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
+          return res;
+      }
+
+      // Binomial PMF for p=0.5
+      function binomialPMF(n, k) {
+          if (k < 0 || k > n) return 0;
+          return combinations(n, k) * Math.pow(0.5, n);
+      }
+
+      // Normal PDF
+      function normalPDF(x, mu, sigma) {
+          const term1 = 1 / (sigma * Math.sqrt(2 * Math.PI));
+          const term2 = Math.exp(-Math.pow(x - mu, 2) / (2 * Math.pow(sigma, 2)));
+          return term1 * term2;
+      }
+
+      // Helper to generate histogram and normal curve SVG string
+      function generateHistogramSVG(
+          chartXOffset,
+          titleText,
+          nFlips,
+          mu,
+          sigma,
+          normCurveColor,
+          xMin, // Full X-axis range start
+          xMax, // Full X-axis range end
+          barSampleMin, // Range for actual bars start
+          barSampleMax, // Range for actual bars end
+          barSampleStep // step for bar sampling
+      ) {
+          let svg = '';
+
+          // Chart Title
+          svg += `<text x="${chartXOffset + CHART_WIDTH / 2}" y="${TITLE_Y}" class="chart-title">${titleText}</text>`;
+
+          // X-axis line
+          svg += `<line x1="${chartXOffset}" y1="${Y_AXIS_BASE_Y}" x2="${chartXOffset + CHART_WIDTH}" y2="${Y_AXIS_BASE_Y}" class="axis-line" />`;
+          // Y-axis line
+          svg += `<line x1="${chartXOffset}" y1="${Y_AXIS_BASE_Y}" x2="${chartXOffset}" y2="${Y_AXIS_TOP_Y}" class="axis-line" />`;
+
+          // X-axis labels
+          const xTickValues = [xMin, mu, xMax];
+          xTickValues.forEach(tick => {
+              const xPos = chartXOffset + (tick - xMin) / (xMax - xMin) * CHART_WIDTH;
+              svg += `<text x="${xPos}" y="${X_AXIS_LABEL_Y}" class="axis-label x-axis-tick">${tick}</text>`;
+          });
+          svg += `<text x="${chartXOffset + CHART_WIDTH / 2}" y="${Y_AXIS_BASE_Y + 30}" class="axis-label">Heads</text>`;
+
+          // Y-axis label (rotated)
+          const yLabelX = chartXOffset - 25; // X position for the text
+          const yLabelY = Y_AXIS_TOP_Y + CHART_HEIGHT / 2; // Y position for the text center
+          svg += `<text x="${yLabelX}" y="${yLabelY}" transform="rotate(-90 ${yLabelX} ${yLabelY})" class="axis-label">Frequency</text>`;
+
+          // --- Histogram Bars ---
+          let maxHistValue = binomialPMF(nFlips, mu); // Peak for this specific histogram to normalize
+
+          const unitWidth = CHART_WIDTH / (xMax - xMin); // Width of one X-axis unit in chart coordinates
+          const actualBarWidth = unitWidth * barSampleStep; // Width of a bar spanning 'barSampleStep' units
+
+          for (let k = barSampleMin; k <= barSampleMax; k += barSampleStep) {
+              const prob = binomialPMF(nFlips, k);
+              const barHeight = (prob / maxHistValue) * CHART_HEIGHT;
+              const xPos = chartXOffset + (k - xMin) * unitWidth; // Position for the left edge of the bar
+              // Only draw bars that are visually significant
+              if (barHeight > 0.1) {
+                   svg += `<rect x="${xPos}" y="${Y_AXIS_BASE_Y - barHeight}" width="${actualBarWidth}" height="${barHeight}" class="histogram-bar" />`;
+              }
+          }
+          
+          // --- Overlay Normal Distribution Curve ---
+          const normPeakValue = normalPDF(mu, mu, sigma);
+          let pathD = "M";
+          const numCurvePoints = 100; // Resolution for curve
+          for (let i = 0; i <= numCurvePoints; i++) {
+              const xVal = xMin + (i / numCurvePoints) * (xMax - xMin);
+              const yVal = normalPDF(xVal, mu, sigma);
+              const plotY = Y_AXIS_BASE_Y - (yVal / normPeakValue) * CHART_HEIGHT;
+              const plotX = chartXOffset + (xVal - xMin) * unitWidth;
+              pathD += `${i === 0 ? '' : 'L'}${plotX} ${plotY}`;
+          }
+          svg += `<path d="${pathD}" class="normal-curve" stroke="${normCurveColor}" />`;
+
+          return svg;
+      }
+    </script>
+
+    <!-- Histogram 1: 10 Flips -->
+    <script>
+      document.currentScript.insertAdjacentHTML('afterend', generateHistogramSVG(
+        CHART_LEFT_MARGIN, // chartXOffset
+        'Distribution for 10 Flips',
+        10, // nFlips
+        5, 1.58, // mu, sigma
+        '#a8dadc', // normCurveColor (pale blue)
+        0, 10, // xMin, xMax for axis and curve
+        0, 10, 1 // barSampleMin, Max, Step for bars
+      ));
+    </script>
+
+    <!-- Histogram 2: 100 Flips -->
+    <script>
+      document.currentScript.insertAdjacentHTML('afterend', generateHistogramSVG(
+        CHART_LEFT_MARGIN + CHART_WIDTH + GAP_BETWEEN_CHARTS, // chartXOffset
+        'Distribution for 100 Flips',
+        100, // nFlips
+        50, 5, // mu, sigma
+        '#457b9d', // normCurveColor (medium blue)
+        0, 100, // xMin, xMax for axis and curve
+        30, 70, 1 // barSampleMin, Max, Step for bars (sampling the central bulk)
+      ));
+    </script>
+
+    <!-- Histogram 3: 1000 Flips -->
+    <script>
+      document.currentScript.insertAdjacentHTML('afterend', generateHistogramSVG(
+        CHART_LEFT_MARGIN + CHART_WIDTH + GAP_BETWEEN_CHARTS + CHART_WIDTH + GAP_BETWEEN_CHARTS, // chartXOffset
+        'Distribution for 1000 Flips',
+        1000, // nFlips
+        500, 15.81, // mu, sigma
+        '#1d3557', // normCurveColor (dark blue)
+        0, 1000, // xMin, xMax for axis and curve
+        400, 600, 1 // barSampleMin, Max, Step for bars (sampling the central bulk)
+      ));
+    </script>
+  </g>
+</svg>

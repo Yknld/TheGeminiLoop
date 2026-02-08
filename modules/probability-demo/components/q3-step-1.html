@@ -1,0 +1,309 @@
+<div class="module-container" style="
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: 400px;
+    max-height: 480px; /* Keep height reasonable for compact design */
+">
+    <style>
+        .module-container svg {
+            width: 100%;
+            min-height: 250px;
+            height: auto;
+            max-height: 300px; /* Max height for the SVG itself */
+            background-color: #f0f0f0; /* Light grey background for plot area */
+            border-radius: 6px;
+            overflow: visible; /* Allow labels to extend slightly outside viewBox */
+        }
+
+        .module-container .controls {
+            display: flex;
+            flex-direction: column;
+            width: 90%;
+            margin-top: 15px;
+            gap: 12px; /* Tight spacing between control groups */
+        }
+
+        .module-container .control-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Space out label and slider */
+            width: 100%;
+            flex-wrap: wrap; /* Allow wrapping for very small screens */
+            gap: 8px; /* Gap between label and slider if wrapped */
+        }
+
+        .module-container .control-group label {
+            font-size: 14px;
+            color: #333;
+            white-space: nowrap; /* Prevent label from breaking */
+            min-width: 150px; /* Ensure label has enough space */
+        }
+
+        .module-container .control-group input[type="range"] {
+            flex-grow: 1; /* Slider takes remaining space */
+            -webkit-appearance: none;
+            width: calc(100% - 190px); /* Adjust width based on label and value width */
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        .module-container .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #2563eb; /* Vibrant blue for thumb */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .module-container .control-group input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .module-container .slider-value {
+            font-size: 14px;
+            color: #555;
+            min-width: 35px; /* Space for value, including decimals */
+            text-align: right;
+            margin-left: 8px;
+        }
+
+        .module-container .axis-label {
+            font-size: 12px;
+            fill: #555;
+            text-anchor: middle;
+        }
+        .module-container .tick-label {
+            font-size: 10px;
+            fill: #555;
+        }
+    </style>
+
+    <svg id="pmfChart" viewBox="0 0 500 300" preserveAspectRatio="xMidYMid meet"></svg>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="numFlipsSlider">Number of Flips (N):</label>
+            <input type="range" id="numFlipsSlider" min="1" max="10" value="5" step="1">
+            <span class="slider-value" id="numFlipsValue">5</span>
+        </div>
+        <div class="control-group">
+            <label for="probHeadsSlider">Probability of Heads (p):</label>
+            <input type="range" id="probHeadsSlider" min="0.05" max="0.95" value="0.5" step="0.05">
+            <span class="slider-value" id="probHeadsValue">0.50</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const svg = document.getElementById('pmfChart');
+            const numFlipsSlider = document.getElementById('numFlipsSlider');
+            const probHeadsSlider = document.getElementById('probHeadsSlider');
+            const numFlipsValue = document.getElementById('numFlipsValue');
+            const probHeadsValue = document.getElementById('probHeadsValue');
+
+            const SVG_WIDTH = 500;
+            const SVG_HEIGHT = 300;
+            const PADDING = 40; // Padding for axes and labels
+            const CHART_AREA_WIDTH = SVG_WIDTH - 2 * PADDING;
+            const CHART_AREA_HEIGHT = SVG_HEIGHT - 2 * PADDING;
+
+            const BAR_COLOR = '#4285F4'; // Vibrant blue
+
+            // Pre-calculate factorials for efficiency up to max N (10)
+            const factorials = [1];
+            for (let i = 1; i <= 10; i++) {
+                factorials[i] = factorials[i - 1] * i;
+            }
+
+            // Function to calculate binomial coefficient C(n, k)
+            function binomialCoefficient(n, k) {
+                if (k < 0 || k > n) {
+                    return 0;
+                }
+                if (k === 0 || k === n) {
+                    return 1;
+                }
+                if (k > n / 2) {
+                    k = n - k;
+                }
+                // Using pre-calculated factorials
+                return factorials[n] / (factorials[k] * factorials[n - k]);
+            }
+
+            // Function to calculate Binomial PMF P(X=k | N, p)
+            function binomialPMF(k, n, p) {
+                if (k < 0 || k > n) return 0;
+                const coeff = binomialCoefficient(n, k);
+                return coeff * Math.pow(p, k) * Math.pow(1 - p, n - k);
+            }
+
+            function drawChart() {
+                // Clear previous chart elements
+                while (svg.lastChild) {
+                    svg.removeChild(svg.lastChild);
+                }
+
+                const N = parseInt(numFlipsSlider.value);
+                const p = parseFloat(probHeadsSlider.value);
+
+                // Update text labels next to sliders
+                numFlipsValue.textContent = N;
+                probHeadsValue.textContent = p.toFixed(2);
+
+                const pmfValues = [];
+                for (let k = 0; k <= N; k++) {
+                    pmfValues.push(binomialPMF(k, N, p));
+                }
+
+                const maxY = 1.0; // Max probability for Y-axis is always 1.0
+
+                // X-axis scale (k values to SVG x coordinates)
+                // We need (N+1) slots for k from 0 to N
+                const xStep = CHART_AREA_WIDTH / (N + 1); // Space allocated for each k value
+                const getXPos = (k) => PADDING + k * xStep + xStep / 2; // Center of the bar slot
+
+                // Y-axis scale (probability to SVG y coordinates)
+                const getYPos = (prob) => PADDING + CHART_AREA_HEIGHT - (prob / maxY) * CHART_AREA_HEIGHT;
+
+
+                // --- Draw Axes ---
+                // X-axis line
+                const xAxisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                xAxisLine.setAttribute('x1', PADDING);
+                xAxisLine.setAttribute('y1', PADDING + CHART_AREA_HEIGHT);
+                xAxisLine.setAttribute('x2', PADDING + CHART_AREA_WIDTH);
+                xAxisLine.setAttribute('y2', PADDING + CHART_AREA_HEIGHT);
+                xAxisLine.setAttribute('stroke', '#333');
+                xAxisLine.setAttribute('stroke-width', '1');
+                svg.appendChild(xAxisLine);
+
+                // Y-axis line
+                const yAxisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                yAxisLine.setAttribute('x1', PADDING);
+                yAxisLine.setAttribute('y1', PADDING);
+                yAxisLine.setAttribute('x2', PADDING);
+                yAxisLine.setAttribute('y2', PADDING + CHART_AREA_HEIGHT);
+                yAxisLine.setAttribute('stroke', '#333');
+                yAxisLine.setAttribute('stroke-width', '1');
+                svg.appendChild(yAxisLine);
+
+                // --- Draw Axis Labels ---
+                // X-axis title
+                const xAxisTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                xAxisTitle.setAttribute('x', PADDING + CHART_AREA_WIDTH / 2);
+                xAxisTitle.setAttribute('y', SVG_HEIGHT - 10);
+                xAxisTitle.setAttribute('class', 'axis-label');
+                xAxisTitle.textContent = 'Number of Heads (k)';
+                svg.appendChild(xAxisTitle);
+
+                // Y-axis title
+                const yAxisTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                yAxisTitle.setAttribute('x', 15);
+                yAxisTitle.setAttribute('y', PADDING + CHART_AREA_HEIGHT / 2);
+                yAxisTitle.setAttribute('transform', `rotate(-90, 15, ${PADDING + CHART_AREA_HEIGHT / 2})`);
+                yAxisTitle.setAttribute('class', 'axis-label');
+                yAxisTitle.textContent = 'Probability P(X=k)';
+                svg.appendChild(yAxisTitle);
+
+
+                // --- Draw X-axis Ticks and Labels ---
+                for (let k = 0; k <= N; k++) {
+                    const x = getXPos(k);
+                    // Tick line
+                    const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    tick.setAttribute('x1', x);
+                    tick.setAttribute('y1', PADDING + CHART_AREA_HEIGHT);
+                    tick.setAttribute('x2', x);
+                    tick.setAttribute('y2', PADDING + CHART_AREA_HEIGHT + 5);
+                    tick.setAttribute('stroke', '#333');
+                    svg.appendChild(tick);
+
+                    // Label
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', x);
+                    label.setAttribute('y', PADDING + CHART_AREA_HEIGHT + 20);
+                    label.setAttribute('text-anchor', 'middle');
+                    label.setAttribute('class', 'tick-label');
+                    label.textContent = k;
+                    svg.appendChild(label);
+                }
+
+                // --- Draw Y-axis Ticks and Labels ---
+                const numYTicks = 5; // To show 0.0, 0.2, 0.4, 0.6, 0.8, 1.0
+                for (let i = 0; i <= numYTicks; i++) {
+                    const prob = (i / numYTicks) * maxY;
+                    const y = getYPos(prob);
+
+                    // Tick line
+                    const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    tick.setAttribute('x1', PADDING - 5);
+                    tick.setAttribute('y1', y);
+                    tick.setAttribute('x2', PADDING);
+                    tick.setAttribute('y2', y);
+                    tick.setAttribute('stroke', '#333');
+                    svg.appendChild(tick);
+
+                    // Label
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', PADDING - 10);
+                    label.setAttribute('y', y + 3); // Adjust for text vertical alignment
+                    label.setAttribute('text-anchor', 'end');
+                    label.setAttribute('class', 'tick-label');
+                    label.textContent = prob.toFixed(1);
+                    svg.appendChild(label);
+                }
+
+
+                // --- Draw Bars ---
+                const barWidth = xStep * 0.7; // 70% of the allocated space per k
+
+                pmfValues.forEach((prob, k) => {
+                    const x = getXPos(k) - barWidth / 2; // Center the bar within its slot
+                    const y = getYPos(prob);
+                    const height = CHART_AREA_HEIGHT - (y - PADDING); // Calculate height from bottom of chart area
+
+                    if (height > 0.5) { // Only draw if probability is significant enough to show (e.g., height > 0.5 SVG units)
+                        const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        bar.setAttribute('x', x);
+                        bar.setAttribute('y', y);
+                        bar.setAttribute('width', barWidth);
+                        bar.setAttribute('height', height);
+                        bar.setAttribute('fill', BAR_COLOR);
+                        bar.setAttribute('rx', '2'); // Rounded corners for bars
+                        bar.setAttribute('ry', '2');
+                        svg.appendChild(bar);
+                    }
+                });
+            }
+
+            // Initial draw on load
+            drawChart();
+
+            // Add event listeners for real-time updates
+            // The 'input' event ensures dynamic updates as the slider is dragged.
+            numFlipsSlider.addEventListener('input', drawChart);
+            probHeadsSlider.addEventListener('input', drawChart);
+
+        })();
+    </script>
+</div>

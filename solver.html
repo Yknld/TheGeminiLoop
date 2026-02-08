@@ -7,11 +7,12 @@
     <meta name="gemini-api-key" content="">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;">
     <title>Interactive Solver</title>
-    <link rel="stylesheet" href="homework-styles.css?v=1739021200">
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="homework-styles.css?v=1739021400">
+    <!-- Load MathJax synchronously so it is ready before homework-app.js runs (fixes formulas not rendering in production) -->
     <script>
         window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true }, options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] } };
     </script>
+    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
     <div class="loading-overlay" id="loading-overlay">
@@ -80,7 +81,7 @@
             <div class="module-modal-body" id="module-modal-body"></div>
         </div>
     </div>
-    <script src="homework-app.js?v=1739021200"></script>
+    <script src="homework-app.js?v=1739021400"></script>
     <script>
         // How the solver pulls module content:
         // 1. Auth: __SUPABASE_TOKEN__, __SUPABASE_URL__, __LESSON_ID__ (injected by parent or from URL).

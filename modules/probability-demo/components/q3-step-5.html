@@ -1,0 +1,320 @@
+<div class="module-container" style="
+    font-family: 'Arial', sans-serif;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    background-color: #fff;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+">
+    <style>
+        .module-container canvas {
+            display: block;
+            width: 100%; /* Make canvas responsive to its parent's width */
+            height: 320px; /* Fixed height for the drawing area */
+            background-color: #fff; /* Canvas background, plot area has its own grey */
+            border-radius: 4px;
+        }
+        .module-container .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .module-container .controls label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .module-container .controls input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        .module-container .controls input[type="range"]:hover {
+            opacity: 1;
+        }
+        .module-container .controls input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #2563eb; /* Blue for slider thumb */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
+        .module-container .controls input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #2563eb; /* Blue for slider thumb */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
+    </style>
+
+    <!-- Titles for the component -->
+    <div style="font-size: 18px; font-weight: bold; color: #333;">Coin Flips and the Bell Curve: Approaching Normality - Step 6</div>
+    <div style="font-size: 12px; color: #666; margin-top: -10px;">Module: probability-demo | Q3 | Step 6 of 6</div>
+
+    <!-- Added clear instructions/context -->
+    <p style="font-size: 14px; color: #555; margin-top: 10px; margin-bottom: 20px; line-height: 1.5;">
+        Observe how the discrete Binomial distribution (blue bars) of coin flip outcomes
+        approaches the continuous Normal distribution (green curve) as the number of flips (N) increases.
+        Use the slider below to change N and see this transformation in action.
+    </p>
+
+    <canvas id="binomialNormalCanvas"></canvas>
+
+    <div class="controls">
+        <!-- Defined slider range in label for clarity -->
+        <label for="nSlider">Number of Flips (N) [10-500]: <span id="nValue">100</span></label>
+        <input type="range" id="nSlider" min="10" max="500" step="10" value="100">
+    </div>
+
+    <script>
+        (function() {
+            let canvas, ctx;
+            let N_slider, N_value_span;
+
+            // Constants
+            const P_FIXED = 0.5;
+            const BAR_COLOR = '#4285F4'; // Google Blue
+            const CURVE_COLOR = '#34A853'; // Google Green
+            const BG_PLOT_COLOR = '#f5f5f5'; // Light grey background for plot area
+            const LABEL_COLOR = '#333';
+            const AXIS_COLOR = '#666';
+
+            // Padding for the chart inside the canvas to make space for labels and axes
+            const padding = { top: 40, right: 30, bottom: 60, left: 60 };
+
+            // Function to calculate log factorial for numerical stability with large N
+            function logFactorial(n) {
+                if (n < 0) return -Infinity;
+                let res = 0;
+                for (let i = 2; i <= n; i++) {
+                    res += Math.log(i);
+                }
+                return res;
+            }
+
+            // Function to calculate Binomial PMF (Probability Mass Function)
+            function getBinomialPMF(k, n, p) {
+                if (k < 0 || k > n) return 0;
+                // For p=0.5, p^k * (1-p)^(n-k) simplifies to (0.5)^n
+                const log_coeff = logFactorial(n) - logFactorial(k) - logFactorial(n - k);
+                const log_prob_term = n * Math.log(p); // This term (n * ln(p)) correctly represents ln(p^n) for p=0.5.
+                return Math.exp(log_coeff + log_prob_term);
+            }
+
+            // Function to calculate Normal PDF (Probability Density Function)
+            function getNormalPDF(x, mean, stdDev) {
+                if (stdDev <= 0) { // Handle cases where stdDev is zero (e.g., N=0 or p=0/1)
+                    return (x === mean && N_slider.value > 0) ? Infinity : 0;
+                }
+                const exponent = -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2));
+                return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+            }
+
+            // Main drawing function, called on slider input and window resize
+            window.drawCharts = function() {
+                const N = parseInt(N_slider.value);
+                N_value_span.textContent = N; // Ensures the displayed value updates
+
+                // Set canvas drawing buffer size to its actual rendered size
+                canvas.width = canvas.offsetWidth;
+                canvas.height = 320; // Fixed height for the drawing area
+
+                // Define plot area dimensions within the canvas
+                const plotWidth = canvas.width - padding.left - padding.right;
+                const plotHeight = canvas.height - padding.top - padding.bottom;
+
+                // Ensure plot dimensions are positive before proceeding
+                if (plotWidth <= 0 || plotHeight <= 0) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear even if no plot area
+                    return; // Abort drawing if plot area is invalid
+                }
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
+
+                // Draw plot area background
+                ctx.fillStyle = BG_PLOT_COLOR;
+                ctx.fillRect(padding.left, padding.top, plotWidth, plotHeight);
+
+                // Calculate mean (μ) and standard deviation (σ) for the Normal distribution
+                const mean = N * P_FIXED;
+                const stdDev = Math.sqrt(N * P_FIXED * (1 - P_FIXED));
+
+                // Get Binomial PMF values
+                const binomialData = [];
+                let maxProb = 0;
+                for (let k = 0; k <= N; k++) {
+                    const prob = getBinomialPMF(k, N, P_FIXED);
+                    binomialData.push(prob);
+                    if (prob > maxProb) maxProb = prob;
+                }
+
+                // Get Normal PDF values for plotting a smooth curve
+                const normalData = [];
+                // Sample points from -4 to +4 standard deviations around the mean, clamped by 0 and N
+                const xMinPDF = Math.max(0, mean - 4 * stdDev);
+                const xMaxPDF = Math.min(N, mean + 4 * stdDev);
+                // Ensure sufficient points for a smooth curve; at least 2, dynamically more for wider plot
+                const numPoints = Math.max(2, Math.floor(plotWidth / 2)); 
+                
+                for (let i = 0; i < numPoints; i++) {
+                    const x = xMinPDF + (xMaxPDF - xMinPDF) * (i / (numPoints - 1));
+                    const density = getNormalPDF(x, mean, stdDev);
+                    normalData.push({ x: x, y: density });
+                    // Update maxProb to accommodate PDF peak, only if stdDev > 0 to avoid issues with Infinity
+                    if (density > maxProb && stdDev > 0) maxProb = density; 
+                }
+                maxProb *= 1.1; // Add 10% buffer to the top for better visualization
+
+                // Fallback: If for some reason maxProb is still 0 (e.g., calculation issues), prevent division by zero
+                if (maxProb === 0) maxProb = 0.01; 
+
+                // Y-axis scaling factor: map probability range [0, maxProb] to plotHeight
+                const yScale = plotHeight / maxProb;
+
+                // X-axis scaling factor: map number of heads range [0, N] to plotWidth
+                const xScale = plotWidth / N;
+
+                // Draw X-axis
+                ctx.beginPath();
+                ctx.moveTo(padding.left, padding.top + plotHeight);
+                ctx.lineTo(padding.left + plotWidth, padding.top + plotHeight);
+                ctx.strokeStyle = AXIS_COLOR;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Draw Y-axis
+                ctx.beginPath();
+                ctx.moveTo(padding.left, padding.top);
+                ctx.lineTo(padding.left, padding.top + plotHeight);
+                ctx.strokeStyle = AXIS_COLOR;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Draw X-axis labels (Number of Heads (k))
+                ctx.font = '12px Arial';
+                ctx.fillStyle = LABEL_COLOR;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                // Adjust density of labels based on N
+                const xLabelStep = Math.max(1, Math.floor(N / 10)); // Ensure at least 1, up to N/10
+                for (let k = 0; k <= N; k += xLabelStep) {
+                    const xPos = padding.left + k * xScale;
+                    ctx.fillText(k, xPos, padding.top + plotHeight + 5);
+                }
+                // Ensure N is always labeled if not covered by step
+                if (N % xLabelStep !== 0 && N !== 0) {
+                     ctx.fillText(N, padding.left + N * xScale, padding.top + plotHeight + 5);
+                }
+                ctx.fillText('Number of Heads (k)', padding.left + plotWidth / 2, padding.top + plotHeight + 30);
+
+                // Draw Y-axis labels (Probability / Probability Density)
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                const numYLabels = 5; // Number of labels on Y-axis
+                for (let i = 0; i <= numYLabels; i++) {
+                    const value = (i / numYLabels) * maxProb;
+                    const yPos = padding.top + plotHeight - value * yScale;
+                    ctx.fillText(value.toFixed(2), padding.left - 5, yPos);
+                }
+                // Rotate and draw Y-axis title
+                ctx.save();
+                ctx.translate(padding.left - 40, padding.top + plotHeight / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText('Probability / Probability Density', 0, 0);
+                ctx.restore();
+
+                // Draw Binomial bars
+                ctx.fillStyle = BAR_COLOR;
+                const barWidthRatio = 0.9; // Bars take 90% of the unit width
+                const effectiveBarWidth = xScale * barWidthRatio;
+                for (let k = 0; k <= N; k++) {
+                    const x = padding.left + k * xScale - effectiveBarWidth / 2; // Center bar at k
+                    const height = binomialData[k] * yScale;
+                    const y = padding.top + plotHeight - height;
+                    if (height > 0) { // Only draw if height is positive and valid
+                        ctx.fillRect(x, y, effectiveBarWidth, height);
+                    }
+                }
+
+                // Draw Normal curve
+                ctx.beginPath();
+                ctx.strokeStyle = CURVE_COLOR;
+                ctx.lineWidth = 2;
+                if (normalData.length > 0) {
+                    // Move to the first point of the Normal curve
+                    ctx.moveTo(padding.left + normalData[0].x * xScale, padding.top + plotHeight - normalData[0].y * yScale);
+                    for (let i = 1; i < normalData.length; i++) {
+                        const x = padding.left + normalData[i].x * xScale;
+                        const y = padding.top + plotHeight - normalData[i].y * yScale;
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+
+                // Draw Mean and Std Dev labels on the graph
+                ctx.fillStyle = LABEL_COLOR;
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                const muText = `μ = Np = ${mean.toFixed(1)}`;
+                const sigmaText = `σ = √(Np(1-p)) = ${stdDev.toFixed(2)}`;
+                // Adjusted position for better readability
+                ctx.fillText(muText, padding.left + 20, padding.top + 20);
+                ctx.fillText(sigmaText, padding.left + 20, padding.top + 40);
+            };
+
+            // Initial setup on script load
+            // Changed to window.onload to ensure all elements are rendered and sized before drawing
+            window.addEventListener('load', function() {
+                canvas = document.getElementById('binomialNormalCanvas');
+                N_slider = document.getElementById('nSlider');
+                N_value_span = document.getElementById('nValue');
+                
+                // Defensive check: Ensure canvas is found
+                if (!canvas) {
+                    console.error('Canvas element not found!');
+                    return;
+                }
+                ctx = canvas.getContext('2d');
+
+                // Defensive check: Ensure 2D context is obtained
+                if (!ctx) {
+                    console.error('2D rendering context not supported or obtained!');
+                    return;
+                }
+
+                // Attach event listener to the slider for real-time updates
+                N_slider.addEventListener('input', window.drawCharts);
+
+                // Function to handle canvas resizing and redraw
+                const resizeAndDraw = () => {
+                    canvas.width = canvas.offsetWidth;
+                    canvas.height = 320; // Fixed height for the drawing area
+                    window.drawCharts(); // Call the drawing function
+                };
+
+                window.addEventListener('resize', resizeAndDraw);
+                resizeAndDraw(); // Call once to set initial size and draw the chart
+            });
+        })();
+    </script>
+</div>

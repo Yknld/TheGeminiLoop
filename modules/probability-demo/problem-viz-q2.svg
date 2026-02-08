@@ -1,0 +1,100 @@
+<svg width="550" height="400" viewBox="0 0 550 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background and Border -->
+  <rect x="0" y="0" width="550" height="400" fill="#f8fafc"/>
+  <rect x="1" y="1" width="548" height="398" stroke="#e2e8f0" stroke-width="2"/>
+
+  <!-- Define reusable styles and arrowhead marker -->
+  <defs>
+    <style type="text/css">
+      .text-color { fill: #0f172a; font-family: sans-serif; }
+      .primary-color-stroke { stroke: #2563eb; }
+      .line-style { stroke-width: 2; fill: none; }
+      .theoretical-line { stroke-dasharray: 4 4; }
+      .axis-label { font-size: 14px; font-weight: bold; }
+      .tick-label { font-size: 12px; }
+      .graph-label { font-size: 13px; font-weight: 600; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto-start-reverse">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0f172a" />
+    </marker>
+  </defs>
+
+  <!-- Axes -->
+  <!-- X-axis -->
+  <line x1="70" y1="320" x2="480" y2="320" stroke="#0f172a" stroke-width="1.5"/>
+  <!-- Y-axis -->
+  <line x1="70" y1="80" x2="70" y2="320" stroke="#0f172a" stroke-width="1.5"/>
+
+  <!-- X-axis Labels and Ticks -->
+  <text x="275" y="355" text-anchor="middle" class="text-color axis-label">Number of Flips (Trials)</text>
+  <line x1="70" y1="320" x2="70" y2="325" stroke="#0f172a" stroke-width="1"/>
+  <text x="70" y="335" text-anchor="middle" class="text-color tick-label">0</text>
+  
+  <line x1="120" y1="320" x2="120" y2="325" stroke="#0f172a" stroke-width="1"/>
+  <text x="120" y="335" text-anchor="middle" class="text-color tick-label">10</text>
+
+  <line x1="220" y1="320" x2="220" y2="325" stroke="#0f172a" stroke-width="1"/>
+  <text x="220" y="335" text-anchor="middle" class="text-color tick-label">100</text>
+
+  <line x1="360" y1="320" x2="360" y2="325" stroke="#0f172a" stroke-width="1"/>
+  <text x="360" y="335" text-anchor="middle" class="text-color tick-label">500</text>
+
+  <line x1="480" y1="320" x2="480" y2="325" stroke="#0f172a" stroke-width="1"/>
+  <text x="480" y="335" text-anchor="middle" class="text-color tick-label">1000</text>
+
+  <!-- Y-axis Labels and Ticks -->
+  <text x="35" y="200" text-anchor="middle" transform="rotate(-90 35 200)" class="text-color axis-label">Proportion of Heads</text>
+  <line x1="65" y1="320" x2="70" y2="320" stroke="#0f172a" stroke-width="1"/>
+  <text x="60" y="325" text-anchor="end" alignment-baseline="middle" class="text-color tick-label">0.0</text>
+  
+  <line x1="65" y1="260" x2="70" y2="260" stroke="#0f172a" stroke-width="1"/>
+  <text x="60" y="260" text-anchor="end" alignment-baseline="middle" class="text-color tick-label">0.25</text>
+
+  <line x1="65" y1="200" x2="70" y2="200" stroke="#0f172a" stroke-width="1"/>
+  <text x="60" y="200" text-anchor="end" alignment-baseline="middle" class="text-color tick-label">0.5</text>
+
+  <line x1="65" y1="140" x2="70" y2="140" stroke="#0f172a" stroke-width="1"/>
+  <text x="60" y="140" text-anchor="end" alignment-baseline="middle" class="text-color tick-label">0.75</text>
+
+  <line x1="65" y1="80" x2="70" y2="80" stroke="#0f172a" stroke-width="1"/>
+  <text x="60" y="80" text-anchor="end" alignment-baseline="middle" class="text-color tick-label">1.0</text>
+
+  <!-- Theoretical Probability Line (0.5) -->
+  <line x1="70" y1="200" x2="480" y2="200" class="primary-color-stroke line-style theoretical-line"/>
+  <text x="485" y="200" text-anchor="start" alignment-baseline="middle" class="text-color graph-label">Theoretical Probability (0.5)</text>
+
+  <!-- Observed Proportion of Heads Line -->
+  <!-- Manually set points to illustrate initial fluctuation and convergence to 0.5 -->
+  <!-- X-coordinates roughly scaled for 1, 10, 100, 500, 1000 flips -->
+  <!-- Y-coordinates scaled from 320 (0.0) to 80 (1.0) for a plot height of 240 units -->
+  <path class="primary-color-stroke line-style" stroke-width="3" d="
+    M 75 100 
+    L 85 200 
+    L 95 160 
+    L 105 240 
+    L 120 150 
+    L 140 210 
+    L 160 270 
+    L 180 170 
+    L 200 230 
+    L 220 205 
+    L 250 190 
+    L 280 215 
+    L 310 195 
+    L 360 202 
+    L 400 198 
+    L 440 201 
+    L 480 200.5
+  "/>
+  <text x="280" y="60" text-anchor="middle" class="text-color graph-label">Observed Proportion of Heads</text>
+  
+  <!-- Labels for "Short Run" vs "Long Run" and guiding arrows -->
+  <text x="140" y="280" text-anchor="middle" class="text-color tick-label" style="font-style: italic;">Short Run</text>
+  <polyline points="140,285 140,240" stroke="#0f172a" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="140" y="295" text-anchor="middle" class="text-color tick-label" style="font-style: italic;">(Fluctuating)</text>
+
+  <text x="400" y="280" text-anchor="middle" class="text-color tick-label" style="font-style: italic;">Long Run</text>
+  <polyline points="400,285 400,240" stroke="#0f172a" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="400" y="295" text-anchor="middle" class="text-color tick-label" style="font-style: italic;">(Stable)</text>
+
+</svg>

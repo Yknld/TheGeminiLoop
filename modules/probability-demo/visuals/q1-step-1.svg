@@ -1,0 +1,65 @@
+<svg width="500" height="300" viewBox="0 0 500 300">
+  <rect x="0" y="0" width="500" height="300" fill="#f8fafc"/>
+
+  <!-- Define metallic gradient for coin texture -->
+  <defs>
+    <radialGradient id="coinGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#fff8dc"/> <!-- Brightest center (pale gold) -->
+      <stop offset="25%" stop-color="#f0e68c"/> <!-- Lighter gold -->
+      <stop offset="50%" stop-color="#daa520"/> <!-- Mid-tone gold (goldenrod) -->
+      <stop offset="75%" stop-color="#b8860b"/> <!-- Darker gold (dark goldenrod) -->
+      <stop offset="100%" stop-color="#8b7b4e"/> <!-- Darkest edge (olive drab for shadow/rim) -->
+    </radialGradient>
+
+    <!-- Coin details - Heads side (simplified profile, like George Washington) -->
+    <g id="headsDetails">
+      <!-- Outer decorative ring/text area suggestion -->
+      <circle cx="0" cy="0" r="45" fill="none" stroke="#8b7b4e" stroke-width="1.5"/>
+      <circle cx="0" cy="0" r="48" fill="none" stroke="#8b7b4e" stroke-width="0.5"/>
+
+      <!-- Simplified profile representing a bust (e.g., George Washington) -->
+      <path d="M-15,20 C-25,10 -20,-10 -5,-25 C10,-20 15,-5 10,10 C5,20 -10,25 -15,20 Z" fill="#b8860b" stroke="#8b7b4e" stroke-width="0.5"/>
+      <path d="M-12,10 C-15,0 -10,-10 0,-15 C10,-10 12,0 10,10 C5,15 -8,15 -12,10 Z" fill="#f0e68c" stroke="#8b7b4e" stroke-width="0.5"/> <!-- Face inner -->
+      <path d="M-8,-10 Q-5,-13 0,-13 Q5,-13 8,-10" fill="none" stroke="#8b7b4e" stroke-width="1"/> <!-- Simplified jaw/chin line -->
+      <circle cx="0" cy="-25" r="5" fill="#daa520" stroke="#8b7b4e" stroke-width="0.5"/> <!-- Top of head / hair bun -->
+      <line x1="-10" y="25" x2="10" y="25" stroke="#8b7b4e" stroke-width="1"/> <!-- Represents a date or value at bottom -->
+    </g>
+
+    <!-- Coin details - Tails side (simplified eagle) -->
+    <g id="tailsDetails">
+      <!-- Outer decorative ring/text area suggestion -->
+      <circle cx="0" cy="0" r="45" fill="none" stroke="#8b7b4e" stroke-width="1.5"/>
+      <circle cx="0" cy="0" r="48" fill="none" stroke="#8b7b4e" stroke-width="0.5"/>
+
+      <!-- Simplified eagle silhouette -->
+      <path d="M0,-25 Q-15,-30 -30,-10 L-20,0 Q-10,15 0,10 Q10,15 20,0 L30,-10 Q15,-30 0,-25 Z" fill="#b8860b" stroke="#8b7b4e" stroke-width="0.5"/> <!-- Wings and body -->
+      <path d="M0,-25 C-5,-28 -8,-25 -8,-20 C-8,-15 0,-20 0,-25 Z" fill="#f0e68c" stroke="#8b7b4e" stroke-width="0.5"/> <!-- Left part of head -->
+      <path d="M0,-25 C5,-28 8,-25 8,-20 C8,-15 0,-20 0,-25 Z" fill="#f0e68c" stroke="#8b7b4e" stroke-width="0.5"/> <!-- Right part of head -->
+      <circle cx="0" cy="-25" r="3" fill="#fff8dc"/> <!-- Head highlight -->
+      <rect x="-10" y="10" width="20" height="8" fill="#daa520" stroke="#8b7b4e" stroke-width="0.5"/> <!-- Shield/banner -->
+      <path d="M-8,12 L-8,16 L-4,16 L-4,12 Z M0,12 L0,16 L4,16 L4,12 Z M8,12 L8,16 L4,16 L4,12 Z" fill="#8b7b4e"/> <!-- Stripes on shield/banner -->
+    </g>
+  </defs>
+
+  <!-- Left Coin (Heads) -->
+  <g transform="translate(150, 100)">
+    <!-- Subtle grey border for delineation -->
+    <circle r="65" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+    <!-- Coin itself -->
+    <circle r="60" fill="url(#coinGradient)"/>
+    <!-- Coin details for Heads -->
+    <use href="#headsDetails"/>
+  </g>
+  <text x="150" y="230" text-anchor="middle" font-family="sans-serif" font-size="24" fill="#0f172a">Heads</text>
+
+  <!-- Right Coin (Tails) -->
+  <g transform="translate(350, 100)">
+    <!-- Subtle grey border for delineation -->
+    <circle r="65" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+    <!-- Coin itself -->
+    <circle r="60" fill="url(#coinGradient)"/>
+    <!-- Coin details for Tails -->
+    <use href="#tailsDetails"/>
+  </g>
+  <text x="350" y="230" text-anchor="middle" font-family="sans-serif" font-size="24" fill="#0f172a">Tails</text>
+</svg>

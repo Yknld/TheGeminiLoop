@@ -1,0 +1,250 @@
+{
+  "id": "probability-demo",
+  "questions": [
+    {
+      "id": 0,
+      "problem": {
+        "title": "Theoretical Probability of a Coin Flip",
+        "text": "What is the theoretical probability of landing on heads when flipping a fair coin? Explain using the concept of sample space.",
+        "image": null,
+        "visualization": "problem-viz-q1.png"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "Theoretical probability quantifies the likelihood of an event occurring based on reasoned expectation rather than observation. It is defined as the ratio of the number of favorable outcomes to the total number of possible outcomes. Mathematically, it's expressed as: $P(\\\\text{Event}) = \\\\frac{\\\\text{Number of Favorable Outcomes}}{\\\\text{Total Number of Possible Outcomes}}$.",
+          "inputLabel": "In your own words, what does the 'total number of possible outcomes' represent in the probability formula?",
+          "inputPlaceholder": "Enter your explanation here...",
+          "correctAnswer": "All possible results|all possible outcomes|the complete set of results|every possible result|the set of all possible results|all outcomes|all possible events",
+          "audioExplanation": "This visualization helps you understand the fundamental formula for theoretical probability. By interacting with the sliders, you can see how changing the number of favorable outcomes or the total number of possible outcomes directly affects the calculated probability. This shows you how probability is a ratio that represents a part of the whole. The interactive module displays the probability formula $P(\\\\text{Event}) = \\\\frac{\\\\text{Favorable Outcomes}}{\\\\text{Total Outcomes}}$ and allows you to adjust the numerator (favorable outcomes) and denominator (total outcomes) with sliders, immediately showing the resulting probability as a fraction, decimal, and percentage. This helps you grasp the conceptual meaning of the probability ratio.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display the probability formula: $P(\\\\text{Event}) = \\\\frac{\\\\text{Favorable Outcomes}}{\\\\text{Total Outcomes}}$. Below the formula, provide two sliders. The first slider, labeled 'Number of Favorable Outcomes', should range from 0 to 10. The second slider, labeled 'Total Number of Possible Outcomes', should range from 1 to 10 (and always be greater than or equal to the 'Favorable Outcomes' slider's value). As the user adjusts these sliders, dynamically update and display the probability as a simplified fraction, a decimal (to two places), and a percentage. For example, if Favorable is 1 and Total is 2, it should show '1/2', '0.50', '50%'. This visualization helps to understand how the ratio works and how changes in the number of outcomes affect the probability.",
+          "moduleImage": null,
+          "audio": "audio/q1-step-0.wav",
+          "component": "components/q1-step-0.html",
+          "visual": null
+        },
+        {
+          "id": 1,
+          "explanation": "Before we can calculate probability, we need to identify all possible outcomes. The 'sample space' is the set of all possible outcomes for an experiment. For flipping a fair coin, there are two distinct possibilities.",
+          "inputLabel": "What are the two possible outcomes when flipping a single fair coin? (List them separated by a comma.)",
+          "inputPlaceholder": "e.g., Heads, Tails",
+          "correctAnswer": "Heads, Tails|Tails, Heads|Head, Tail|Tail, Head|heads, tails|tails, heads|head,tail|tail,head",
+          "audioExplanation": "This visualization helps you clearly define the sample space for a simple coin flip. Seeing the distinct representations of heads and tails makes it easy to understand what 'all possible outcomes' means in this context. It's a foundational step for any probability problem. The image displays two distinct panels or sections. One panel clearly shows the 'Heads' side of a coin, labeled 'Heads'. The other panel clearly shows the 'Tails' side of the same coin, labeled 'Tails'. These two panels visually represent the complete sample space, \\{Heads, Tails\\}, for a single coin flip.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "Two distinct circular images of a coin, side-by-side on a neutral background. The left image shows the 'Heads' side of a standard US quarter (or similar generic coin) clearly visible. Below it, centered, is the label 'Heads'. The right image shows the 'Tails' side of the same coin, clearly visible. Below it, centered, is the label 'Tails'. Both labels should be in a clear, sans-serif font. The coins should be realistically rendered with metallic texture. A subtle grey border around each coin image can further delineate them. The overall visual clearly communicates the two possible outcomes without additional text.",
+          "audio": "audio/q1-step-1.wav",
+          "component": null,
+          "visual": "visuals/q1-step-1.png"
+        },
+        {
+          "id": 2,
+          "explanation": "Now that we know the sample space (all possible outcomes), we need to identify the 'favorable outcome' for our specific event. In this problem, the event is 'landing on heads'.",
+          "inputLabel": "How many outcomes in the sample space correspond to the event 'landing on heads'?",
+          "inputPlaceholder": "Enter a number (e.g., 1, 2, 3)",
+          "correctAnswer": "1|one",
+          "audioExplanation": "This visualization helps you isolate the specific event we're interested in from the entire sample space. By seeing 'Heads' highlighted, you can easily identify what constitutes a 'favorable outcome' for this particular problem. This is crucial for correctly setting up your probability calculation. The image displays the same two coin faces as the previous step: 'Heads' and 'Tails'. However, the 'Heads' coin image is visually highlighted or emphasized (e.g., with a glowing border, a brighter color, or a larger size) while the 'Tails' coin image remains as before. A clear arrow or indicator points specifically to the 'Heads' coin, reinforcing that it represents the favorable outcome for the problem's event.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "Two distinct circular images of a coin, side-by-side. The left image shows the 'Heads' side, identical to the previous step. It is surrounded by a prominent, glowing blue border (hex code #007BFF) and slightly larger than the other coin, indicating selection. Below it, centered, is the label 'Heads'. The right image shows the 'Tails' side, without any special highlighting, maintaining its previous appearance. Below it, centered, is the label 'Tails'. A curved arrow, also in blue, originates from the general area between the coins and points directly to the center of the 'Heads' coin, further emphasizing it as the selected outcome. The background is neutral.",
+          "audio": "audio/q1-step-2.wav",
+          "component": null,
+          "visual": "visuals/q1-step-2.png"
+        },
+        {
+          "id": 3,
+          "explanation": "You've identified that the total number of possible outcomes (the sample space) is 2 (Heads, Tails) and the number of favorable outcomes for 'landing on heads' is 1. Now, let's plug these values into the theoretical probability formula: $$P(\\\\text{Heads}) = \\\\frac{\\\\text{Number of Favorable Outcomes (Heads)}}{\\\\text{Total Number of Possible Outcomes}}$$ $$P(\\\\text{Heads}) = \\\\frac{1}{2}$$",
+          "inputLabel": "What is the theoretical probability of landing on heads when flipping a fair coin? (Enter as a fraction, decimal, or percentage.)",
+          "inputPlaceholder": "e.g., 1/2, 0.5, 50%",
+          "correctAnswer": "1/2|0.5|50%|one half|0.50|1/2|1/2|50 percent|50%",
+          "audioExplanation": "This interactive module allows you to confirm your understanding of the final calculation. By inputting the favorable and total outcomes you've identified, you can instantly see the probability calculated and displayed in various formats. This helps reinforce the connection between the components of the formula and the final probability. The interactive module displays two input fields: one for 'Number of Favorable Outcomes' and one for 'Total Number of Possible Outcomes'. When you enter values (e.g., 1 and 2), the module immediately calculates and displays the result as a simplified fraction (1/2), a decimal (0.50), and a percentage (50%). This helps you verify your final answer and understand different representations of probability.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display the probability formula $P(\\\\text{Heads}) = \\\\frac{\\\\text{Favorable Outcomes}}{\\\\text{Total Outcomes}}$. Below this, provide two editable input fields. The first input field should be labeled 'Number of Favorable Outcomes' with a placeholder of '1'. The second input field should be labeled 'Total Number of Possible Outcomes' with a placeholder of '2'. A 'Calculate' button should be present. Upon clicking 'Calculate', or dynamically as values are entered, the module should display the calculated probability below the input fields in three formats: as a simplified fraction (e.g., '1/2'), as a decimal rounded to two places (e.g., '0.50'), and as a percentage (e.g., '50%'). The module should clearly show the substitution of entered values into the formula before displaying the results. For example, if '1' and '2' are entered, it would show $P(\\\\text{Heads}) = \\\\frac{1}{2}$ then 'Result: 1/2, 0.50, 50%'. This helps students see the direct application of the numbers to the formula and the resulting probability.",
+          "moduleImage": null,
+          "audio": "audio/q1-step-3.wav",
+          "component": "components/q1-step-3.html",
+          "visual": null
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "problem": {
+        "title": "Coin Flips and the Law of Large Numbers",
+        "text": "If we flip a coin 1,000 times, the results approach 50% heads. Explain why this happens using the Law of Large Numbers.",
+        "image": null,
+        "visualization": "problem-viz-q2.png"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "Let's start by considering a single, fair coin flip. A fair coin has two equally likely outcomes: heads or tails. Each outcome has a theoretical probability associated with it.",
+          "inputLabel": "What are the two possible outcomes when you flip a fair coin?",
+          "inputPlaceholder": "Type your answer here (e.g., side A, side B)",
+          "correctAnswer": "heads and tails|heads, tails|tails and heads|tails, heads|head and tail|tail and head",
+          "audioExplanation": "This visualization helps you clearly see the two distinct sides of a coin, representing the two possible outcomes of a single flip. By seeing the 'Heads' and 'Tails' sides, you can confirm that there are indeed two possibilities for each flip. The visualization is a simple, clear image of a coin with its two faces, 'Heads' and 'Tails', prominently displayed. This image helps you understand the basic components of the coin flip experiment.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A detailed, realistic illustration of a US quarter coin. One side (left) clearly shows 'Heads' (George Washington's profile) with the word 'HEADS' labeled beneath it in bold text. The other side (right) clearly shows 'Tails' (eagle design) with the word 'TAILS' labeled beneath it in bold text. The coin should be oriented slightly diagonally to show both faces clearly, as if suspended in air, with a clean white background. Use silver and copper tones for the coin. No additional text, questions, or numerical values.",
+          "audio": "audio/q2-step-0.wav",
+          "component": null,
+          "visual": "visuals/q2-step-0.png"
+        },
+        {
+          "id": 1,
+          "explanation": "Since a fair coin has two equally likely outcomes, the theoretical probability of getting heads on any single flip is 1 out of 2, or $1/2$. This can also be expressed as 50% or 0.5.",
+          "inputLabel": "What is the theoretical probability of flipping a head, expressed as a fraction?",
+          "inputPlaceholder": "Enter as a fraction (e.g., 1/2)",
+          "correctAnswer": "1/2|0.5|50%|one half|a half",
+          "audioExplanation": "This visualization allows you to see the individual probability of getting heads on a single flip. By highlighting one side of the coin as the 'favorable' outcome out of two total outcomes, you can intuitively grasp the concept of probability as a fraction. The visualization is a simple image of a coin, with the 'Heads' side prominently displayed and a large, clear label '1/2' or '50%' next to it, visually representing the theoretical probability. This helps you understand the mathematical likelihood for a single event.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A stylized illustration of a coin toss in mid-air. One side of the coin, the 'Heads' side, is clearly visible and highlighted with a faint glow (e.g., light yellow). Next to the coin, a large, clear fraction '$1/2$' is displayed. Below the fraction, the text '50% probability' is shown. The background is a clean, minimalist gradient from light blue to white. The coin should be a generic coin, not specific currency, showing a clear 'H' on one side and 'T' on the other. Only the 'H' side is facing the viewer.",
+          "audio": null,
+          "component": null,
+          "visual": "visuals/q2-step-1.png"
+        },
+        {
+          "id": 2,
+          "explanation": "When you flip a coin only a few times, say 5 or 10 times, the actual number of heads you get might not be exactly 50%. You could get 2 heads out of 5 (40%), or even 5 heads out of 5 (100%). This observed frequency can vary quite a bit from the theoretical 50% with a small number of trials.",
+          "inputLabel": "If you flip a coin only a few times, do you expect the percentage of heads to always be exactly 50%?",
+          "inputPlaceholder": "Yes/No",
+          "correctAnswer": "No|no|N|n",
+          "audioExplanation": "This interactive module helps you understand that with a small number of trials, the observed results can be quite random and might not match the theoretical probability. By simulating a small number of coin flips, you can visually see the percentage of heads fluctuate, reinforcing the idea that short runs don't guarantee 50%. The visualization is an interactive coin flip simulator. It has a 'Flip Coin' button and a counter for the number of flips, heads, and the current percentage of heads. You can click the button multiple times to see the percentage change with each flip, demonstrating variability in small samples.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Create an interactive coin flip simulator. The module should display a visual representation of a coin (e.g., a spinning coin animation) that lands on either 'Heads' or 'Tails'. Below the coin, there should be:\n1.  A counter for 'Number of Flips:'.\n2.  A counter for 'Heads Count:'.\n3.  A counter for 'Tails Count:'.\n4.  A display for 'Percentage Heads:'.\n5.  A 'Flip Coin' button. When clicked, the coin animates, lands on either heads or tails (50/50 chance for each outcome), and all counters update in real-time. The initial state should be all counters at 0. The purpose is to show that with a small number of flips (e.g., 1-10 clicks), the 'Percentage Heads' can deviate significantly from 50%. The module should emphasize the variability of small sample sizes. The 'Percentage Heads' should be calculated as (Heads Count / Number of Flips) * 100%. Ensure clear labels and easy-to-read numbers.",
+          "moduleImage": null,
+          "audio": "audio/q2-step-2.wav",
+          "component": "components/q2-step-2.html",
+          "visual": null
+        },
+        {
+          "id": 3,
+          "explanation": "The Law of Large Numbers (LLN) explains this phenomenon. It states that as the number of trials or observations in an experiment increases, the observed (or empirical) frequency of an event will approach its theoretical (or expected) probability. In simpler terms, the more times you repeat an experiment, the closer your average result will get to the true average.",
+          "inputLabel": "What statistical law describes how observed frequency approaches theoretical probability with more trials?",
+          "inputPlaceholder": "Type the name of the law",
+          "correctAnswer": "Law of Large Numbers|The Law of Large Numbers|LLN",
+          "audioExplanation": "This interactive visualization helps you grasp the core concept of the Law of Large Numbers by showing a clear trend towards the theoretical probability. As you increase the number of simulated flips, you'll observe the percentage of heads consistently converging towards 50%, demonstrating the law in action. The visualization is an interactive graph. The x-axis represents the 'Number of Flips', and the y-axis represents the 'Percentage of Heads'. There's a horizontal line at 50% (theoretical probability). When you click a 'Start Simulation' or 'Add More Flips' button, the graph plots the cumulative percentage of heads over an increasing number of flips. The line representing the observed percentage should fluctuate wildly at first but then smooth out and get progressively closer to the 50% line as the number of flips grows, illustrating the convergence dictated by the LLN.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Create an interactive graph demonstrating the Law of Large Numbers. The graph should have two axes:\n1.  X-axis: 'Number of Flips' (ranging from 1 to 1000+).\n2.  Y-axis: 'Percentage of Heads' (ranging from 0% to 100%).\nDraw a horizontal dashed line at 50% on the Y-axis, labeled 'Theoretical Probability (50%)'.\nThere should be a 'Start Simulation' button. When clicked, the module should animate the flipping of a coin many times (e.g., 1,000 flips). For each flip, calculate the cumulative percentage of heads (Heads Count / Total Flips) and plot it as a point on the graph, connecting the points to form a line.\nInitially, the line will oscillate widely around 50%, but as the number of flips increases, the line should visibly 'settle down' and get progressively closer to the 50% theoretical probability line. The animation speed should be adjustable, or there should be a 'Run X Flips' button (e.g., Run 100 Flips, Run 500 Flips, Run 1000 Flips) to show the progression in chunks. The goal is to visually demonstrate the convergence.",
+          "moduleImage": null,
+          "audio": "audio/q2-step-3.wav",
+          "component": "components/q2-step-3.html",
+          "visual": null
+        },
+        {
+          "id": 4,
+          "explanation": "Applying the Law of Large Numbers to our coin flip scenario, as you increase the number of flips from a small amount to 1,000, the observed percentage of heads will get closer and closer to the theoretical probability of 50%. While it might not be exactly 500 heads, it will be very close, like 498 or 503, due to the stabilizing effect of more trials.",
+          "inputLabel": "In the coin flip problem, what specific effect of the Law of Large Numbers causes the results to approach 50% heads?",
+          "inputPlaceholder": "Explain in your own words",
+          "correctAnswer": "The observed frequency of heads approaches the theoretical probability of 50% as the number of flips increases.|As the number of trials increases, the actual results get closer to the expected probability.|More flips mean the sample average converges to the true probability.|The increasing number of trials causes the observed percentage to stabilize around 50%.",
+          "audioExplanation": "This interactive module allows you to see the convergence more clearly over a very large number of trials, specifically up to the 1,000 flips mentioned in the problem. By watching the graph stabilize around the 50% mark, you can confirm how the Law of Large Numbers applies to a real-world example like coin flipping. The visualization is the same interactive graph from the previous step, but focused on simulating and plotting up to 1,000 coin flips. It should clearly show the line representing the 'Percentage of Heads' settling very close to the 50% theoretical probability line by the time it reaches 1,000 flips on the x-axis, emphasizing the effect of large numbers.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Re-use and enhance the interactive graph from the previous step. The graph should still have the X-axis for 'Number of Flips' (now explicitly ranging up to 1,000) and the Y-axis for 'Percentage of Heads' (0% to 100%), with the 50% theoretical probability line. Add a control (e.g., a slider or input field) that allows the user to set the 'Total Number of Flips' up to 1,000. When the user sets a number and clicks 'Run Simulation', the graph should animate the results of that many coin flips, plotting the cumulative percentage of heads. The animation should clearly show the initial fluctuations and the subsequent strong convergence towards the 50% line as the number of flips approaches 1,000. Highlight the final point at 1,000 flips, showing its close proximity to 50%. The purpose is to concretely illustrate how the observed frequency approaches the theoretical probability over a large number of trials, as stated in the problem.",
+          "moduleImage": null,
+          "audio": "audio/q2-step-4.wav",
+          "component": "components/q2-step-4.html",
+          "visual": null
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "problem": {
+        "title": "Coin Flips and the Bell Curve: Approaching Normality",
+        "text": "As we increase the number of coin flips, the distribution of heads follows a specific pattern. Describe how this distribution approaches a Normal Distribution (Bell Curve).",
+        "image": null,
+        "visualization": "problem-viz-q3.png"
+      },
+      "steps": [
+        {
+          "id": 0,
+          "explanation": "Before looking at many flips, let's consider a single coin flip. This is a basic event with two possible outcomes: heads or tails. In probability, such an event is called a Bernoulli trial. For a fair coin, the probability of getting heads, denoted as $p$, is $0.5$. The probability of getting tails is then $1-p$.",
+          "inputLabel": "For a fair coin, what is the probability of flipping heads?",
+          "inputPlaceholder": "Enter the probability as a decimal (e.g., 0.5)",
+          "correctAnswer": "0.5|0.50|1/2|one half|a half|.5|p=0.5|p = 0.5",
+          "audioExplanation": "This visualization helps you grasp the fundamental building block of our problem: a single coin flip. You can clearly see the two distinct outcomes, heads and tails, and understand that each has an equal chance for a fair coin. The image directly illustrates what a Bernoulli trial looks like and the concept of an event having a specific probability of occurring.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A simple diagram showing a single coin. On the left side, an icon representing the 'Heads' side of a coin with the label 'Heads (Probability = 0.5)'. On the right side, an icon representing the 'Tails' side of a coin with the label 'Tails (Probability = 0.5)'. A large curved arrow should point from the central coin icon to both outcome icons, indicating the potential results of a flip. Use a clean, minimalist style. Colors: Coin border in gold (#FFD700), 'Heads' label text in blue (#4285F4), 'Tails' label text in red (#DB4437). Background is white.",
+          "audio": "audio/q3-step-0.wav",
+          "component": null,
+          "visual": "visuals/q3-step-0.png"
+        },
+        {
+          "id": 1,
+          "explanation": "When you perform a series of $N$ independent Bernoulli trials (like flipping a coin $N$ times) and count the number of \\\"successes\\\" (e.g., number of heads), the distribution of these counts is called a Binomial Distribution. It's defined by two parameters: $N$ (the number of trials) and $p$ (the probability of success on a single trial). The probability of getting exactly $k$ heads in $N$ flips is given by the formula: $P(X=k) = \\binom{N}{k} p^k (1-p)^{N-k}$ where $\\binom{N}{k} = \\frac{N!}{k!(N-k)!}$ is the binomial coefficient.",
+          "inputLabel": "What are the two parameters that define a Binomial Distribution?",
+          "inputPlaceholder": "e.g., N and P | trials and probability",
+          "correctAnswer": "N and p|N, p|p and N|p, N|number of trials and probability of success|trials and probability|number of flips and probability of heads|flips and probability|number of attempts and probability|trials, probability|probability, trials",
+          "audioExplanation": "This visualization allows you to actively explore how the Binomial distribution looks for a small number of flips. By adjusting the probability of heads, you can observe how the distribution shifts, helping you understand its sensitivity to changes in the underlying event probability. The graph displays the probability mass function (PMF) of the Binomial distribution for a set number of trials, showing the likelihood of different numbers of heads.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Visualize the Probability Mass Function (PMF) of a Binomial Distribution. The x-axis should represent the 'Number of Heads (k)' ranging from 0 to N. The y-axis should represent 'Probability P(X=k)'. Display the PMF as a bar chart (histogram).\n\nControls:\n- A slider labeled 'Number of Flips (N)' with a range from 1 to 10, stepping by 1. Default to 5.\n- A slider labeled 'Probability of Heads (p)' with a range from 0.05 to 0.95, stepping by 0.05. Default to 0.5.\n\nVisualization:\n- A bar chart where each bar's height represents $P(X=k)$ for the given $N$ and $p$.\n- As the user adjusts $N$ or $p$, the bar chart should update in real-time.\n- For $N=5, p=0.5$, the chart should be symmetrical around the theoretical mean ($N \\times p = 2.5$), with peaks at $k=2$ and $k=3$.\n- Each bar should be distinct, using a consistent vibrant blue color (#4285F4).\n- The plot area should have a light grey background and clearly labeled axes.\n\nEducational Purpose: This module demonstrates that the Binomial distribution describes the probability of getting $k$ successes in $N$ trials. Manipulating $N$ and $p$ shows how the shape changes, giving an intuitive feel for its parameters and its discrete nature for small $N$. It helps visualize the basic properties of the Binomial PMF.",
+          "moduleImage": null,
+          "audio": "audio/q3-step-1.wav",
+          "component": "components/q3-step-1.html",
+          "visual": null
+        },
+        {
+          "id": 2,
+          "explanation": "Now, let's observe what happens to the shape of the Binomial distribution as we significantly increase the number of coin flips, $N$. You'll notice a remarkable transformation: the discrete bar chart starts to become smoother and more symmetrical.",
+          "inputLabel": "As the number of coin flips (N) increases, what common shape does the distribution of heads start to resemble?",
+          "inputPlaceholder": "e.g., Bell curve | Symmetrical curve",
+          "correctAnswer": "Bell curve|bell-curve|bellcurve|bell shape|bell-shape|bellshape|symmetrical curve|symmetric curve|mound shape|mound-shape|moundshape|bell|symmetrical|symmetric",
+          "audioExplanation": "This interactive graph is crucial for understanding the core concept of the problem. As you increase the number of flips, you can visually observe the distinct change in the distribution's shape, becoming more and more symmetrical and 'bell-like'. This direct observation helps you intuitively grasp the pattern described in the problem statement. The visualization shows a histogram of the Binomial distribution that dynamically updates, allowing you to see its transformation from a few bars into a smooth, recognizable curve.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display the Probability Mass Function (PMF) of a Binomial Distribution as a bar chart. The x-axis should be 'Number of Heads (k)' from 0 to N. The y-axis should be 'Probability P(X=k)'.\n\nControls:\n- A slider labeled 'Number of Flips (N)' with a range from 1 to 100, stepping by 1. Default to 10.\n- The 'Probability of Heads (p)' should be fixed at 0.5 (representing a fair coin), with no slider for $p$.\n\nVisualization:\n- A bar chart representing $P(X=k)$ for the current $N$. The bars should be a consistent vibrant blue (#4285F4).\n- As $N$ increases, the bars should become narrower and more numerous, collectively forming a smoother, increasingly symmetrical, bell-shaped outline.\n- Highlight the mean of the distribution, which is $N \\times p$, by drawing a vertical dashed line in red (#EA4335) at $k=N/2$. This line should update its position with $N$.\n- The plot area should have a light grey background and clearly labeled axes.\n\nEducational Purpose: This module directly illustrates how increasing the number of trials ($N$) causes the discrete Binomial distribution to approximate a continuous, bell-shaped curve. It's a visual demonstration of the underlying principle leading to the Central Limit Theorem, allowing students to observe the shape change dynamically.",
+          "moduleImage": null,
+          "audio": "audio/q3-step-2.wav",
+          "component": "components/q3-step-2.html",
+          "visual": null
+        },
+        {
+          "id": 3,
+          "explanation": "The \\\"bell curve\\\" you're observing is formally known as the Normal Distribution. It's a continuous probability distribution that is symmetric around its mean, with probabilities highest around the mean and tapering off towards the tails. It's characterized by two parameters: its mean ($\\mu$) and its standard deviation ($\\sigma$). Many natural phenomena follow a Normal Distribution.",
+          "inputLabel": "What two parameters define a Normal Distribution?",
+          "inputPlaceholder": "e.g., Mean and standard deviation",
+          "correctAnswer": "Mean and standard deviation|mean, standard deviation|standard deviation and mean|standard deviation, mean|mu and sigma|\\\\mu and \\\\sigma|mu, sigma|average and spread|center and spread",
+          "audioExplanation": "This image gives you a clear visual representation of what a Normal Distribution, or 'bell curve', looks like. You can easily identify its characteristic symmetrical shape and understand that its peak indicates the most probable values. The labels for the mean and standard deviation help you understand the key parameters that define this specific curve.",
+          "visualizationType": "image",
+          "modulePrompt": null,
+          "moduleImage": "A classic bell-shaped curve (Normal Distribution) drawn on a coordinate plane with clear x and y axes. The x-axis should be labeled 'Value' and the y-axis 'Probability Density'. The curve itself should be smooth and continuous, centered symmetrically. A vertical dashed line should extend from the peak of the curve down to the x-axis, clearly labeled with 'Mean (\\\\mu)'. Two more vertical dashed lines should be placed symmetrically on either side of the mean, one standard deviation away from the mean, labeled '(\\\\mu - \\\\sigma)' and '(\\\\mu + \\\\sigma)' respectively. Shade the area under the curve between the '(\\\\mu - \\\\sigma)' and '(\\\\mu + \\\\sigma)' lines to visually represent approximately 68% of the data. Colors: Curve in dark blue (#1A73E8). Mean line in red (#EA4335). Standard deviation lines in orange (#F29900). Shaded area in a lighter blue (#D1E2FC). All labels in black, prominent font.",
+          "audio": "audio/q3-step-3.wav",
+          "component": null,
+          "visual": "visuals/q3-step-3.png"
+        },
+        {
+          "id": 4,
+          "explanation": "The reason the distribution of heads approaches a Normal Distribution is due to a powerful statistical principle known as the Central Limit Theorem (CLT). The CLT states that, under certain conditions (like having a sufficiently large number of independent trials), the sampling distribution of the sample mean (or sum, like the number of heads) will be approximately normally distributed, regardless of the shape of the original population distribution. For a Binomial distribution, when $N$ is large, the mean of the approximating Normal distribution is $\\mu = Np$ and its standard deviation is $\\sigma = \\sqrt{Np(1-p)}$.",
+          "inputLabel": "What statistical theorem explains why the distribution of heads approaches a Normal Distribution for a large number of flips?",
+          "inputPlaceholder": "e.g., Central Limit Theorem",
+          "correctAnswer": "Central Limit Theorem|CLT|central limit theorem|central limit theory|Central Limit|The Central Limit Theorem",
+          "audioExplanation": "This interactive visualization is where everything comes together. You can see the discrete bar chart of the Binomial distribution and, simultaneously, the continuous Normal distribution overlaid on top. As you increase the number of flips, you'll observe how the Normal curve becomes an increasingly accurate fit for the Binomial bars. This directly demonstrates the Central Limit Theorem by showing the approximation in real-time.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display a bar chart of the Binomial Distribution's PMF, as in Step 3. Overlaid on this bar chart, draw the Probability Density Function (PDF) of a Normal Distribution.\n\nControls:\n- A slider labeled 'Number of Flips (N)' with a range from 1 to 200, stepping by 1. Default to 20.\n- The 'Probability of Heads (p)' should be fixed at 0.5 (for a fair coin), with no slider for $p$.\n\nVisualization:\n- The Binomial bar chart should update as N changes (blue bars #4285F4).\n- The Normal Distribution curve should be plotted using parameters: Mean (\\\\mu) = $N \\times p$ and Standard Deviation (\\\\sigma) = $\\sqrt{N \\times p \\times (1-p)}$.\n- The Normal curve should be a smooth, continuous line (e.g., bright green #34A853) that overlays and increasingly approximates the shape of the Binomial bars as $N$ increases.\n- For small $N$, the fit won't be perfect, but as $N$ grows, the Normal curve should neatly encapsulate the tops of the bars.\n- The x-axis should be labeled 'Number of Heads (k)' and the y-axis 'Probability / Probability Density'. The plot area should have a light grey background and clearly labeled axes.\n\nEducational Purpose: This module visually confirms the Central Limit Theorem. By seeing the Normal Distribution curve fit the Binomial bars more closely as $N$ increases, students gain an intuitive understanding of how a discrete distribution can be approximated by a continuous one under specific conditions.",
+          "moduleImage": null,
+          "audio": "audio/q3-step-4.wav",
+          "component": "components/q3-step-4.html",
+          "visual": null
+        },
+        {
+          "id": 5,
+          "explanation": "So, to summarize, as the number of coin flips ($N$) increases, the discrete probability distribution of the number of heads (which is a Binomial distribution) becomes more symmetrical and bell-shaped. This transformation means it starts to closely resemble a continuous Normal Distribution. The Central Limit Theorem explains this phenomenon, stating that for a large number of independent trials, the sum (or average) of outcomes will be approximately normally distributed. This approximation becomes better and better as $N$ gets larger.",
+          "inputLabel": "In your own words, describe how the distribution of heads approaches a Normal Distribution as the number of coin flips increases.",
+          "inputPlaceholder": "The distribution becomes...",
+          "correctAnswer": "As the number of coin flips increases, the discrete binomial distribution of the number of heads becomes more symmetrical and bell-shaped, closely resembling the continuous normal distribution. The peaks become higher, the spread increases proportionally to the square root of N, and the distribution smooths out, making the normal distribution a good approximation due to the Central Limit Theorem.|With more flips, the binomial distribution of heads gets more symmetrical and bell-shaped, looking like a normal distribution, as explained by the Central Limit Theorem.|The distribution of heads becomes more like a bell curve with more flips because of the Central Limit Theorem.|The discrete distribution gets smoother and bell-shaped, approaching a normal distribution as N gets large, due to the Central Limit Theorem.|The distribution becomes more bell-shaped and symmetric, approximating a Normal Distribution more closely as the number of flips increases, according to the Central Limit Theorem.|As N increases, the Binomial distribution for heads becomes more bell-shaped and can be approximated by a Normal distribution, as per the Central Limit Theorem.",
+          "audioExplanation": "This final interactive visualization allows you to see the culmination of what you've learned. With a high number of flips, you can clearly observe the excellent fit of the Normal distribution curve over the Binomial bars. This reinforces your understanding of how the approximation works and provides a strong visual summary of the Central Limit Theorem. The module shows a Binomial distribution's histogram and its Normal approximation, allowing you to set a very high number of flips to see the convergence in its near-final state.",
+          "visualizationType": "interactive",
+          "modulePrompt": "Display a bar chart of the Binomial Distribution's PMF and overlay the Normal Distribution PDF, similar to Step 5.\n\nControls:\n- A slider labeled 'Number of Flips (N)' with a range from 10 to 500, stepping by 10. Default to 100.\n- The 'Probability of Heads (p)' should be fixed at 0.5 (for a fair coin), with no slider for $p$.\n\nVisualization:\n- The Binomial bar chart (blue bars #4285F4) and the Normal Distribution curve (green line #34A853) should update in real-time as N changes.\n- Emphasis should be on showing a very close fit between the two distributions for larger $N$ values, visually demonstrating strong convergence.\n- Clearly label the mean (\\\\mu = Np) and standard deviation (\\\\sigma = \\\\sqrt{Np(1-p)}) on the graph, perhaps as dynamically updating text annotations or markers at 1 standard deviation from the mean.\n- The x-axis should be 'Number of Heads (k)' and the y-axis 'Probability / Probability Density'. The plot area should have a light grey background and clearly labeled axes.\n\nEducational Purpose: This module serves as a powerful visual summary, showing the Normal approximation to the Binomial distribution for a very large number of trials. It solidifies the understanding that the discrete distribution of heads essentially \\\"becomes\\\" a continuous Normal distribution as $N$ grows, highlighting the Central Limit Theorem's practical implication.",
+          "moduleImage": null,
+          "audio": "audio/q3-step-5.wav",
+          "component": "components/q3-step-5.html",
+          "visual": null
+        }
+      ]
+    }
+  ],
+  "generated": "2026-02-07T20:20:05.043705",
+  "version": "2.0"
+}

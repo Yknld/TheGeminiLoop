@@ -1,0 +1,274 @@
+<div class="module-container" style="
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #f0f4f8;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 15px;
+    position: relative;
+    overflow: hidden;
+">
+    <style>
+        .scale-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 200px;
+            position: relative;
+        }
+
+        .scale-base {
+            width: 120px;
+            height: 20px;
+            background-color: #555;
+            border-radius: 5px 5px 0 0;
+            position: absolute;
+            bottom: 0;
+            transform: translateX(-50%);
+            left: 50%;
+        }
+
+        .scale-pillar {
+            width: 10px;
+            height: 120px;
+            background-color: #555;
+            border-radius: 5px;
+            position: absolute;
+            bottom: 20px;
+            transform: translateX(-50%);
+            left: 50%;
+        }
+
+        .scale-pivot {
+            width: 20px;
+            height: 20px;
+            background-color: #333;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 140px; /* Center at 150px */
+            transform: translateX(-50%);
+            left: 50%;
+            z-index: 2;
+        }
+
+        .scale-beam {
+            width: 80%;
+            max-width: 400px;
+            height: 8px;
+            background-color: #888;
+            border-radius: 4px;
+            position: absolute;
+            bottom: 146px; /* Align center with pivot center (150px - 4px) */
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start; /* Align pans at top of their containers */
+            transform: translateX(-50%) rotateZ(0deg); /* Initial balance */
+            left: 50%;
+            transition: transform 0.5s ease-in-out;
+            transform-origin: center center; /* Rotate from the pivot point */
+            z-index: 1;
+        }
+
+        .scale-pan-container {
+            width: 45%;
+            height: 60px; /* Space for the pan and its connection */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .scale-pan-container::before {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 30px; /* Rope length */
+            background-color: #888;
+            top: 0; /* Starts from the beam level */
+            transform-origin: top center;
+            transform: rotateZ(0deg);
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .left-pan-container::before { left: calc(50% - 15px); transform: rotateZ(-5deg); }
+        .right-pan-container::before { right: calc(50% - 15px); transform: rotateZ(5deg); }
+
+        .scale-pan {
+            width: 100px;
+            height: 20px;
+            background-color: #a7b7c7;
+            border-radius: 10px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+            position: absolute;
+            top: 30px; /* Position below the 'rope' */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-end;
+            padding: 5px;
+            gap: 2px;
+            min-height: 40px;
+            box-sizing: border-box;
+        }
+
+        .block {
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+        .x-block {
+            width: 30px;
+            height: 30px;
+            background-color: #2563eb; /* Blue */
+        }
+        .one-block {
+            width: 20px;
+            height: 20px;
+            background-color: #16a34a; /* Green */
+        }
+
+        .block.fade-out {
+            opacity: 0;
+            transform: translateY(20px) scale(0.5);
+        }
+
+        .equation-display {
+            margin-top: 25px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            min-height: 40px;
+            text-align: center;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-button {
+            background-color: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .action-button:active {
+            transform: translateY(1px);
+        }
+
+        .action-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+    </style>
+
+    <div class="scale-wrapper">
+        <div class="scale-base"></div>
+        <div class="scale-pillar"></div>
+        <div class="scale-pivot"></div>
+        <div class="scale-beam" id="scaleBeam">
+            <div class="scale-pan-container left-pan-container">
+                <div class="scale-pan" id="leftPan"></div>
+            </div>
+            <div class="scale-pan-container right-pan-container">
+                <div class="scale-pan" id="rightPan"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="equation-display" id="equationDisplay">2x + 5 = 13</div>
+
+    <div class="controls">
+        <button class="action-button" id="subtractFiveButton">Subtract 5</button>
+    </div>
+
+    <script>
+        (function() {
+            const leftPan = document.getElementById('leftPan');
+            const rightPan = document.getElementById('rightPan');
+            const scaleBeam = document.getElementById('scaleBeam');
+            const equationDisplay = document.getElementById('equationDisplay');
+            const subtractFiveButton = document.getElementById('subtractFiveButton');
+
+            function createBlock(type, count, pan) {
+                for (let i = 0; i < count; i++) {
+                    const block = document.createElement('div');
+                    block.className = `block ${type}-block ${type === 'one' ? 'unit-' + (pan.id === 'leftPan' ? 'left' : 'right') : ''}`;
+                    block.textContent = type === 'x' ? 'x' : '1';
+                    pan.appendChild(block);
+                }
+            }
+
+            function initializeScale() {
+                leftPan.innerHTML = '';
+                rightPan.innerHTML = '';
+
+                createBlock('x', 2, leftPan);
+                createBlock('one', 5, leftPan);
+                createBlock('one', 13, rightPan);
+
+                equationDisplay.textContent = '2x + 5 = 13';
+                scaleBeam.style.transform = 'translateX(-50%) rotateZ(0deg)';
+                subtractFiveButton.disabled = false;
+            }
+
+            function animateSubtraction() {
+                subtractFiveButton.disabled = true;
+
+                const leftUnits = Array.from(document.querySelectorAll('.unit-left')).slice(-5);
+                const rightUnits = Array.from(document.querySelectorAll('.unit-right')).slice(-5);
+
+                leftUnits.forEach(block => block.classList.add('fade-out'));
+                rightUnits.forEach(block => block.classList.add('fade-out'));
+
+                // Animate scale dip
+                scaleBeam.style.transition = 'transform 0.5s ease-in-out';
+                scaleBeam.style.transform = 'translateX(-50%) rotateZ(2deg)'; // Dip slightly
+
+                // Update equation Phase 1
+                equationDisplay.textContent = '2x + 5 - 5 = 13 - 5';
+
+                setTimeout(() => {
+                    // Remove faded blocks from DOM
+                    leftUnits.forEach(block => block.remove());
+                    rightUnits.forEach(block => block.remove());
+
+                    // Re-balance scale
+                    scaleBeam.style.transform = 'translateX(-50%) rotateZ(0deg)';
+                    
+                    // Update equation Phase 2
+                    equationDisplay.textContent = '2x = 8';
+
+                }, 700); // Allow fade-out and initial scale dip to complete
+            }
+
+            subtractFiveButton.addEventListener('click', animateSubtraction);
+            initializeScale();
+        })();
+    </script>
+</div>

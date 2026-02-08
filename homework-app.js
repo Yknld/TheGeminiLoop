@@ -78,7 +78,7 @@
                     return;
                 }
                 let attempts = 0;
-                const maxAttempts = 100;
+                const maxAttempts = 200;
                 const check = () => {
                     if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
                         resolve();
@@ -1959,9 +1959,14 @@ CRITICAL JSON FORMATTING REQUIREMENTS:
                 }
             });
 
-            // Typeset all math in problem + steps (MathJax script loads async; this runs when ready)
+            // Typeset all math in problem + steps
             const problemSection = document.getElementById('problem-section');
-            if (problemSection && stepsList) typesetMath([problemSection, stepsList]);
+            if (problemSection && stepsList) {
+                typesetMath([problemSection, stepsList]);
+                // Retry after 2s and 4s (production CDN can be slower; ensures formulas render)
+                setTimeout(() => typesetMath([problemSection, stepsList]), 2000);
+                setTimeout(() => typesetMath([problemSection, stepsList]), 4000);
+            }
 
             // Initialize step state tracking
             initializeStepStates(steps.length);
@@ -3955,18 +3960,14 @@ The SVG should contain ONLY the diagram illustration showing the problem setup, 
             return (meta && meta.getAttribute('content')) || 'Kore';
         })();
         
-        // Get Supabase configuration from meta tags or use defaults
+        // Get Supabase configuration from meta tags or from parent postMessage (when embedded in app)
         function getSupabaseConfig() {
             const supabaseUrlMeta = document.querySelector('meta[name="supabase-url"]');
             const supabaseKeyMeta = document.querySelector('meta[name="supabase-anon-key"]');
-            
-            const supabaseUrl = supabaseUrlMeta ? supabaseUrlMeta.getAttribute('content') : '';
-            let supabaseKey = supabaseKeyMeta ? supabaseKeyMeta.getAttribute('content') : '';
-            
-            // Trim any whitespace that might have been accidentally added
-            if (supabaseKey) {
-                supabaseKey = supabaseKey.trim();
-            }
+            let supabaseUrl = (supabaseUrlMeta && supabaseUrlMeta.getAttribute('content')) || (typeof window.__SUPABASE_URL__ === 'string' && window.__SUPABASE_URL__) || '';
+            let supabaseKey = (supabaseKeyMeta && supabaseKeyMeta.getAttribute('content')) || (typeof window.__SUPABASE_TOKEN__ === 'string' && window.__SUPABASE_TOKEN__) || '';
+            if (supabaseUrl) supabaseUrl = supabaseUrl.replace(/\/$/, '');
+            if (supabaseKey) supabaseKey = supabaseKey.trim();
             
             // Log configuration for debugging
             console.log('🎥 [YOUTUBE] Config check - URL:', supabaseUrl ? 'Present' : 'MISSING');

@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 370">
+  <defs>
+    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0f0f0;" />
+      <stop offset="50%" style="stop-color:#cccccc;" />
+      <stop offset="100%" style="stop-color:#a0a0a0;" />
+    </linearGradient>
+    <linearGradient id="silverRimGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#a0a0a0;" />
+      <stop offset="50%" style="stop-color:#808080;" />
+      <stop offset="100%" style="stop-color:#606060;" />
+    </linearGradient>
+    <linearGradient id="copperGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#cd7f32;" />
+      <stop offset="50%" style="stop-color:#b87333;" />
+      <stop offset="100%" style="stop-color:#a0522d;" />
+    </linearGradient>
+  </defs>
+
+  <!-- Copper Core - base layer to suggest coin thickness when viewed diagonally -->
+  <!-- This path creates a somewhat elongated, curved shape to represent the visible edge -->
+  <path fill="url(#copperGradient)"
+        d="M 120 120 C 150 90, 450 90, 480 120 L 480 170 C 450 200, 150 200, 120 170 Z"
+        transform="rotate(-5 300 145)"/>
+
+  <!-- Heads Coin (Left Side) -->
+  <g transform="translate(190, 120) rotate(-15)">
+    <!-- Coin Face Shape -->
+    <ellipse cx="0" cy="0" rx="75" ry="70" fill="url(#silverGradient)" stroke="url(#silverRimGradient)" stroke-width="2"/>
+    <!-- George Washington Profile (simplified silhouette) -->
+    <path fill="#333" d="
+        M-30,-20              /* Start chin */
+        Q-35,-10 -30,5        /* Jawline to neck */
+        L-20,15               /* Bottom of neck */
+        L-10,15               /* Collar */
+        Q-5,10 0,5            /* Back of neck/head */
+        Q5,0 10,-5            /* Back of head */
+        Q20,-15 25,-25        /* Hair back */
+        Q20,-35 10,-40        /* Top of head */
+        Q0,-45 -10,-40        /* Forehead */
+        Q-20,-35 -25,-25      /* Nose bridge */
+        Q-28,-20 -25,-15      /* Nose tip */
+        Q-20,-10 -25,-5       /* Upper lip */
+        Q-30,0 -30,-20 Z      /* Lower lip to chin */
+    "/>
+  </g>
+  <!-- Label for Heads side -->
+  <text x="190" y="260" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#0f172a">HEADS</text>
+
+  <!-- Tails Coin (Right Side) -->
+  <g transform="translate(410, 120) rotate(15)">
+    <!-- Coin Face Shape -->
+    <ellipse cx="0" cy="0" rx="75" ry="70" fill="url(#silverGradient)" stroke="url(#silverRimGradient)" stroke-width="2"/>
+    <!-- Eagle Design (simplified spread eagle silhouette) -->
+    <path fill="#333" d="
+        M0,-45                   /* Top of head */
+        Q-10,-50 -20,-40         /* Left side of head/neck */
+        L-50,-10                 /* Left wing tip */
+        Q-55,0 -50,10            /* Left wing lower edge */
+        L-20,20                  /* Left body/tail */
+        L-10,25                  /* Tail center */
+        L10,25                   /* Right tail center */
+        L20,20                   /* Right body/tail */
+        L50,10                   /* Right wing lower edge */
+        Q55,0 50,-10             /* Right wing tip */
+        L20,-40                  /* Right side of head/neck */
+        Q10,-50 0,-45 Z          /* Back to top of head */
+        M-10,15 Q-15,18 -10,21 L-5,18 Z /* Left talon/object */
+        M10,15 Q15,18 10,21 L5,18 Z   /* Right talon/object */
+    "/>
+  </g>
+  <!-- Label for Tails side -->
+  <text x="410" y="260" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#0f172a">TAILS</text>
+
+</svg>

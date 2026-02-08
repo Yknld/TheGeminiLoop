@@ -1,0 +1,332 @@
+<div class="module-container" style="font-family: 'Inter', sans-serif; display: flex; flex-direction: column; gap: 12px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 100%; box-sizing: border-box; background-color: #ffffff;">
+    <style>
+        .module-container button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+        .module-container button:hover {
+            background-color: #1e40af;
+        }
+        .module-container button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+        .module-container .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .module-container .graph-label {
+            font-size: 12px;
+            fill: #4b5563;
+        }
+        .module-container .axis-label {
+            font-size: 13px;
+            fill: #374151;
+            font-weight: 500;
+        }
+        .module-container .legend-label {
+            font-size: 12px;
+            fill: #4b5563;
+        }
+    </style>
+
+    <div style="width: 100%; aspect-ratio: 2 / 1; min-height: 250px; position: relative;">
+        <svg id="llnGraph" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;"></svg>
+    </div>
+
+    <div class="control-group">
+        <button id="resetSimulationBtn">Reset Simulation</button>
+        <button id="add100FlipsBtn">Add 100 Flips</button>
+        <button id="add500FlipsBtn">Add 500 Flips</button>
+        <button id="add1000FlipsBtn">Add 1,000 Flips</button>
+        <button id="add5000FlipsBtn">Add 5,000 Flips</button>
+    </div>
+
+    <script>
+        (function() {
+            const svg = document.getElementById('llnGraph');
+            const resetSimulationBtn = document.getElementById('resetSimulationBtn');
+            const add100FlipsBtn = document.getElementById('add100FlipsBtn');
+            const add500FlipsBtn = document.getElementById('add500FlipsBtn');
+            const add1000FlipsBtn = document.getElementById('add1000FlipsBtn');
+            const add5000FlipsBtn = document.getElementById('add5000FlipsBtn');
+
+            // SVG dimensions and padding
+            const SVG_WIDTH = 800;
+            const SVG_HEIGHT = 400;
+            const PADDING_LEFT = 60;
+            const PADDING_RIGHT = 30;
+            const PADDING_TOP = 20;
+            const PADDING_BOTTOM = 40;
+
+            const GRAPH_WIDTH = SVG_WIDTH - PADDING_LEFT - PADDING_RIGHT;
+            const GRAPH_HEIGHT = SVG_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
+
+            let totalFlips = 0;
+            let headsCount = 0;
+            let simulationData = []; // Stores {flips: N, percentage: P}
+            let isSimulating = false;
+            let maxFlipsOnAxis = 1000; // Dynamic X-axis scale
+            const xAxisScaleSteps = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
+
+            function scaleX(flips) {
+                return PADDING_LEFT + (flips / maxFlipsOnAxis) * GRAPH_WIDTH;
+            }
+
+            function scaleY(percentage) {
+                // Percentage is 0-100, convert to 0-1 range for calculation
+                return PADDING_TOP + (1 - (percentage / 100)) * GRAPH_HEIGHT;
+            }
+
+            function clearGraph() {
+                while (svg.firstChild) {
+                    svg.removeChild(svg.firstChild);
+                }
+            }
+
+            function drawAxes() {
+                // X-axis line
+                let xAxisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                xAxisLine.setAttribute('x1', PADDING_LEFT);
+                xAxisLine.setAttribute('y1', SVG_HEIGHT - PADDING_BOTTOM);
+                xAxisLine.setAttribute('x2', SVG_WIDTH - PADDING_RIGHT);
+                xAxisLine.setAttribute('y2', SVG_HEIGHT - PADDING_BOTTOM);
+                xAxisLine.setAttribute('stroke', '#4b5563');
+                xAxisLine.setAttribute('stroke-width', '1');
+                svg.appendChild(xAxisLine);
+
+                // Y-axis line
+                let yAxisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                yAxisLine.setAttribute('x1', PADDING_LEFT);
+                yAxisLine.setAttribute('y1', PADDING_TOP);
+                yAxisLine.setAttribute('x2', PADDING_LEFT);
+                yAxisLine.setAttribute('y2', SVG_HEIGHT - PADDING_BOTTOM);
+                yAxisLine.setAttribute('stroke', '#4b5563');
+                yAxisLine.setAttribute('stroke-width', '1');
+                svg.appendChild(yAxisLine);
+
+                // X-axis label
+                let xAxisText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                xAxisText.setAttribute('x', PADDING_LEFT + GRAPH_WIDTH / 2);
+                xAxisText.setAttribute('y', SVG_HEIGHT - PADDING_BOTTOM / 3);
+                xAxisText.setAttribute('text-anchor', 'middle');
+                xAxisText.setAttribute('class', 'axis-label');
+                xAxisText.textContent = 'Number of Flips';
+                svg.appendChild(xAxisText);
+
+                // Y-axis label
+                let yAxisText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                yAxisText.setAttribute('x', PADDING_LEFT / 2);
+                yAxisText.setAttribute('y', PADDING_TOP + GRAPH_HEIGHT / 2);
+                yAxisText.setAttribute('text-anchor', 'middle');
+                yAxisText.setAttribute('transform', `rotate(-90 ${PADDING_LEFT / 2}, ${PADDING_TOP + GRAPH_HEIGHT / 2})`);
+                yAxisText.setAttribute('class', 'axis-label');
+                yAxisText.textContent = 'Percentage of Heads';
+                svg.appendChild(yAxisText);
+
+                // Y-axis ticks and labels (0%, 25%, 50%, 75%, 100%)
+                for (let i = 0; i <= 100; i += 25) {
+                    let y = scaleY(i);
+                    let tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    tick.setAttribute('x1', PADDING_LEFT - 5);
+                    tick.setAttribute('y1', y);
+                    tick.setAttribute('x2', PADDING_LEFT);
+                    tick.setAttribute('y2', y);
+                    tick.setAttribute('stroke', '#4b5563');
+                    svg.appendChild(tick);
+
+                    let label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', PADDING_LEFT - 10);
+                    label.setAttribute('y', y + 4);
+                    label.setAttribute('text-anchor', 'end');
+                    label.setAttribute('class', 'graph-label');
+                    label.textContent = `${i}%`;
+                    svg.appendChild(label);
+                }
+
+                // X-axis ticks and labels (dynamic based on maxFlipsOnAxis)
+                let effectiveTickStep;
+                if (maxFlipsOnAxis <= 100) effectiveTickStep = 20;
+                else if (maxFlipsOnAxis <= 200) effectiveTickStep = 50;
+                else if (maxFlipsOnAxis <= 500) effectiveTickStep = 100;
+                else if (maxFlipsOnAxis <= 1000) effectiveTickStep = 200;
+                else if (maxFlipsOnAxis <= 2000) effectiveTickStep = 500;
+                else if (maxFlipsOnAxis <= 5000) effectiveTickStep = 1000;
+                else if (maxFlipsOnAxis <= 10000) effectiveTickStep = 2000;
+                else if (maxFlipsOnAxis <= 20000) effectiveTickStep = 5000;
+                else if (maxFlipsOnAxis <= 50000) effectiveTickStep = 10000;
+                else effectiveTickStep = 20000;
+                
+                for (let i = 0; i <= maxFlipsOnAxis; i += effectiveTickStep) {
+                    if (i === 0 && (totalFlips > 0 || maxFlipsOnAxis > 100)) continue; // Don't draw 0 if simulation started or axis is large
+                    let x = scaleX(i);
+                    let tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    tick.setAttribute('x1', x);
+                    tick.setAttribute('y1', SVG_HEIGHT - PADDING_BOTTOM);
+                    tick.setAttribute('x2', x);
+                    tick.setAttribute('y2', SVG_HEIGHT - PADDING_BOTTOM + 5);
+                    tick.setAttribute('stroke', '#4b5563');
+                    svg.appendChild(tick);
+
+                    let label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', x);
+                    label.setAttribute('y', SVG_HEIGHT - PADDING_BOTTOM + 20);
+                    label.setAttribute('text-anchor', 'middle');
+                    label.setAttribute('class', 'graph-label');
+                    label.textContent = i >= 1000 ? `${i/1000}k` : i;
+                    svg.appendChild(label);
+                }
+
+
+                // 50% theoretical probability line
+                let theoreticalLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                theoreticalLine.setAttribute('x1', PADDING_LEFT);
+                theoreticalLine.setAttribute('y1', scaleY(50));
+                theoreticalLine.setAttribute('x2', SVG_WIDTH - PADDING_RIGHT);
+                theoreticalLine.setAttribute('y2', scaleY(50));
+                theoreticalLine.setAttribute('stroke', '#16a34a');
+                theoreticalLine.setAttribute('stroke-width', '2');
+                theoreticalLine.setAttribute('stroke-dasharray', '5,5');
+                svg.appendChild(theoreticalLine);
+
+                // Label for 50% line
+                let theoreticalLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                theoreticalLabel.setAttribute('x', SVG_WIDTH - PADDING_RIGHT - 10);
+                theoreticalLabel.setAttribute('y', scaleY(50) - 5);
+                theoreticalLabel.setAttribute('text-anchor', 'end');
+                theoreticalLabel.setAttribute('class', 'legend-label');
+                theoreticalLabel.setAttribute('fill', '#16a34a');
+                theoreticalLabel.textContent = 'Theoretical Probability (50%)';
+                svg.appendChild(theoreticalLabel);
+            }
+
+            function updateSimulationLine() {
+                let polyline = svg.querySelector('#simulationLine');
+                if (!polyline) {
+                    polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+                    polyline.setAttribute('id', 'simulationLine');
+                    polyline.setAttribute('fill', 'none');
+                    polyline.setAttribute('stroke', '#2563eb');
+                    polyline.setAttribute('stroke-width', '2');
+                    svg.appendChild(polyline);
+                }
+
+                if (simulationData.length === 0) {
+                    polyline.setAttribute('points', '');
+                    return;
+                }
+
+                let points = simulationData
+                    .filter(d => d.flips <= maxFlipsOnAxis) // Only show points within current axis range
+                    .map(d => `${scaleX(d.flips)},${scaleY(d.percentage)}`)
+                    .join(' ');
+                polyline.setAttribute('points', points);
+            }
+
+            function updateMaxFlipsOnAxis() {
+                if (totalFlips === 0) {
+                    if (maxFlipsOnAxis !== 1000) {
+                        maxFlipsOnAxis = 1000;
+                        initGraph();
+                    }
+                    return;
+                }
+                let newMax = maxFlipsOnAxis;
+                while (totalFlips > newMax) {
+                    let nextStepIndex = xAxisScaleSteps.indexOf(newMax) + 1;
+                    if (nextStepIndex < xAxisScaleSteps.length) {
+                        newMax = xAxisScaleSteps[nextStepIndex];
+                    } else {
+                        newMax *= 2; // Beyond defined steps, double the max
+                    }
+                }
+                if (newMax !== maxFlipsOnAxis) {
+                    maxFlipsOnAxis = newMax;
+                    initGraph(); // Redraw everything if axis scale changes
+                }
+            }
+
+            async function runSimulation(numFlipsToAdd) {
+                if (isSimulating) return;
+                isSimulating = true;
+                disableButtons(true);
+
+                const currentStartFlips = totalFlips;
+                
+                for (let i = 0; i < numFlipsToAdd; i++) {
+                    totalFlips++;
+                    const flipResult = Math.random() < 0.5 ? 0 : 1; // 0 for tails, 1 for heads
+                    if (flipResult === 1) {
+                        headsCount++;
+                    }
+                    const percentageHeads = (headsCount / totalFlips) * 100;
+                    simulationData.push({ flips: totalFlips, percentage: percentageHeads });
+
+                    // Update graph more frequently for initial flips, then less frequently
+                    const updateFrequency = (totalFlips < 100) ? 1 : Math.ceil(totalFlips / 100); // Update every flip for first 100, then less frequently
+                    if ((totalFlips - currentStartFlips) % updateFrequency === 0 || totalFlips === currentStartFlips + numFlipsToAdd) {
+                        updateMaxFlipsOnAxis(); // This will re-draw graph if axis changes
+                        if (!isSimulating) break; // If reset during async loop
+                        updateSimulationLine();
+                        await new Promise(resolve => requestAnimationFrame(resolve)); // Smoother animation than setTimeout
+                    }
+                }
+                
+                // Ensure final state is drawn
+                if(isSimulating) { // Only update if not reset during simulation
+                    updateMaxFlipsOnAxis();
+                    updateSimulationLine();
+                }
+                
+                isSimulating = false;
+                disableButtons(false);
+            }
+
+            function resetSimulation() {
+                if (isSimulating) {
+                    isSimulating = false; // Stop ongoing simulation gracefully
+                    // The loop will check isSimulating and break
+                }
+                totalFlips = 0;
+                headsCount = 0;
+                simulationData = [];
+                maxFlipsOnAxis = 1000; // Reset axis scale
+                initGraph();
+                updateSimulationLine();
+                disableButtons(false); // Ensure buttons are enabled after reset
+            }
+
+            function initGraph() {
+                clearGraph();
+                drawAxes();
+                updateSimulationLine(); // Draw empty line or existing data
+            }
+
+            function disableButtons(disabled) {
+                resetSimulationBtn.disabled = disabled;
+                add100FlipsBtn.disabled = disabled;
+                add500FlipsBtn.disabled = disabled;
+                add1000FlipsBtn.disabled = disabled;
+                add5000FlipsBtn.disabled = disabled;
+            }
+
+            // Initial setup
+            initGraph();
+
+            // Event listeners
+            resetSimulationBtn.addEventListener('click', resetSimulation);
+            add100FlipsBtn.addEventListener('click', () => runSimulation(100));
+            add500FlipsBtn.addEventListener('click', () => runSimulation(500));
+            add1000FlipsBtn.addEventListener('click', () => runSimulation(1000));
+            add5000FlipsBtn.addEventListener('click', () => runSimulation(5000));
+        })();
+    </script>
+</div>

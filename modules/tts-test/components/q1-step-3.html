@@ -1,0 +1,363 @@
+<div class="module-container" style="
+    font-family: 'Arial', sans-serif;
+    padding: 20px;
+    border-radius: 12px;
+    background-color: #f0f7ff; /* Light blue background */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    overflow: hidden; /* For blocks animating off-screen */
+">
+    <style>
+        .balance-scale {
+            width: 100%;
+            max-width: 450px; /* Constrain for optimal visual balance */
+            height: 180px; /* Overall height of the scale structure */
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* Align items to the bottom */
+            margin-bottom: 20px;
+        }
+
+        .fulcrum {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 30px solid #8B4513; /* SaddleBrown */
+            position: absolute;
+            bottom: 0;
+            z-index: 1;
+        }
+        
+        .beam {
+            width: 90%;
+            height: 10px;
+            background-color: #5a5a5a;
+            border-radius: 5px;
+            position: absolute;
+            bottom: 30px; /* Position beam above the fulcrum's base */
+            transform-origin: center bottom; /* Pivot from center of bottom edge */
+            transition: transform 0.5s ease-in-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .balance-scale.rebalance .beam {
+            animation: rebalance-beam 0.8s forwards;
+        }
+
+        @keyframes rebalance-beam {
+            0% { transform: rotateZ(0deg); }
+            30% { transform: rotateZ(3deg); }
+            60% { transform: rotateZ(-3deg); }
+            100% { transform: rotateZ(0deg); }
+        }
+
+        .pan {
+            width: 38%;
+            height: 60px;
+            background-color: #e0e0e0;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+            box-sizing: border-box;
+            top: 100%; /* Hang below the beam */
+            transform: translateY(5px); /* Small gap from beam */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-pan {
+            left: -5%; /* Position relative to beam width */
+        }
+
+        .right-pan {
+            right: -5%; /* Position relative to beam width */
+        }
+
+        .block-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            width: 100%;
+            height: 100%;
+            position: relative; /* For absolute positioning of blocks */
+        }
+
+        .math-block {
+            background-color: #2563eb; /* Blue */
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            transition: all 0.7s ease-out; /* For splitting, moving, fading */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: absolute; /* For flexible positioning within container */
+            white-space: nowrap;
+        }
+
+        #block2x {
+            width: 60px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%); /* Centered initially */
+        }
+
+        .block-x {
+            width: 30px;
+        }
+
+        .units-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            transition: all 0.7s ease-out; /* For splitting, moving, fading */
+            position: absolute; /* For flexible positioning within container */
+            justify-content: center;
+            align-content: center;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.2); /* Subtle background for groups */
+            border-radius: 4px;
+            padding: 2px;
+        }
+
+        #units8 {
+            width: 100%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%); /* Centered initially */
+        }
+
+        .unit {
+            background-color: #16a34a; /* Green */
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8em;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+
+        .units-group-4 {
+            width: 48%; /* Adjust for 2 groups on pan */
+            height: auto;
+            min-height: 40px;
+        }
+        
+        .equation-display {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #333;
+            min-height: 2em; /* Prevent layout shift */
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            background-color: #2563eb; /* Blue */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #1d4ed8; /* Darker blue */
+            transform: translateY(-1px);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background-color: #93c5fd; /* Lighter blue */
+            cursor: not-allowed;
+        }
+    </style>
+
+    <div id="balanceScale" class="balance-scale">
+        <div class="fulcrum"></div>
+        <div id="beam" class="beam">
+            <div id="leftPan" class="pan left-pan">
+                <div id="leftBlockContainer" class="block-container">
+                    <div id="block2x" class="math-block">2x</div>
+                    <div id="blockX1" class="math-block block-x">x</div>
+                    <div id="blockX2" class="math-block block-x">x</div>
+                </div>
+            </div>
+            <div id="rightPan" class="pan right-pan">
+                <div id="rightBlockContainer" class="block-container">
+                    <div id="units8" class="units-group units-group-8">
+                        <div class="unit">1</div><div class="unit">1</div><div class="unit">1</div><div class="unit">1</div>
+                        <div class="unit">1</div><div class="unit">1</div><div class="unit">1</div><div class="unit">1</div>
+                    </div>
+                    <div id="units4A" class="units-group units-group-4">
+                        <div class="unit">1</div><div class="unit">1</div><div class="unit">1</div><div class="unit">1</div>
+                    </div>
+                    <div id="units4B" class="units-group units-group-4">
+                        <div class="unit">1</div><div class="unit">1</div><div class="unit">1</div><div class="unit">1</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="equationDisplay" class="equation-display">2x = 8</div>
+    <div class="controls">
+        <button id="divideButton">Divide by 2</button>
+    </div>
+    <script>
+        (function() {
+            const balanceScale = document.getElementById('balanceScale');
+            const beam = document.getElementById('beam');
+            const block2x = document.getElementById('block2x');
+            const blockX1 = document.getElementById('blockX1');
+            const blockX2 = document.getElementById('blockX2');
+            const units8 = document.getElementById('units8');
+            const units4A = document.getElementById('units4A');
+            const units4B = document.getElementById('units4B');
+            const equationDisplay = document.getElementById('equationDisplay');
+            const divideButton = document.getElementById('divideButton');
+
+            // Set initial state for all elements
+            function initializeState() {
+                block2x.style.opacity = 1;
+                block2x.style.pointerEvents = 'auto';
+                block2x.style.left = '50%';
+                block2x.style.top = '50%';
+                block2x.style.transform = 'translate(-50%, -50%)';
+
+                blockX1.style.opacity = 0;
+                blockX1.style.pointerEvents = 'none';
+                blockX1.style.left = '50%';
+                blockX1.style.top = '50%';
+                blockX1.style.transform = 'translate(-50%, -50%)';
+
+                blockX2.style.opacity = 0;
+                blockX2.style.pointerEvents = 'none';
+                blockX2.style.left = '50%';
+                blockX2.style.top = '50%';
+                blockX2.style.transform = 'translate(-50%, -50%)';
+
+                units8.style.opacity = 1;
+                units8.style.pointerEvents = 'auto';
+                units8.style.left = '50%';
+                units8.style.top = '50%';
+                units8.style.transform = 'translate(-50%, -50%)';
+
+                units4A.style.opacity = 0;
+                units4A.style.pointerEvents = 'none';
+                units4A.style.left = '50%';
+                units4A.style.top = '50%';
+                units4A.style.transform = 'translate(-50%, -50%)';
+
+                units4B.style.opacity = 0;
+                units4B.style.pointerEvents = 'none';
+                units4B.style.left = '50%';
+                units4B.style.top = '50%';
+                units4B.style.transform = 'translate(-50%, -50%)';
+
+                equationDisplay.textContent = '2x = 8';
+                divideButton.disabled = false;
+                beam.style.transform = 'rotateZ(0deg)';
+                balanceScale.classList.remove('rebalance');
+            }
+
+            initializeState();
+
+            divideButton.addEventListener('click', function() {
+                divideButton.disabled = true;
+
+                // Phase 1: Separation Animation
+                // Hide 2x, reveal & spread 2 x's
+                block2x.style.opacity = 0;
+                block2x.style.pointerEvents = 'none';
+
+                blockX1.style.opacity = 1;
+                blockX1.style.pointerEvents = 'auto';
+                blockX1.style.left = '25%'; /* Position left block */
+                blockX1.style.transform = 'translate(-50%, -50%)';
+                
+                blockX2.style.opacity = 1;
+                blockX2.style.pointerEvents = 'auto';
+                blockX2.style.left = '75%'; /* Position right block */
+                blockX2.style.transform = 'translate(-50%, -50%)';
+
+                // Hide 8 units, reveal & spread 2 groups of 4 units
+                units8.style.opacity = 0;
+                units8.style.pointerEvents = 'none';
+
+                units4A.style.opacity = 1;
+                units4A.style.pointerEvents = 'auto';
+                units4A.style.left = '25%'; /* Position left group */
+                units4A.style.transform = 'translate(-50%, -50%)';
+                
+                units4B.style.opacity = 1;
+                units4B.style.pointerEvents = 'auto';
+                units4B.style.left = '75%'; /* Position right group */
+                units4B.style.transform = 'translate(-50%, -50%)';
+
+                setTimeout(() => {
+                    // Phase 2: Removal of one 'x' and one '4-unit' group
+                    blockX2.style.opacity = 0;
+                    blockX2.style.pointerEvents = 'none';
+                    blockX2.style.transform = 'translate(-50%, -150%) scale(0.5)'; // Animate off-screen upwards
+
+                    units4B.style.opacity = 0;
+                    units4B.style.pointerEvents = 'none';
+                    units4B.style.transform = 'translate(-50%, -150%) scale(0.5)'; // Animate off-screen upwards
+
+                    // Center the remaining blocks
+                    blockX1.style.left = '50%';
+                    blockX1.style.transform = 'translate(-50%, -50%)';
+
+                    units4A.style.left = '50%';
+                    units4A.style.transform = 'translate(-50%, -50%)';
+
+                    // Balance scale rebalance animation
+                    balanceScale.classList.add('rebalance');
+
+                    setTimeout(() => {
+                        // Phase 3: Equation Update - Step 1
+                        equationDisplay.textContent = '2x/2 = 8/2';
+
+                        setTimeout(() => {
+                            // Phase 3: Equation Update - Step 2 (Final)
+                            equationDisplay.textContent = 'x = 4';
+                            // The prompt implies a single progression, so button remains disabled.
+                        }, 500); // Shorter delay for the final equation update
+                    }, 1000); // Delay for removal animation and rebalance to complete
+                }, 1000); // Delay for separation animation to complete
+            });
+        })();
+    </script>
+</div>

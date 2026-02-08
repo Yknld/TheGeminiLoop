@@ -1,0 +1,467 @@
+<div class="module-container">
+    <style>
+        .module-container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            max-width: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #fff;
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        .component-header {
+            margin-bottom: 5px; /* Reduced margin slightly */
+        }
+
+        .component-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 5px 0;
+        }
+
+        .component-subtitle {
+            font-size: 0.9em;
+            color: #666;
+            margin: 0;
+        }
+
+        /* NEW: Introductory text styling */
+        .intro-text {
+            font-size: 0.95em;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background-color: #e8f0f7; /* Light blue background for emphasis */
+            border-left: 5px solid #2563eb;
+            border-radius: 5px;
+        }
+
+
+        .coin-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 120px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .coin {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #e0b44b;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .coin-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #8b5e0c;
+            border-radius: 50%;
+            background-color: #f7d85d;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .coin-face.front {
+            transform: rotateY(0deg);
+        }
+
+        .coin-face.back {
+            transform: rotateY(180deg);
+        }
+
+        .coin.animate-heads {
+            animation: spin-coin-heads 1.2s forwards cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .coin.animate-tails {
+            animation: spin-coin-tails 1.2s forwards cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        @keyframes spin-coin-heads {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(1080deg); } /* Lands showing front face (Heads) */
+        }
+
+        @keyframes spin-coin-tails {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(1260deg); } /* Lands showing back face (Tails) (1080 + 180) */
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background-color: #f0f4f8;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95em;
+            color: #4a5568;
+            border: 1px solid #dcdfe4;
+        }
+
+        .stat-label {
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #2563eb;
+            font-size: 1.1em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .flip-button {
+            background-color: #2563eb;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            flex: 1;
+            box-sizing: border-box;
+        }
+
+        .flip-button:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .flip-button:active {
+            background-color: #1e40af;
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3);
+        }
+
+        .reset-button {
+            background-color: #6b7280;
+            box-shadow: 0 4px 10px rgba(107, 114, 128, 0.3);
+        }
+        .reset-button:hover {
+            background-color: #4b5563;
+        }
+        .reset-button:active {
+            background-color: #374151;
+        }
+
+        /* Reset button feedback */
+        .reset-button.active-feedback {
+            background-color: #9ca3af; /* Lighter gray on click */
+            transition: background-color 0.1s ease-out;
+        }
+
+        .disabled-button {
+            background-color: #a0aec0 !important; /* Use !important to override other button styles */
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        .disabled-button:hover {
+             background-color: #a0aec0 !important;
+             transform: none !important;
+        }
+
+        /* NEW: Bulk flip controls styling */
+        .bulk-flip-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            align-items: center;
+        }
+
+        .bulk-flip-controls label {
+            font-size: 0.9em;
+            color: #4a5568;
+            white-space: nowrap;
+        }
+
+        .bulk-flip-input {
+            width: 80px;
+            padding: 8px 10px;
+            border: 1px solid #dcdfe4;
+            border-radius: 6px;
+            font-size: 1em;
+            color: #333;
+            text-align: center;
+            -moz-appearance: textfield;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+
+        /* Hide arrows for Chrome, Safari, Edge */
+        .bulk-flip-input::-webkit-outer-spin-button,
+        .bulk-flip-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .bulk-flip-button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+            flex-grow: 1;
+            max-width: 150px;
+            box-sizing: border-box;
+        }
+
+        .bulk-flip-button:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .bulk-flip-button:active {
+            background-color: #1e40af;
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+    <div class="component-header">
+        <h3 class="component-title">Coin Flips and the Law of Large Numbers - Step 3</h3>
+        <p class="component-subtitle">Module: probability-demo | Q2 | Step 3 of 5</p>
+    </div>
+    <!-- NEW: Introductory Text -->
+    <div class="intro-text">
+        <p>The <strong>Law of Large Numbers</strong> states that as you increase the number of coin flips, the observed percentage of heads (or tails) will get closer and closer to the theoretical probability of 50%. Try flipping the coin a few times, then try flipping it many times at once!</p>
+    </div>
+    <div class="coin-display">
+        <div id="coin" class="coin">
+            <div class="coin-face front">H</div>
+            <div class="coin-face back">T</div>
+        </div>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-item">
+            <span class="stat-label">Number of Flips:</span>
+            <span id="num-flips" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Heads Count:</span>
+            <span id="heads-count" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Tails Count:</span>
+            <span id="tails-count" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Percentage Heads:</span>
+            <span id="percentage-heads" class="stat-value">0.00%</span>
+        </div>
+    </div>
+    <div class="button-group">
+        <button id="flip-button" class="flip-button">Flip Coin (1 time)</button>
+        <button id="reset-button" class="flip-button reset-button">Reset</button>
+    </div>
+    <!-- NEW: Bulk Flip Controls -->
+    <div class="bulk-flip-controls">
+        <label for="bulk-flip-input">Flip</label>
+        <input type="number" id="bulk-flip-input" class="bulk-flip-input" value="100" min="1" max="10000">
+        <label>times</label>
+        <button id="bulk-flip-button" class="bulk-flip-button">Bulk Flip</button>
+    </div>
+
+    <script>
+        (function() {
+            const coinElement = document.getElementById('coin');
+            const numFlipsElement = document.getElementById('num-flips');
+            const headsCountElement = document.getElementById('heads-count');
+            const tailsCountElement = document.getElementById('tails-count');
+            const percentageHeadsElement = document.getElementById('percentage-heads');
+            const flipButton = document.getElementById('flip-button');
+            const resetButton = document.getElementById('reset-button');
+
+            // NEW: Bulk flip elements
+            const bulkFlipInput = document.getElementById('bulk-flip-input');
+            const bulkFlipButton = document.getElementById('bulk-flip-button');
+
+            let numFlips = 0;
+            let headsCount = 0;
+            let tailsCount = 0;
+            let isAnimating = false; // Controls single flip animation
+            let isBulkFlipping = false; // Controls bulk flip process state
+
+            function updateDisplay() {
+                numFlipsElement.textContent = numFlips;
+                headsCountElement.textContent = headsCount;
+                tailsCountElement.textContent = tailsCount;
+
+                let percentageHeads = (numFlips === 0) ? 0 : (headsCount / numFlips) * 100;
+                percentageHeadsElement.textContent = percentageHeads.toFixed(2) + '%';
+            }
+
+            // Function to disable/enable all interactive elements
+            function setControlsDisabled(disabled) {
+                flipButton.disabled = disabled;
+                resetButton.disabled = disabled;
+                bulkFlipInput.disabled = disabled;
+                bulkFlipButton.disabled = disabled;
+
+                if (disabled) {
+                    flipButton.classList.add('disabled-button');
+                    resetButton.classList.add('disabled-button');
+                    bulkFlipButton.classList.add('disabled-button');
+                    bulkFlipInput.classList.add('disabled-button'); /* Also disable input visually */
+                } else {
+                    flipButton.classList.remove('disabled-button');
+                    resetButton.classList.remove('disabled-button');
+                    bulkFlipButton.classList.remove('disabled-button');
+                    bulkFlipInput.classList.remove('disabled-button'); /* Also enable input visually */
+                }
+            }
+
+            // Encapsulates coin animation logic
+            function animateCoin(result, callback) {
+                // This function assumes `isAnimating` is set to true BEFORE calling it
+                // and `setControlsDisabled(true)` is also called.
+
+                coinElement.classList.remove('animate-heads', 'animate-tails');
+                coinElement.style.transform = 'rotateY(0deg)';
+                void coinElement.offsetWidth; // Force reflow
+
+                if (result === 'heads') {
+                    coinElement.classList.add('animate-heads');
+                } else {
+                    coinElement.classList.add('animate-tails');
+                }
+
+                setTimeout(() => {
+                    isAnimating = false;
+                    // Only re-enable controls if no bulk flip is active
+                    if (!isBulkFlipping) {
+                       setControlsDisabled(false);
+                    }
+                    if (callback) callback();
+                }, 1200); // Match CSS animation duration
+            }
+
+            function singleFlip() {
+                if (isAnimating || isBulkFlipping) return;
+
+                isAnimating = true;
+                setControlsDisabled(true);
+
+                const result = Math.random() < 0.5 ? 'heads' : 'tails';
+
+                animateCoin(result, () => {
+                    numFlips++;
+                    if (result === 'heads') {
+                        headsCount++;
+                    } else {
+                        tailsCount++;
+                    }
+                    updateDisplay();
+                });
+            }
+
+            function performBulkFlips() {
+                if (isAnimating || isBulkFlipping) return;
+
+                let flipsToDo = parseInt(bulkFlipInput.value, 10);
+                if (isNaN(flipsToDo) || flipsToDo < 1) {
+                    alert('Please enter a valid number of flips (at least 1).');
+                    return;
+                }
+                if (flipsToDo > parseInt(bulkFlipInput.max, 10)) {
+                    alert(`Please enter a number no greater than ${bulkFlipInput.max}.`);
+                    flipsToDo = parseInt(bulkFlipInput.max, 10);
+                    bulkFlipInput.value = flipsToDo;
+                }
+
+                isBulkFlipping = true;
+                setControlsDisabled(true);
+
+                // Simulate flips without individual animations for efficiency
+                for (let i = 0; i < flipsToDo; i++) {
+                    numFlips++;
+                    if (Math.random() < 0.5) {
+                        headsCount++;
+                    } else {
+                        tailsCount++;
+                    }
+                }
+
+                // After all bulk flips, perform one final animation to show a random outcome
+                // This gives visual feedback for the action without being tedious.
+                const finalResult = Math.random() < 0.5 ? 'heads' : 'tails';
+
+                // Temporarily set isAnimating to true to correctly use animateCoin and handle its callback
+                isAnimating = true;
+                animateCoin(finalResult, () => {
+                    updateDisplay(); // Update display after animation
+                    isBulkFlipping = false;
+                    setControlsDisabled(false); // Re-enable controls only after bulk flip and its animation are done
+                });
+            }
+
+
+            function resetStats() {
+                if (isAnimating || isBulkFlipping) return;
+
+                numFlips = 0;
+                headsCount = 0;
+                tailsCount = 0;
+                updateDisplay();
+
+                // Reset coin visual state to heads (initial state)
+                coinElement.classList.remove('animate-heads', 'animate-tails');
+                coinElement.style.transform = 'rotateY(0deg)'; // Ensure it's explicitly reset to initial state
+
+                // Visual feedback for reset button
+                resetButton.classList.add('active-feedback');
+                setTimeout(() => {
+                    resetButton.classList.remove('active-feedback');
+                }, 200); // Brief feedback duration
+            }
+
+            // Initial display update when the script runs
+            updateDisplay();
+            setControlsDisabled(false); // Ensure controls are enabled on load
+
+            // Attach event listeners
+            flipButton.addEventListener('click', singleFlip);
+            resetButton.addEventListener('click', resetStats);
+            bulkFlipButton.addEventListener('click', performBulkFlips);
+        })();
+    </script>
+</div>

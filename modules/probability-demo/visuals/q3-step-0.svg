@@ -1,0 +1,30 @@
+<svg width="700" height="350" viewBox="0 0 700 350" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="700" height="350" fill="#f8fafc"/>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <!-- Central node (coin to flip) -->
+  <circle cx="350" cy="175" r="44" fill="#fff" stroke="#94a3b8" stroke-width="1.5"/>
+
+  <!-- Heads -->
+  <g>
+    <circle cx="150" cy="175" r="44" fill="#fff" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="150" y="182" font-family="system-ui, sans-serif" font-size="28" fill="#475569" text-anchor="middle" font-weight="600">H</text>
+    <text x="150" y="235" font-family="system-ui, sans-serif" font-size="15" fill="#475569" text-anchor="middle" font-weight="500">Heads (Probability = 0.5)</text>
+  </g>
+
+  <!-- Tails -->
+  <g>
+    <circle cx="550" cy="175" r="44" fill="#fff" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="550" y="182" font-family="system-ui, sans-serif" font-size="28" fill="#475569" text-anchor="middle" font-weight="600">T</text>
+    <text x="550" y="235" font-family="system-ui, sans-serif" font-size="15" fill="#475569" text-anchor="middle" font-weight="500">Tails (Probability = 0.5)</text>
+  </g>
+
+  <!-- Arrows -->
+  <path d="M 350,175 C 300,85 200,85 150,132" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <path d="M 350,175 C 400,85 500,85 550,132" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+</svg>
